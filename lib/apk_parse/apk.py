@@ -21,6 +21,7 @@ import bytecode
 import androconf
 from dvm_permissions import DVM_PERMISSIONS
 from util import read, get_md5
+from subprocess import Popen, PIPE
 
 import StringIO
 from struct import pack, unpack
@@ -211,24 +212,18 @@ class APK(object):
 
                     self.valid_apk = True
 
-            re_cert = re.compile(r'meta-inf(/|\\).*\.(rsa|dsa)')
-            if re_cert.match(i.lower()):
-                self.parse_cert(i)
-
+        self.parse_cert()
         self.get_files_types()
 
-    def parse_cert(self, cert_fname):
+    def parse_cert(self):
         """
             parse the cert text and md5
         :param cert_fname:
         """
+        p = Popen(['openssl', 'pkcs7', '-inform', 'DER', '-noout', '-print_certs', '-text'], stdout=PIPE, stdin=PIPE)
+        data = p.communicate(input=self.get_file('META-INF/CERT.RSA'))[0].split('\n')
 
-        #input_bio = M2Crypto.BIO.MemoryBuffer(self.zip.read(cert_fname))
-        #p7 = M2Crypto.SMIME.PKCS7(M2Crypto.m2.pkcs7_read_bio_der(input_bio._ptr()), 1)
-        #sk3 = p7.get0_signers(M2Crypto.X509.X509_Stack())
-        #cert = sk3.pop()
-        #self.cert_text = cert.as_text()
-        #self.cert_md5 = get_md5(cert.as_der())
+        self.cert_text = data
 
     def is_valid_APK(self):
         """

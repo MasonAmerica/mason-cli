@@ -34,15 +34,15 @@ class Mason(object):
             return False
 
         # Check for 'Android Debug' CN for the given artifact, disallow upload
-        #for line in apkf.cert_text.splitlines():
-        #    if re.search('Subject:', line):
-        #        if re.search('Android Debug', line):
-        #            print '\n------------------WARNING------------------\n' \
-        #                  'Not allowing android debug key signed apk. \n' \
-        #                  'Please sign the APK with your release keys \n' \
-        #                  'before attempting to upload.               \n' \
-        #                  '------------------WARNING------------------\n'
-        #            return False
+        for line in apkf.cert_text:
+            if re.search('Subject:', line):
+                if re.search('Android Debug', line):
+                    print '\n------------------WARNING------------------\n' \
+                          'Not allowing android debug key signed apk. \n' \
+                          'Please sign the APK with your release keys \n' \
+                          'before attempting to upload.               \n' \
+                          '------------------WARNING------------------\n'
+                    return False
 
         print '------------ APK ------------'
         print 'File Name: ' + apkf.filename
@@ -50,9 +50,9 @@ class Mason(object):
         print 'Package: ' + apkf.package
         print 'Version Name: ' + apkf.get_androidversion_name()
         print 'Version Code: ' + apkf.get_androidversion_code()
-        #if self.config.verbose:
-        #    print 'Cert md5: ' + apkf.cert_md5
-        #    print apkf.cert_text
+        if self.config.verbose:
+            for line in apkf.cert_text:
+                print line
         print '-----------------------------'
         self.apkf = apkf
         return True
