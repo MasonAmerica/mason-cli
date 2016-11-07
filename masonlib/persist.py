@@ -41,3 +41,9 @@ class Persist(object):
         with open(self.file, 'w') as outfile:
             json.dump(data, outfile)
             return True
+
+    def delete_tokens(self):
+        try:
+            return os.remove(self.file)
+        except OSError:
+            return False

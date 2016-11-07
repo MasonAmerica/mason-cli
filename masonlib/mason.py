@@ -191,6 +191,10 @@ class Mason(object):
         else:
             return False
 
+    # public logout method, returns true if successfully logged out
+    def logout(self):
+        return self.persist.delete_tokens()
+
 class upload_in_chunks(object):
     def __init__(self, filename, chunksize=1 << 13):
         self.filename = filename

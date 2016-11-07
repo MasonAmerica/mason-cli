@@ -84,6 +84,14 @@ def auth(config, user, password):
     else:
         click.echo('User authenticated.')
 
+# LOGOUT INTERFACE
+@cli.command()
+@pass_config
+def logout(config):
+    """Log out of current session"""
+    if config.mason.logout():
+        click.echo('Successfully logged out')
+
 # VERSION INTERFACE
 @cli.command()
 def version():
