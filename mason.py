@@ -2,6 +2,7 @@
 # COPYRIGHT MASONAMERICA
 import click
 import getpass
+import pkg_resources
 
 from masonlib.mason import Mason
 
@@ -82,6 +83,19 @@ def auth(config, user, password):
         exit('Unable to authenticate')
     else:
         click.echo('User authenticated.')
+
+# VERSION INTERFACE
+@cli.command()
+def version():
+    """Display mason-cli version"""
+    try:
+        version = pkg_resources.require("mason-cli")[0].version
+        click.echo('mason (Mason America) ' + version)
+        click.echo('Copyright (C) 2016 Mason America')
+        click.echo('License Apache 2.0 <https://www.apache.org/licenses/LICENSE-2.0>')
+        click.echo('Originally written by Adnan Begovic')
+    except pkg_resources.DistributionNotFound:
+        click.echo('Unable to retrieve version information')
 
 if __name__ == '__main__':
     cli()
