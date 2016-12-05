@@ -45,16 +45,18 @@ def apk(config, apk):
     if config.verbose:
         click.echo('Registering ' + apk + '...')
     if config.mason.parse_apk(apk):
-        if not config.skip_verify:
-            response = raw_input('Continue register? (y)')
-            if not response or response == 'y':
-                if not config.mason.register_apk(apk):
-                    exit('Unable to register apk')
-        else:
-            if not config.mason.register_apk(apk):
-                exit('Unable to register apk')
-            else:
-                click.echo('APK successfully registered.')
+        config.mason.register(apk)
+
+# CONFIG INTERFACE
+@register.command()
+@click.argument('yaml')
+@pass_config
+def config(config, yaml):
+    """Register config artifacts"""
+    if config.verbose:
+        click.echo('Registering ' + yaml + '...')
+    if config.mason.parse_os_config(yaml):
+        config.mason.register(yaml)
 
 # MEDIA INTERFACE
 @register.command()
@@ -75,16 +77,7 @@ def media(config, binary, name, type, version):
     if config.verbose:
         click.echo('Registering ' + binary + '...')
     if config.mason.parse_media(name, type, version, binary):
-        if not config.skip_verify:
-            response = raw_input('Continue register? (y)')
-            if not response or response == 'y':
-                if not config.mason.register_media(binary):
-                    exit('Unable to register media')
-            else:
-                if not config.mason.register_media(binary):
-                    exit('Unable to register media')
-                else:
-                    click.echo('Media successfully registered.')
+        config.mason.register(binary)
 
 # AUTHENTICATION INTERFACE
 @cli.command()

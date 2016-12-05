@@ -2,11 +2,11 @@ import json
 import requests
 import base64
 import os.path
-import re
 import sys
 
-from lib.apk_parse.apk import APK
-from artifacts import Media
+from apk import Apk
+from media import Media
+from os_config import OSConfig
 from persist import Persist
 from utils import Utils
 from store import Store
@@ -17,85 +17,51 @@ class Mason(object):
         self.config = config
         self.id_token = None
         self.access_token = None
-        self.apkf = None
-        self.media = None
+        self.artifact = None
         self.persist = Persist('.masonrc')
         self.store = Store(os.path.join(os.path.expanduser('~'), '.mason.yml'))
 
-    # public parse method, returns true if supported artifact, false otherwise
+    # public apk parse method, returns true if supported artifact, false otherwise
     def parse_apk(self, apk):
-        if not os.path.isfile(apk):
-            print 'No file provided'
+        apk = Apk.parse(self.config, apk)
+
+        if not apk:
             return False
 
-        apkf = APK(apk)
-
-        # Bail on non valid apk
-        if not apkf.is_valid_APK():
-            print "Not a valid APK, only APK's are currently supported"
-            return False
-
-        # Check for 'Android Debug' CN for the given artifact, disallow upload
-        for line in apkf.cert_text:
-            if re.search('Subject:', line):
-                if re.search('Android Debug', line):
-                    print '\n------------------WARNING------------------\n' \
-                          'Not allowing android debug key signed apk. \n' \
-                          'Please sign the APK with your release keys \n' \
-                          'before attempting to upload.               \n' \
-                          '------------------WARNING------------------\n'
-                    return False
-
-        print '------------ APK ------------'
-        print 'File Name: ' + apkf.filename
-        print 'File size: ', str(os.path.getsize(apk))
-        print 'Package: ' + apkf.package
-        print 'Version Name: ' + apkf.get_androidversion_name()
-        print 'Version Code: ' + apkf.get_androidversion_code()
-        if self.config.verbose:
-            for line in apkf.cert_text:
-                print line
-        print '-----------------------------'
-        self.apkf = apkf
+        self.artifact = apk
         return True
 
+    # public media parse method, returns true if supported artifact, false otherwise
     def parse_media(self, name, type, version, binary):
-        if not os.path.isfile(binary):
-            print 'No file provided'
+        media = Media.parse(self.config, name, type, version, binary)
+
+        if not media:
             return False
 
-        media = Media(name, type, version, binary)
-
-        # Bail on non valid apk
-        if not media.is_valid_media():
-            print "Not a valid " + type + ", see type requirements in the documentation"
-            return False
-
-        print '----------- MEDIA -----------'
-        print 'File Name: ' + media.binary
-        print 'File size: ' + str(os.path.getsize(binary))
-        print 'Name: ' + media.name
-        print 'Version: ' + media.version
-        print 'Type: ' + media.type
-        if self.config.verbose:
-            if media.details:
-                print 'Details: '
-                lines = list(line for line in (l.strip() for l in media.details) if line)
-                for line in lines:
-                    print line
-        print '-----------------------------'
-        self.media = media
+        self.artifact = media
         return True
 
-    # public register apk method, returns true if published, false otherwise
-    def register_apk(self, apk):
-        return self.__register_artifact(apk, self.apkf)
+    # public os parse method, returns true if supported artifact, false otherwise
+    def parse_os_config(self, config_yaml):
+        os_config = OSConfig.parse(self.config, config_yaml)
 
-    # public register media method, returns true if published, false otherwise
-    def register_media(self, binary):
-        return self.__register_artifact(binary, self.media)
+        if not os_config:
+            return False
 
-    def __register_artifact(self, binary, artifact_data):
+        self.artifact = os_config
+        return True
+
+    # public register method
+    def register(self, binary):
+        if not self.config.skip_verify:
+            response = raw_input('Continue register? (y)')
+            if not response or response == 'y':
+                if not self.__register_artifact(binary):
+                    exit('Unable to register media')
+            else:
+                exit('Artifact register aborted')
+
+    def __register_artifact(self, binary):
         self.id_token = self.persist.retrieve_id_token()
         self.access_token = self.persist.retrieve_access_token()
 
@@ -119,7 +85,7 @@ class Mason(object):
         customer = user_info_data['user_metadata']['clients'][0]
 
         # Get the signed url data for the user and artifact
-        signed_url_data = self.__request_signed_url(customer, artifact_data, md5)
+        signed_url_data = self.__request_signed_url(customer, self.artifact, md5)
 
         if not signed_url_data:
             return False
@@ -131,11 +97,11 @@ class Mason(object):
         download_url = signed_url_data['url']
 
         # Upload the artifact to the signed url
-        if not self.__upload_to_signed_url(signed_request_url, binary, artifact_data, md5):
+        if not self.__upload_to_signed_url(signed_request_url, binary, self.artifact, md5):
             return False
 
         # Publish to mason services
-        if not self.__register_to_mason(customer, download_url, sha1, artifact_data):
+        if not self.__register_to_mason(customer, download_url, sha1, self.artifact):
             return False
 
         return True
@@ -158,15 +124,9 @@ class Mason(object):
         headers = {'Content-Type': 'application/json',
                    'Content-MD5': base64encodedmd5,
                    'Authorization': 'Bearer ' + self.id_token}
-        if isinstance(artifact_data, APK):
-            url = self.store.registry_signer_url() + '/{0}/{1}/{2}'.format(customer, artifact_data.package,
-                                                                           artifact_data.get_androidversion_name())
-        elif isinstance(artifact_data, Media):
-            url = self.store.registry_signer_url() + '/{0}/{1}/{2}?type=media'.format(customer, artifact_data.name,
-                                                                           artifact_data.version)
-        else:
-            print 'Unsupported artifact type'
-            return None
+        url = self.store.registry_signer_url() \
+              + '/{0}/{1}/{2}'.format(customer, artifact_data.get_name(), artifact_data.get_version()) \
+              + '?type=' + artifact_data.get_type()
 
         r = requests.get(url, headers=headers)
         if r.status_code == 200:
@@ -179,20 +139,8 @@ class Mason(object):
     def __upload_to_signed_url(self, url, artifact, artifact_data, md5):
         print 'Uploading artifact...'
         base64encodedmd5 = base64.b64encode(md5).decode('utf-8')
-        if isinstance(artifact_data, APK):
-            headers = {'Content-Type': 'application/vnd.android.package-archive',
+        headers = {'Content-Type': artifact_data.get_content_type(),
                        'Content-MD5': base64encodedmd5}
-        elif isinstance(artifact_data, Media):
-            if artifact_data.type == 'bootanimation':
-                headers = {'Content-Type': 'application/zip',
-                           'Content-MD5': base64encodedmd5}
-            else:
-                print 'Unsupported media type'
-                return None
-        else:
-            print 'Unsupported artifact type'
-            return None
-
         file = open(artifact, 'rb')
         iterable = upload_in_chunks(file.name, chunksize=10)
 
@@ -209,32 +157,17 @@ class Mason(object):
         print 'Registering to mason services...'
         headers = {'Content-Type': 'application/json',
                    'Authorization': 'Bearer ' + self.id_token}
-        if isinstance(artifact_data, APK):
-            payload = {'name': artifact_data.package,
-                       'version': artifact_data.get_androidversion_name(),
-                       'customer': customer,
-                       'apk': {
-                           'versionCode': artifact_data.get_androidversion_code(),
-                           'packageName': artifact_data.package
-                       },
-                       'url': download_url,
-                       'checksum': {
-                           'sha1': sha1
-                       }}
-        elif isinstance(artifact_data, Media):
-            payload = {'name': artifact_data.name,
-                       'version': artifact_data.version,
-                       'customer': customer,
-                       'media': {
-                           'type': artifact_data.type,
-                       },
-                       'url': download_url,
-                       'checksum': {
-                           'sha1': sha1
-                       }}
-        else:
-            print 'Unsupported artifact type'
-            return None
+        payload = {'name': artifact_data.get_name(),
+                   'version': artifact_data.get_version(),
+                   'customer': customer,
+                   'url': download_url,
+                   'type': artifact_data.get_type(),
+                   'checksum': {
+                       'sha1': sha1
+                   }}
+
+        if artifact_data.get_registry_meta_data():
+            payload.update(artifact_data.get_registry_meta_data())
 
         url = self.store.registry_artifact_url() + '/{0}/'.format(customer)
         r = requests.post(url, headers=headers, json=payload)
@@ -302,4 +235,3 @@ class IterableToFileAdapter(object):
 
     def __len__(self):
         return self.length
-
