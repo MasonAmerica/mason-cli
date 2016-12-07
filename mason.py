@@ -28,29 +28,63 @@ your configurations and packages to your devices in the field."""
     config.mason.id_token = id_token
     config.mason.access_token = access_token
 
-# PUBLISH INTERFACE
-@cli.command()
-@click.argument("artifact")
-@click.option('--name', default=None, help='optional name for the artifact')
+# REGISTER INTERFACE
+@cli.group()
 @click.option('--skip-verify', '-s', is_flag=True, help='skip verification of artifact details')
 @pass_config
-def publish(config, name, skip_verify, artifact):
-    """Upload artifacts"""
+def register(config, skip_verify):
+    """Register artifacts to the mason platform"""
+    config.skip_verify = skip_verify
+
+# APK INTERFACE
+@register.command()
+@click.argument('apk')
+@pass_config
+def apk(config, apk):
+    """Register apk artifacts"""
     if config.verbose:
-        click.echo('Publishing ' + artifact + '...')
-        if name:
-            click.echo('Optional name: ' + name)
-    if config.mason.parse(artifact):
-        if not skip_verify:
-            response = raw_input('Continue publish? (y)')
+        click.echo('Registering ' + apk + '...')
+    if config.mason.parse_apk(apk):
+        if not config.skip_verify:
+            response = raw_input('Continue register? (y)')
             if not response or response == 'y':
-                if not config.mason.publish(artifact):
-                    exit('Unable to publish artifact')
+                if not config.mason.register_apk(apk):
+                    exit('Unable to register apk')
         else:
-            if not config.mason.publish(artifact):
-                exit('Unable to publish artifact')
+            if not config.mason.register_apk(apk):
+                exit('Unable to register apk')
             else:
-                click.echo('Artifact successfully uploaded.')
+                click.echo('APK successfully registered.')
+
+# MEDIA INTERFACE
+@register.command()
+@click.argument('binary')
+@click.option('--name', '-n', default=None)
+@click.option('--type', '-t', default=None)
+@click.option('--version', '-v', default=None)
+@pass_config
+def media(config, binary, name, type, version):
+    """Register media artifacts"""
+    if not name:
+        exit('Name is required for media')
+    if not type:
+        exit('Type is required for media')
+    if not version:
+        exit('Version is required for media')
+
+    if config.verbose:
+        click.echo('Registering ' + binary + '...')
+    if config.mason.parse_media(name, type, version, binary):
+        if not config.skip_verify:
+            response = raw_input('Continue register? (y)')
+            if not response or response == 'y':
+                if not config.mason.register_media(binary):
+                    exit('Unable to register media')
+            else:
+                if not config.mason.register_media(binary):
+                    exit('Unable to register media')
+                else:
+                    click.echo('Media successfully registered.')
 
 # AUTHENTICATION INTERFACE
 @cli.command()

@@ -27,11 +27,15 @@ Usage: mason [OPTIONS] COMMAND [ARGS]...
 
 Options:
   --verbose
-  --help     Show this message and exit.
+  --access_token TEXT  optional access token if already available
+  --id_token TEXT      optional id token if already available
+  --help               Show this message and exit.
 
 Commands:
-  auth     Authenticate via user/password
-  publish  Upload artifacts
+  auth      Authenticate via user/password
+  logout    Log out of current session
+  register  Register artifacts to the mason platform
+  version   Display mason-cli version
 ```
 
 ## Usage
@@ -56,28 +60,58 @@ Password: *********
 User authenticated.
 ```
 
-### mason publish
+### mason register
 
-`mason publish` provides a means to publish artifacts to mason's Registry Service, so that they can be deployed to your devices in the field. Currently the tool supports publishing Android packages (APKs) that have already been configured during the pilot/development phase. The purpose of this command is to publish a newer version of an artifact to replace an existing one of an older version.
+`mason register` provides a means to register artifacts to mason's Registry Service, so that they can be deployed to your devices in the field. Currently the tool supports publishing Android packages (APKs) and bootanimations that have already been configured during the pilot/development phase. The purpose of this command is to publish a newer version of an artifact to replace an existing one of an older version.
 
 ```
-mason publish --help
+mason register --help
 
-Usage: mason publish [OPTIONS] ARTIFACT
+Usage: mason register [OPTIONS] COMMAND [ARGS]...
 
-  Upload artifacts
+  Register artifacts to the mason platform
 
 Options:
-  --name TEXT        optional name for the artifact
   -s, --skip-verify  skip verification of artifact details
   --help             Show this message and exit.
+
+Commands:
+  apk    Register apk artifacts
+  media  Register media artifacts
+```
+
+`mason register apk` for apk publishes
+
+```
+mason register apk --help
+
+Usage: mason register apk [OPTIONS] APK
+
+  Register apk artifacts
+
+Options:
+  --help  Show this message and exit.
+```
+
+`mason register media` for media publishes
+
+```
+Usage: mason register media [OPTIONS] BINARY
+
+  Register media artifacts
+
+Options:
+  -n, --name TEXT
+  -t, --type TEXT
+  -v, --version TEXT
+  --help Show this message and exit.
 ```
 
 ### Notes
 
-A publish operation will cause the artifact to immediately go live -- the next successful check-in from a device against the Mason Services will result in the artifact being retrieved and installed.
+A register operation will cause the artifact to immediately go live -- the next successful check-in from a device against the Mason Services will result in the artifact being retrieved and installed.
 
-The only supported artifact type is Android APKs. When you publish an artifact, you must ensure that:
+When you register an apk artifact, you must ensure that:
 
 * it is signed with the same signing certificate as the original application that was preinstalled on all devices
 
