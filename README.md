@@ -32,7 +32,7 @@ Options:
   --help               Show this message and exit.
 
 Commands:
-  auth      Authenticate via user/password
+  login      Authenticate via user/password
   logout    Log out of current session
   register  Register artifacts to the mason platform
   version   Display mason-cli version
@@ -44,17 +44,17 @@ In order to use Mason CLI, you will need credentials to authenticate against the
 
 Type `mason --help` for details on available commands. The various individual commands are described below.
 
-### mason auth
+### mason login
 
-`mason auth` provides a means to authenticate against Mason Services via username and password. This only needs to be run once; the tool will securely cache the credentials locally to ensure you can re-run the tool without having to reauthenticate each time.
+`mason login` provides a means to authenticate against Mason Services via username and password. This only needs to be run once; the tool will securely cache the credentials locally to ensure you can re-run the tool without having to reauthenticate each time.
 
 ```sh
-mason auth [OPTIONS]
+mason login [OPTIONS]
 ```
 
 Enter your username and password to ensure your credentials are saved for future runs:
 ```
-$ mason auth
+$ mason login
 User: user@example.tld
 Password: *********
 User authenticated.

@@ -79,12 +79,12 @@ def media(config, binary, name, type, version):
     if config.mason.parse_media(name, type, version, binary):
         config.mason.register(binary)
 
-# AUTHENTICATION INTERFACE
+# LOGIN INTERFACE
 @cli.command()
 @click.option('--user', default=None, help='pass in user')
 @click.option('--password', default=None, help='pass in password')
 @pass_config
-def auth(config, user, password):
+def login(config, user, password):
     """Authenticate via user/password"""
     if not user or not password:
         # Prompt for user name
