@@ -6,8 +6,8 @@ import re
 import os
 
 class Apk(Artifact):
-    def __init__(self, apk):
-        self.apkf = APK(apk)
+    def __init__(self, apkf):
+        self.apkf = apkf
         self.name = self.apkf.package
         self.version = self.apkf.get_androidversion_name()
         self.details = self.apkf.cert_text
@@ -18,7 +18,8 @@ class Apk(Artifact):
             print 'No file provided'
             return False
 
-        apkf = Apk(apk)
+        apk_abs = APK(apk)
+        apkf = Apk(apk_abs)
 
         # Bail on non valid apk
         if not apkf.is_valid():

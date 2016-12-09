@@ -5,12 +5,11 @@ import yaml
 
 class OSConfig(Artifact):
 
-    def __init__(self, config_yaml):
-        self.ecosystem = self.__load_ecosystem(config_yaml)
+    def __init__(self, ecosystem):
+        self.ecosystem = ecosystem
         self.os = self.ecosystem['os']
         self.name = self.os['name']
         self.version = self.os['version']
-        self.type = OSConfig
 
     @staticmethod
     def parse(config, config_yaml):
@@ -18,7 +17,8 @@ class OSConfig(Artifact):
             print 'No file provided'
             return None
 
-        os_config = OSConfig(config_yaml)
+        ecosystem = OSConfig.__load_ecosystem(config_yaml)
+        os_config = OSConfig(ecosystem)
 
         # Bail on non valid apk
         if not os_config.is_valid():
@@ -62,7 +62,8 @@ class OSConfig(Artifact):
     def get_details(self):
         return self.ecosystem
 
-    def __load_ecosystem(self, path):
+    @staticmethod
+    def __load_ecosystem(path):
         if not os.path.isfile(path):
             return None
 

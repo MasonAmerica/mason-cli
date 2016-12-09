@@ -2,7 +2,6 @@ import json
 import requests
 import base64
 import os.path
-import sys
 
 from apk import Apk
 from media import Media
@@ -123,14 +122,8 @@ class Mason(object):
 
     def __request_signed_url(self, customer, artifact_data, md5):
         print 'Connecting to server...'
-        base64encodedmd5 = base64.b64encode(md5).decode('utf-8')
-        headers = {'Content-Type': 'application/json',
-                   'Content-MD5': base64encodedmd5,
-                   'Authorization': 'Bearer ' + self.id_token}
-        url = self.store.registry_signer_url() \
-              + '/{0}/{1}/{2}'.format(customer, artifact_data.get_name(), artifact_data.get_version()) \
-              + '?type=' + artifact_data.get_type()
-
+        headers = self.__get_signed_url_request_headers(md5)
+        url = self.__get_signed_url_request_endpoint(customer, artifact_data)
         r = requests.get(url, headers=headers)
         if r.status_code == 200:
             data = json.loads(r.text)
@@ -139,11 +132,20 @@ class Mason(object):
             print 'Unable to get signed url ', r.status_code
             return None
 
+    def __get_signed_url_request_headers(self, md5):
+        base64encodedmd5 = base64.b64encode(md5).decode('utf-8')
+        return {'Content-Type': 'application/json',
+                'Content-MD5': base64encodedmd5,
+                'Authorization': 'Bearer ' + self.id_token}
+
+    def __get_signed_url_request_endpoint(self, customer, artifact_data):
+        return self.store.registry_signer_url() \
+              + '/{0}/{1}/{2}'.format(customer, artifact_data.get_name(), artifact_data.get_version()) \
+              + '?type=' + artifact_data.get_type()
+
     def __upload_to_signed_url(self, url, artifact, artifact_data, md5):
         print 'Uploading artifact...'
-        base64encodedmd5 = base64.b64encode(md5).decode('utf-8')
-        headers = {'Content-Type': artifact_data.get_content_type(),
-                       'Content-MD5': base64encodedmd5}
+        headers = self.__get_signed_url_post_headers(artifact_data, md5)
         file = open(artifact, 'rb')
         iterable = upload_in_chunks(file.name, chunksize=10)
 
@@ -156,18 +158,16 @@ class Mason(object):
             print r.text
             return False
 
+    def __get_signed_url_post_headers(self, artifact_data, md5):
+        base64encodedmd5 = base64.b64encode(md5).decode('utf-8')
+        return {'Content-Type': artifact_data.get_content_type(),
+                'Content-MD5': base64encodedmd5}
+
     def __register_to_mason(self, customer, download_url, sha1, artifact_data):
         print 'Registering to mason services...'
         headers = {'Content-Type': 'application/json',
                    'Authorization': 'Bearer ' + self.id_token}
-        payload = {'name': artifact_data.get_name(),
-                   'version': artifact_data.get_version(),
-                   'customer': customer,
-                   'url': download_url,
-                   'type': artifact_data.get_type(),
-                   'checksum': {
-                       'sha1': sha1
-                   }}
+        payload = self.__get_registry_payload(customer, download_url, sha1, artifact_data)
 
         if artifact_data.get_registry_meta_data():
             payload.update(artifact_data.get_registry_meta_data())
@@ -181,9 +181,28 @@ class Mason(object):
             print 'Unable to register artifact. ', r.status_code
             return False
 
+    def __get_registry_payload(self, customer, download_url, sha1, artifact_data):
+        return {'name': artifact_data.get_name(),
+                   'version': artifact_data.get_version(),
+                   'customer': customer,
+                   'url': download_url,
+                   'type': artifact_data.get_type(),
+                   'checksum': {
+                       'sha1': sha1
+                   }}
+
     # public auth method, returns true if authed, false otherwise
     def authenticate(self, user, password):
-        payload = {'client_id': self.store.client_id(),
+        payload = self.__get_auth_payload(user, password)
+        r = requests.post(self.store.auth_url(), json=payload)
+        if r.status_code == 200:
+            data = json.loads(r.text)
+            return self.persist.write_tokens(data)
+        else:
+            return False
+
+    def __get_auth_payload(self, user, password):
+        return {'client_id': self.store.client_id(),
                    'username': user,
                    'password': password,
                    'id_token': self.id_token,
@@ -191,14 +210,6 @@ class Mason(object):
                    'grant_type': 'password',
                    'scope': 'openid',
                    'device': ''}
-
-        r = requests.post(self.store.auth_url(), json=payload)
-
-        if r.status_code == 200:
-            data = json.loads(r.text)
-            return self.persist.write_tokens(data)
-        else:
-            return False
 
     # public logout method, returns true if successfully logged out
     def logout(self):
