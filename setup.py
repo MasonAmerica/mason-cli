@@ -14,7 +14,7 @@ setup(
     install_requires=[
         'click',
         'requests',
-        'progressbar',
+        'tqdm',
         'pyyaml'
     ],
     entry_points='''

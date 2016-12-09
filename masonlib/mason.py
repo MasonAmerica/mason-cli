@@ -10,7 +10,7 @@ from os_config import OSConfig
 from persist import Persist
 from utils import Utils
 from store import Store
-from progressbar import ProgressBar
+from tqdm import tqdm
 
 class Mason(object):
     def __init__(self, config):
@@ -57,9 +57,12 @@ class Mason(object):
             response = raw_input('Continue register? (y)')
             if not response or response == 'y':
                 if not self.__register_artifact(binary):
-                    exit('Unable to register media')
+                    exit('Unable to register artifact')
             else:
                 exit('Artifact register aborted')
+        else:
+            if not self.__register_artifact(binary):
+                exit('Unable to register artifact')
 
     def __register_artifact(self, binary):
         self.id_token = self.persist.retrieve_id_token()
@@ -206,20 +209,16 @@ class upload_in_chunks(object):
         self.filename = filename
         self.chunksize = chunksize
         self.totalsize = os.path.getsize(filename)
-        self.readsofar = 0
-        self.pbar = ProgressBar(maxval=self.totalsize)
+        self.pbar = tqdm(total=self.totalsize, ncols=100, unit='kb', dynamic_ncols=True, unit_scale='kb')
 
     def __iter__(self):
-        self.pbar.start()
         with open(self.filename, 'rb') as file:
             while True:
                 data = file.read(self.chunksize)
                 if not data:
-                    sys.stderr.write("\n")
-                    self.pbar.finish()
+                    self.pbar.close()
                     break
-                self.readsofar += len(data)
-                self.pbar.update(self.readsofar)
+                self.pbar.update(len(data))
                 yield data
 
     def __len__(self):

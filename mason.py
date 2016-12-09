@@ -16,7 +16,7 @@ pass_config = click.make_pass_decorator(Config, ensure=True)
 
 # MAIN CLI INTERFACE
 @click.group()
-@click.option('--verbose', is_flag=True)
+@click.option('--verbose', '-v', help='show verbose artifact and command details', is_flag=True)
 @click.option('--access_token', help='optional access token if already available')
 @click.option('--id_token', help='optional id token if already available')
 @pass_config
@@ -61,9 +61,9 @@ def config(config, yaml):
 # MEDIA INTERFACE
 @register.command()
 @click.argument('binary')
-@click.option('--name', '-n', default=None)
-@click.option('--type', '-t', default=None)
-@click.option('--version', '-v', default=None)
+@click.option('--name', '-n', help='the name for the media artifact', default=None)
+@click.option('--type', '-t', help='the type of media artifact', default=None)
+@click.option('--version', '-v', help='the version for the media artifact', default=None)
 @pass_config
 def media(config, binary, name, type, version):
     """Register media artifacts"""

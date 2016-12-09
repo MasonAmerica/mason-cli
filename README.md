@@ -16,7 +16,7 @@ pip install git+ssh://git@github.com/MasonAmerica/mason-cli.git
 
 > NOTE: On Linux, you may need to run the above command as the root user by prefixing with `sudo`.
 
-To verify installaton, you can type `mason` to see the following output:
+To verify installation, you can type `mason` to see the following output:
 
 ```
 Usage: mason [OPTIONS] COMMAND [ARGS]...
@@ -76,8 +76,9 @@ Options:
   --help             Show this message and exit.
 
 Commands:
-  apk    Register apk artifacts
-  media  Register media artifacts
+  apk     Register apk artifacts
+  config  Register config artifacts
+  media   Register media artifacts
 ```
 
 `mason register apk` for apk publishes
@@ -105,6 +106,17 @@ Options:
   -t, --type TEXT
   -v, --version TEXT
   --help Show this message and exit.
+```
+
+`mason register config` for config publishes
+
+```
+Usage: mason register config [OPTIONS] YAML
+
+  Register config artifacts
+
+Options:
+  --help  Show this message and exit.
 ```
 
 ### Notes
