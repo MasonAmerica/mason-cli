@@ -137,7 +137,8 @@ class Mason(object):
             data = json.loads(r.text)
             return data
         else:
-            print 'Unable to get user info ', r.status_code
+            print 'Unable to get user info: ' + str(r.status_code)
+            self.__handle_status(r.status_code)
             return None
 
     def __request_signed_url(self, customer, artifact_data, md5):
@@ -149,7 +150,8 @@ class Mason(object):
             data = json.loads(r.text)
             return data
         else:
-            print 'Unable to get signed url ', r.status_code
+            print 'Unable to get signed url: ' + str(r.status_code)
+            self.__handle_status(r.status_code)
             return None
 
     def __get_signed_url_request_headers(self, md5):
@@ -174,8 +176,8 @@ class Mason(object):
             print 'File upload complete.'
             return True
         else:
-            print 'Unable to upload to signed url: ', r.status_code
-            print r.text
+            print 'Unable to upload to signed url: ' + str(r.status_code)
+            self.__handle_status(r.status_code)
             return False
 
     def __get_signed_url_post_headers(self, artifact_data, md5):
@@ -198,7 +200,8 @@ class Mason(object):
             print 'Artifact registered.'
             return True
         else:
-            print 'Unable to register artifact. ', r.status_code
+            print 'Unable to register artifact: ' + str(r.status_code)
+            self.__handle_status(r.status_code)
             return False
 
     def __get_registry_payload(self, customer, download_url, sha1, artifact_data):
@@ -210,6 +213,12 @@ class Mason(object):
                    'checksum': {
                        'sha1': sha1
                    }}
+
+    def __handle_status(self, status_code):
+        if status_code == 401:
+            print 'User token is expired or user is unauthorized'
+        elif status_code == 403:
+            print 'Access to domain is forbidden. Please contact support.'
 
     # public auth method, returns true if authed, false otherwise
     def authenticate(self, user, password):
