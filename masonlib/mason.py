@@ -12,6 +12,10 @@ from store import Store
 from tqdm import tqdm
 
 class Mason(object):
+    """ The main Mason interface. Provides methods that allow you to parse, register, build, and deploy artifacts.
+
+        :param config: A global config object detailing verbosity and extra functions."""
+
     def __init__(self, config):
         self.config = config
         self.id_token = None
@@ -20,8 +24,11 @@ class Mason(object):
         self.persist = Persist('.masonrc')
         self.store = Store(os.path.join(os.path.expanduser('~'), '.mason.yml'))
 
-    # public apk parse method, returns true if supported artifact, false otherwise
     def parse_apk(self, apk):
+        """ Public apk parse method, returns true if supported artifact, false otherwise
+
+            :param apk: specify the path of the apk file
+            :rtype: boolean"""
         apk = Apk.parse(self.config, apk)
 
         if not apk:
@@ -30,8 +37,14 @@ class Mason(object):
         self.artifact = apk
         return True
 
-    # public media parse method, returns true if supported artifact, false otherwise
     def parse_media(self, name, type, version, binary):
+        """ Public media parse method, returns true if supported artifact, false otherwise
+
+            :param name: specify the name of the media artifact
+            :param type: specify the type of the media artifact
+            :param version: specify the unique version of the media artifact
+            :param binary: specify the path of the media binary file
+            :rtype: boolean"""
         media = Media.parse(self.config, name, type, version, binary)
 
         if not media:
@@ -40,8 +53,11 @@ class Mason(object):
         self.artifact = media
         return True
 
-    # public os parse method, returns true if supported artifact, false otherwise
     def parse_os_config(self, config_yaml):
+        """ Public os parse method, returns true if supported artifact, false otherwise
+
+            :param config_yaml: specify the path of the os configuration yaml file
+            :rtype: boolean"""
         os_config = OSConfig.parse(self.config, config_yaml)
 
         if not os_config:
@@ -52,6 +68,10 @@ class Mason(object):
 
     # public register method
     def register(self, binary):
+        """ Register a given binary. Need to call one of the parse commands prior to invoking register to validate
+            a given artifact and decorate it with the necessary metadata for service upload.
+
+            :param binary: specify the path of the artifact file"""
         if not self.config.skip_verify:
             response = raw_input('Continue register? (y)')
             if not response or response == 'y':
@@ -193,6 +213,11 @@ class Mason(object):
 
     # public auth method, returns true if authed, false otherwise
     def authenticate(self, user, password):
+        """ Public authentication method, returns true if authed, false otherwise
+
+            :param user: specify a user as string
+            :param password: specify a password as string
+            :rtype: boolean"""
         payload = self.__get_auth_payload(user, password)
         r = requests.post(self.store.auth_url(), json=payload)
         if r.status_code == 200:
@@ -213,6 +238,8 @@ class Mason(object):
 
     # public logout method, returns true if successfully logged out
     def logout(self):
+        """ Public logout method, returns true if successfully logged out
+            :rtype: boolean"""
         return self.persist.delete_tokens()
 
 class upload_in_chunks(object):
