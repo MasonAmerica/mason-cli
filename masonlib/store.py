@@ -3,10 +3,13 @@ import os
 
 class Store(object):
 
-
     def __init__(self, file_path):
         self.file = file_path
         self.data = self.__load_stored_data()
+        if not self.__validate_data():
+            print 'Resetting credential store...'
+            os.remove(file_path)
+            self.data = self.__load_stored_data()
 
     def __load_stored_data(self):
         if not os.path.isfile(self.file):
@@ -21,6 +24,12 @@ class Store(object):
                     print(exc)
         return config
 
+    def __validate_data(self):
+        return 'client_id' in self.data and \
+               'auth_url' in self.data and \
+               'user_info_url' in self.data and \
+               'registry_artifact_url' in self.data and \
+               'registry_signed_url' in self.data
 
     def _default_config(self):
         return {

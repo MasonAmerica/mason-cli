@@ -220,7 +220,6 @@ class Mason(object):
         elif status_code == 403:
             print 'Access to domain is forbidden. Please contact support.'
 
-    # public auth method, returns true if authed, false otherwise
     def authenticate(self, user, password):
         """ Public authentication method, returns true if authed, false otherwise
 
