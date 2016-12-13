@@ -29,12 +29,7 @@ class ConfigTest(unittest.TestCase):
         assert(self.test_config.get_version() == self.test_config.ecosystem['os']['version'])
 
     def test_config_meta_data(self):
-        meta_data = {
-            'config': {
-                'project': self.test_config.name,
-            },
-        }
-        assert(self.test_config.get_registry_meta_data() == meta_data)
+        assert(self.test_config.get_registry_meta_data() is None)
 
     def __create_test_config(self):
         test_config = Common.create_config_file()

@@ -57,12 +57,7 @@ class OSConfig(Artifact):
         return self.version
 
     def get_registry_meta_data(self):
-        meta_data = {
-            'config': {
-                'project': self.name,
-            },
-        }
-        return meta_data
+        return None
 
     def get_details(self):
         return self.ecosystem
