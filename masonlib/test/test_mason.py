@@ -115,6 +115,17 @@ class MasonTest(unittest.TestCase):
 
         assert(expected_updated_payload == expected_payload)
 
+    def test__build_project(self):
+        test_customer = 'mason-test'
+        test_project = 'TestProjectName'
+        test_version = '1.3.2.5.2.13.6'
+
+        expected_payload = {'customer': test_customer,
+                'project': test_project,
+                'version': test_version}
+
+        assert(expected_payload == self.mason._Mason__get_build_payload(test_customer, test_project, test_version))
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -66,7 +66,6 @@ class Mason(object):
         self.artifact = os_config
         return True
 
-    # public register method
     def register(self, binary):
         """ Register a given binary. Need to call one of the parse commands prior to invoking register to validate
             a given artifact and decorate it with the necessary metadata for service upload.
@@ -88,6 +87,7 @@ class Mason(object):
         self.access_token = self.persist.retrieve_access_token()
 
         if not self.id_token or not self.access_token:
+            print 'Please run \'mason login\' first'
             return False
 
         sha1 = Utils.hash_file(binary, 'sha1', True)
@@ -158,7 +158,7 @@ class Mason(object):
         base64encodedmd5 = base64.b64encode(md5).decode('utf-8')
         return {'Content-Type': 'application/json',
                 'Content-MD5': base64encodedmd5,
-                'Authorization': 'Bearer ' + self.id_token}
+                'Authorization': 'Bearer ' + str(self.id_token)}
 
     def __get_signed_url_request_endpoint(self, customer, artifact_data):
         return self.store.registry_signer_url() \
@@ -188,7 +188,7 @@ class Mason(object):
     def __register_to_mason(self, customer, download_url, sha1, artifact_data):
         print 'Registering to mason services...'
         headers = {'Content-Type': 'application/json',
-                   'Authorization': 'Bearer ' + self.id_token}
+                   'Authorization': 'Bearer ' + str(self.id_token)}
         payload = self.__get_registry_payload(customer, download_url, sha1, artifact_data)
 
         if artifact_data.get_registry_meta_data():
@@ -220,6 +220,53 @@ class Mason(object):
         elif status_code == 403:
             print 'Access to domain is forbidden. Please contact support.'
 
+    def build(self, project, version):
+        """ Public bulid method, returns true if build started, false otherwise
+
+            :param project: specify the name of the project to start a build for
+            :param version: specify the version of the project for which to start a build for
+            :rtype: boolean"""
+        return self.__build_project(project, version)
+
+    def __build_project(self, project, version):
+        self.id_token = self.persist.retrieve_id_token()
+        self.access_token = self.persist.retrieve_access_token()
+
+        if not self.id_token or not self.access_token:
+            print 'Please run \'mason login\' first'
+            return False
+
+        headers = {'Content-Type': 'application/json',
+                   'Authorization': 'Bearer ' + str(self.id_token)}
+
+        # Get the user info
+        user_info_data = self.__request_user_info()
+
+        if not user_info_data:
+            return False
+
+        # Extract the customer info
+        customer = user_info_data['user_metadata']['clients'][0]
+
+        payload = self.__get_build_payload(customer, project, version)
+        builder_url = self.store.builder_url() + '/{0}/'.format(customer) + 'jobs'
+        print 'Starting build...'
+        r = requests.post(builder_url, headers=headers, json=payload)
+        if r.status_code == 200:
+            data = json.loads(r.text)
+            job_id = data['jobId']
+            print 'Started build: ' + job_id
+            return True
+        else:
+            print 'Unable to enqueue build: ' + str(r.status_code)
+            self.__handle_status(r.status_code)
+            return False
+
+    def __get_build_payload(self, customer, project, version):
+        return {'customer': customer,
+                'project': project,
+                'version': str(version)}
+
     def authenticate(self, user, password):
         """ Public authentication method, returns true if authed, false otherwise
 
@@ -238,13 +285,12 @@ class Mason(object):
         return {'client_id': self.store.client_id(),
                    'username': user,
                    'password': password,
-                   'id_token': self.id_token,
+                   'id_token': str(self.id_token),
                    'connection': 'Username-Password-Authentication',
                    'grant_type': 'password',
                    'scope': 'openid',
                    'device': ''}
 
-    # public logout method, returns true if successfully logged out
     def logout(self):
         """ Public logout method, returns true if successfully logged out
             :rtype: boolean"""

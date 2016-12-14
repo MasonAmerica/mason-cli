@@ -21,7 +21,7 @@ pass_config = click.make_pass_decorator(Config, ensure=True)
 @click.option('--id_token', help='optional id token if already available')
 @pass_config
 def cli(config, verbose, id_token, access_token):
-    """mason-cli provides command line interfaces that allow you to publish, query, and deploy
+    """mason-cli provides command line interfaces that allow you to register, query, build, and deploy
 your configurations and packages to your devices in the field."""
     config.verbose = verbose
     config.mason = Mason(config)
@@ -78,6 +78,18 @@ def media(config, binary, name, type, version):
         click.echo('Registering ' + binary + '...')
     if config.mason.parse_media(name, type, version, binary):
         config.mason.register(binary)
+
+# BUILD INTERFACE
+@cli.command()
+@click.argument('project')
+@click.argument('version')
+@pass_config
+def build(config, project, version):
+    """Build a registered project"""
+    if config.verbose:
+        click.echo('Starting build for ' + project + ':' + version)
+    if not config.mason.build(project, version):
+        exit('Unable to start build')
 
 # LOGIN INTERFACE
 @cli.command()

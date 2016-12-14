@@ -11,6 +11,7 @@ class StoreTest(unittest.TestCase):
     USER_INFO_URL = 'http://user.info.server.in.the.sky'
     REGISTRY_SIGNED_URL = 'http://registry.signed.url.in.the.sky'
     REGISTRY_ARTIFACT_URL = 'http://artifact.signed.url.in.the.sky'
+    BUILDER_URL = 'https://builder.url.in.the.sky'
 
     def setUp(self):
         self.store = Store('masonlib/.test_mason.yml')
@@ -25,7 +26,8 @@ class StoreTest(unittest.TestCase):
                      'auth_url': self.AUTH_URL,
                      'user_info_url': self.USER_INFO_URL,
                      'registry_signed_url': self.REGISTRY_SIGNED_URL,
-                     'registry_artifact_url': self.REGISTRY_ARTIFACT_URL}
+                     'registry_artifact_url': self.REGISTRY_ARTIFACT_URL,
+                     'builder_url': self.BUILDER_URL}
 
         with open(self.store.file, 'w') as outfile:
             yaml.dump(test_data, outfile)
@@ -44,3 +46,6 @@ class StoreTest(unittest.TestCase):
 
     def test_registry_artifact_url(self):
         assert(self.REGISTRY_ARTIFACT_URL == self.store.registry_artifact_url())
+
+    def test_builder_url(self):
+        assert(self.BUILDER_URL == self.store.builder_url())

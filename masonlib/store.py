@@ -2,6 +2,12 @@ import yaml
 import os
 
 class Store(object):
+    CLIENT_ID = 'client_id'
+    AUTH_URL = 'auth_url'
+    USER_INFO_URL = 'user_info_url'
+    REGISTRY_SIGNED_URL = 'registry_signed_url'
+    REGISTRY_ARTIFACT_URL = 'registry_artifact_url'
+    BUILDER_URL = 'builder_url'
 
     def __init__(self, file_path):
         self.file = file_path
@@ -25,19 +31,21 @@ class Store(object):
         return config
 
     def __validate_data(self):
-        return 'client_id' in self.data and \
-               'auth_url' in self.data and \
-               'user_info_url' in self.data and \
-               'registry_artifact_url' in self.data and \
-               'registry_signed_url' in self.data
+        return self.CLIENT_ID in self.data and \
+               self.AUTH_URL in self.data and \
+               self.USER_INFO_URL in self.data and \
+               self.REGISTRY_SIGNED_URL in self.data and \
+               self.REGISTRY_ARTIFACT_URL in self.data and \
+               self.BUILDER_URL in self.data
 
     def _default_config(self):
         return {
-            'client_id': 'QLWpUwYOOcLlAJsmyQhQMXyeWn6RZpoc',
-            'auth_url': 'https://bymason.auth0.com/oauth/ro',
-            'user_info_url': 'https://bymason.auth0.com/userinfo',
-            'registry_artifact_url': 'https://platform.bymason.com/api/registry/artifacts',
-            'registry_signed_url': 'https://platform.bymason.com/api/registry/signedurl',
+            self.CLIENT_ID: 'QLWpUwYOOcLlAJsmyQhQMXyeWn6RZpoc',
+            self.AUTH_URL: 'https://bymason.auth0.com/oauth/ro',
+            self.USER_INFO_URL: 'https://bymason.auth0.com/userinfo',
+            self.REGISTRY_ARTIFACT_URL: 'https://platform.bymason.com/api/registry/artifacts',
+            self.REGISTRY_SIGNED_URL: 'https://platform.bymason.com/api/registry/signedurl',
+            self.BUILDER_URL: 'https://6homlwnywe.execute-api.us-west-2.amazonaws.com/staging/api/builder'
         }
 
     def __get(self, key):
@@ -50,16 +58,19 @@ class Store(object):
         self.data = self.__load_stored_data()
 
     def client_id(self):
-        return self.__get('client_id')
+        return self.__get(self.CLIENT_ID)
 
     def auth_url(self):
-        return self.__get('auth_url')
+        return self.__get(self.AUTH_URL)
 
     def user_info_url(self):
-        return self.__get('user_info_url')
+        return self.__get(self.USER_INFO_URL)
 
     def registry_signer_url(self):
-        return self.__get('registry_signed_url')
+        return self.__get(self.REGISTRY_SIGNED_URL)
 
     def registry_artifact_url(self):
-        return self.__get('registry_artifact_url')
+        return self.__get(self.REGISTRY_ARTIFACT_URL)
+
+    def builder_url(self):
+        return self.__get(self.BUILDER_URL)

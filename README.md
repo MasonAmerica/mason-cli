@@ -21,18 +21,19 @@ To verify installation, you can type `mason` to see the following output:
 ```
 Usage: mason [OPTIONS] COMMAND [ARGS]...
 
-  mason-cli provides command line interfaces that allow you to publish,
-  query, and deploy your configurations and packages to your devices in the
-  field.
+  mason-cli provides command line interfaces that allow you to register,
+  query, build, and deploy your configurations and packages to your devices
+  in the field.
 
 Options:
-  --verbose
+  -v, --verbose        show verbose artifact and command details
   --access_token TEXT  optional access token if already available
   --id_token TEXT      optional id token if already available
   --help               Show this message and exit.
 
 Commands:
-  login      Authenticate via user/password
+  build     Build a registered project
+  login     Authenticate via user/password
   logout    Log out of current session
   register  Register artifacts to the mason platform
   version   Display mason-cli version
@@ -114,6 +115,16 @@ Options:
 Usage: mason register config [OPTIONS] YAML
 
   Register config artifacts
+
+Options:
+  --help  Show this message and exit.
+```
+
+`mason build` for triggering builds of config-defined projects
+```
+Usage: mason build [OPTIONS] PROJECT VERSION
+
+  Build a registered project
 
 Options:
   --help  Show this message and exit.
