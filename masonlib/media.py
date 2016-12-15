@@ -6,9 +6,9 @@ import zipfile
 class Media(Artifact):
 
     def __init__(self, name, type, version, binary):
-        self.name = name
+        self.name = str(name)
         self.type = type
-        self.version = version
+        self.version = str(version)
         self.binary = binary
         self.details = None
 
