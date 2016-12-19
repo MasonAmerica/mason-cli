@@ -23,10 +23,10 @@ class ConfigTest(unittest.TestCase):
         assert(self.test_config.get_sub_type() is None)
 
     def test_config_name(self):
-        assert(self.test_config.get_name() == self.test_config.ecosystem['os']['name'])
+        assert(self.test_config.get_name() == str(self.test_config.ecosystem['os']['name']))
 
     def test_config_version(self):
-        assert(self.test_config.get_version() == self.test_config.ecosystem['os']['version'])
+        assert(self.test_config.get_version() == str(self.test_config.ecosystem['os']['version']))
 
     def test_config_meta_data(self):
         assert(self.test_config.get_registry_meta_data() is None)
