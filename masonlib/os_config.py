@@ -7,9 +7,10 @@ class OSConfig(Artifact):
 
     def __init__(self, ecosystem):
         self.ecosystem = ecosystem
-        self.os = self.ecosystem['os']
-        self.name = str(self.os['name'])
-        self.version = str(self.os['version'])
+        if ecosystem:
+            self.os = self.ecosystem['os']
+            self.name = str(self.os['name'])
+            self.version = str(self.os['version'])
 
     @staticmethod
     def parse(config, config_yaml):
