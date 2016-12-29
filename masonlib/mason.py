@@ -253,9 +253,12 @@ class Mason(object):
         print 'Starting build...'
         r = requests.post(builder_url, headers=headers, json=payload)
         if r.status_code == 200:
-            data = json.loads(r.text)
-            job_id = data['jobId']
-            print 'Started build: ' + job_id
+            if r.text:
+                data = json.loads(r.text)
+                if data['jobId']:
+                    job_id = data['jobId']
+                    print 'Started build: ' + job_id
+            print 'Started build!'
             return True
         else:
             print 'Unable to enqueue build: ' + str(r.status_code)
