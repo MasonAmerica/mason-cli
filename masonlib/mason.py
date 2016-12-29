@@ -260,6 +260,8 @@ class Mason(object):
         else:
             print 'Unable to enqueue build: ' + str(r.status_code)
             self.__handle_status(r.status_code)
+            if self.config.verbose:
+                print r.text
             return False
 
     def __get_build_payload(self, customer, project, version):
