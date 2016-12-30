@@ -254,10 +254,8 @@ class Mason(object):
         r = requests.post(builder_url, headers=headers, json=payload)
         if r.status_code == 200:
             if r.text:
-                data = json.loads(r.text)
-                if data['jobId']:
-                    job_id = data['jobId']
-                    print 'Started build: ' + job_id
+                if self.config.verbose:
+                    print r.text
             print 'Started build!'
             return True
         else:
