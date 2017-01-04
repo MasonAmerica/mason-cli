@@ -1,20 +1,19 @@
-import json
-import requests
 import base64
+import json
 import os.path
+import requests
 
-from apk import Apk
-from media import Media
-from os_config import OSConfig
-from persist import Persist
-from utils import Utils
-from store import Store
 from tqdm import tqdm
 
-class Mason(object):
-    """ The main Mason interface. Provides methods that allow you to parse, register, build, and deploy artifacts.
+from masonlib.imason import IMason
+from masonlib.internal.apk import Apk
+from masonlib.internal.media import Media
+from masonlib.internal.os_config import OSConfig
+from masonlib.internal.persist import Persist
+from masonlib.internal.store import Store
+from masonlib.internal.utils import Utils
 
-        :param config: A global config object detailing verbosity and extra functions."""
+class Mason(IMason):
 
     def __init__(self, config):
         self.config = config
@@ -24,11 +23,13 @@ class Mason(object):
         self.persist = Persist('.masonrc')
         self.store = Store(os.path.join(os.path.expanduser('~'), '.mason.yml'))
 
-    def parse_apk(self, apk):
-        """ Public apk parse method, returns true if supported artifact, false otherwise
+    def set_access_token(self, access_token):
+        self.access_token = access_token
 
-            :param apk: specify the path of the apk file
-            :rtype: boolean"""
+    def set_id_token(self, id_token):
+        self.id_token = id_token
+
+    def parse_apk(self, apk):
         apk = Apk.parse(self.config, apk)
 
         if not apk:
@@ -38,13 +39,6 @@ class Mason(object):
         return True
 
     def parse_media(self, name, type, version, binary):
-        """ Public media parse method, returns true if supported artifact, false otherwise
-
-            :param name: specify the name of the media artifact
-            :param type: specify the type of the media artifact
-            :param version: specify the unique version of the media artifact
-            :param binary: specify the path of the media binary file
-            :rtype: boolean"""
         media = Media.parse(self.config, name, type, version, binary)
 
         if not media:
@@ -54,10 +48,6 @@ class Mason(object):
         return True
 
     def parse_os_config(self, config_yaml):
-        """ Public os parse method, returns true if supported artifact, false otherwise
-
-            :param config_yaml: specify the path of the os configuration yaml file
-            :rtype: boolean"""
         os_config = OSConfig.parse(self.config, config_yaml)
 
         if not os_config:
@@ -67,10 +57,6 @@ class Mason(object):
         return True
 
     def register(self, binary):
-        """ Register a given binary. Need to call one of the parse commands prior to invoking register to validate
-            a given artifact and decorate it with the necessary metadata for service upload.
-
-            :param binary: specify the path of the artifact file"""
         if not self.config.skip_verify:
             response = raw_input('Continue register? (y)')
             if not response or response == 'y':
@@ -221,11 +207,6 @@ class Mason(object):
             print 'Access to domain is forbidden. Please contact support.'
 
     def build(self, project, version):
-        """ Public bulid method, returns true if build started, false otherwise
-
-            :param project: specify the name of the project to start a build for
-            :param version: specify the version of the project for which to start a build for
-            :rtype: boolean"""
         return self.__build_project(project, version)
 
     def __build_project(self, project, version):
@@ -271,11 +252,6 @@ class Mason(object):
                 'version': str(version)}
 
     def authenticate(self, user, password):
-        """ Public authentication method, returns true if authed, false otherwise
-
-            :param user: specify a user as string
-            :param password: specify a password as string
-            :rtype: boolean"""
         payload = self.__get_auth_payload(user, password)
         r = requests.post(self.store.auth_url(), json=payload)
         if r.status_code == 200:
@@ -295,8 +271,6 @@ class Mason(object):
                    'device': ''}
 
     def logout(self):
-        """ Public logout method, returns true if successfully logged out
-            :rtype: boolean"""
         return self.persist.delete_tokens()
 
 class upload_in_chunks(object):

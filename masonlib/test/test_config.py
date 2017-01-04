@@ -1,9 +1,8 @@
 # COPYRIGHT MASONAMERICA
 import unittest
 
+from masonlib.internal.os_config import OSConfig
 from test_common import Common
-
-from masonlib.os_config import OSConfig
 
 class ConfigTest(unittest.TestCase):
 

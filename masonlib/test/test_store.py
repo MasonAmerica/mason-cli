@@ -1,9 +1,11 @@
 # COPYRIGHT MASONAMERICA
-import unittest
-import yaml
 import os
+import unittest
 
-from masonlib.store import Store
+import yaml
+
+from masonlib.internal.store import Store
+
 
 class StoreTest(unittest.TestCase):
     CLIENT_ID = 'APODf8uaspoerpsd8fuyadoreafds89u7fDDS8f'

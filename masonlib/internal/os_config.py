@@ -1,9 +1,10 @@
-from artifacts import Artifact
-
 import os
+
 import yaml
 
-class OSConfig(Artifact):
+from masonlib.internal.artifacts import IArtifact
+
+class OSConfig(IArtifact):
 
     def __init__(self, ecosystem):
         self.ecosystem = ecosystem

@@ -1,9 +1,9 @@
-from artifacts import Artifact
-
 import os
 import zipfile
 
-class Media(Artifact):
+from masonlib.internal.artifacts import IArtifact
+
+class Media(IArtifact):
 
     def __init__(self, name, type, version, binary):
         self.name = str(name)

@@ -2,8 +2,9 @@
 import unittest
 
 from mason import Config
-from masonlib.mason import Mason
-from masonlib.apk import Apk
+from masonlib.imason import IMason
+from masonlib.internal.apk import Apk
+from masonlib.platform import Platform
 from test_common import Common
 
 class MasonTest(unittest.TestCase):
@@ -11,15 +12,16 @@ class MasonTest(unittest.TestCase):
     def setUp(self):
         config = Config()
         config.verbose = False
-        self.mason = Mason(config)
+        platform = Platform(config)
+        self.mason = platform.get(IMason)
 
     def test_authenticate(self):
         test_user = 'foo'
         test_password = 'bar'
 
         store = Common.create_mock_store()
-        self.mason.id_token = '09ads09a8dsfa0re'
-        self.mason.access_token = 'oads098fa9830924qdf09asfd'
+        self.mason.set_id_token('09ads09a8dsfa0re')
+        self.mason.set_access_token('oads098fa9830924qdf09asfd')
         self.mason.store = store
 
         expected_payload = {'client_id': store.client_id(),
@@ -41,8 +43,8 @@ class MasonTest(unittest.TestCase):
         test_customer = 'mason'
         test_apk = Apk(apkf)
 
-        self.mason.id_token = '09ads09a8dsfa0re'
-        self.mason.access_token = 'oads098fa9830924qdf09asfd'
+        self.mason.set_id_token('09ads09a8dsfa0re')
+        self.mason.set_access_token('oads098fa9830924qdf09asfd')
         self.mason.store = store
 
         expected_headers = {'Content-Type': 'application/json', 'Authorization': 'Bearer 09ads09a8dsfa0re',
@@ -64,8 +66,8 @@ class MasonTest(unittest.TestCase):
         test_md5 = 'l32k43h2lh532k32jkfods9ads348aisdfiuaoer034f7s9347u123'
         test_apk = Apk(apkf)
 
-        self.mason.id_token = '09ads09a8dsfa0re'
-        self.mason.access_token = 'oads098fa9830924qdf09asfd'
+        self.mason.set_id_token('09ads09a8dsfa0re')
+        self.mason.set_access_token('oads098fa9830924qdf09asfd')
         self.mason.store = store
 
         expected_headers = {'Content-Type': test_apk.get_content_type(),
@@ -82,8 +84,8 @@ class MasonTest(unittest.TestCase):
         test_customer = 'mason'
         test_apk = Apk(apkf)
 
-        self.mason.id_token = '09ads09a8dsfa0re'
-        self.mason.access_token = 'oads098fa9830924qdf09asfd'
+        self.mason.set_id_token('09ads09a8dsfa0re')
+        self.mason.set_access_token('oads098fa9830924qdf09asfd')
         self.mason.store = store
 
         expected_payload = {'name': test_apk.get_name(),

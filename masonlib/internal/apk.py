@@ -1,11 +1,10 @@
-from artifacts import Artifact
-
-from lib.apk_parse.apk import APK
-
-import re
 import os
+import re
 
-class Apk(Artifact):
+from masonlib.external.apk_parse.apk import APK
+from masonlib.internal.artifacts import IArtifact
+
+class Apk(IArtifact):
     def __init__(self, apkf):
         self.apkf = apkf
         self.name = self.apkf.package

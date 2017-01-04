@@ -1,8 +1,9 @@
 # COPYRIGHT MASONAMERICA
-import unittest
 import os
+import unittest
 
-from masonlib.persist import Persist
+from masonlib.internal.persist import Persist
+
 
 class PersistTest(unittest.TestCase):
     ID_TOKEN = 'akdfPODIFsplerHSPODif123'

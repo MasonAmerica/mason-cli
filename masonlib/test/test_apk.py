@@ -1,9 +1,8 @@
 # COPYRIGHT MASONAMERICA
 import unittest
 
+from masonlib.internal.apk import Apk
 from test_common import Common
-
-from masonlib.apk import Apk
 
 class ApkTest(unittest.TestCase):
 

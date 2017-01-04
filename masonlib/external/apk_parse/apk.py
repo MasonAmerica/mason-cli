@@ -16,20 +16,19 @@
 # limitations under the License.
 
 
-import os
-import bytecode
-import androconf
-from dvm_permissions import DVM_PERMISSIONS
-from util import read, get_md5
-from subprocess import Popen, PIPE
-
 import StringIO
+import os
+import re
 from struct import pack, unpack
+from subprocess import Popen, PIPE
+from xml.dom import minidom
 from xml.sax.saxutils import escape
 from zlib import crc32
-import re
 
-from xml.dom import minidom
+import androconf
+import bytecode
+from dvm_permissions import DVM_PERMISSIONS
+from util import read, get_md5
 
 NS_ANDROID_URI = 'http://schemas.android.com/apk/res/android'
 

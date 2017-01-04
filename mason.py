@@ -1,20 +1,21 @@
 #!/usr/bin/env python2
-# COPYRIGHT MASONAMERICA
-import click
 import getpass
 import pkg_resources
+import click
 
-from masonlib.mason import Mason
+from masonlib.platform import Platform
+from masonlib.imason import IMason
 
-## Global Config
 class Config(object):
+    """
+    Global config object, utilized to set verbosity of logging events
+    """
 
     def __init__(self):
         self.verbose = False
 
 pass_config = click.make_pass_decorator(Config, ensure=True)
 
-# MAIN CLI INTERFACE
 @click.group()
 @click.option('--verbose', '-v', help='show verbose artifact and command details', is_flag=True)
 @click.option('--access_token', help='optional access token if already available')
@@ -24,11 +25,11 @@ def cli(config, verbose, id_token, access_token):
     """mason-cli provides command line interfaces that allow you to register, query, build, and deploy
 your configurations and packages to your devices in the field."""
     config.verbose = verbose
-    config.mason = Mason(config)
-    config.mason.id_token = id_token
-    config.mason.access_token = access_token
+    platform = Platform(config)
+    config.mason = platform.get(IMason)
+    config.mason.set_id_token(id_token)
+    config.mason.set_access_token(access_token)
 
-# REGISTER INTERFACE
 @cli.group()
 @click.option('--skip-verify', '-s', is_flag=True, help='skip verification of artifact details')
 @pass_config
@@ -36,7 +37,6 @@ def register(config, skip_verify):
     """Register artifacts to the mason platform"""
     config.skip_verify = skip_verify
 
-# APK INTERFACE
 @register.command()
 @click.argument('apk')
 @pass_config
@@ -47,7 +47,6 @@ def apk(config, apk):
     if config.mason.parse_apk(apk):
         config.mason.register(apk)
 
-# CONFIG INTERFACE
 @register.command()
 @click.argument('yaml')
 @pass_config
@@ -58,7 +57,6 @@ def config(config, yaml):
     if config.mason.parse_os_config(yaml):
         config.mason.register(yaml)
 
-# MEDIA INTERFACE
 @register.command()
 @click.argument('binary')
 @click.option('--name', '-n', help='the name for the media artifact', default=None)
@@ -79,7 +77,6 @@ def media(config, binary, name, type, version):
     if config.mason.parse_media(name, type, version, binary):
         config.mason.register(binary)
 
-# BUILD INTERFACE
 @cli.command()
 @click.argument('project')
 @click.argument('version')
@@ -91,7 +88,6 @@ def build(config, project, version):
     if not config.mason.build(project, version):
         exit('Unable to start build')
 
-# LOGIN INTERFACE
 @cli.command()
 @click.option('--user', default=None, help='pass in user')
 @click.option('--password', default=None, help='pass in password')
@@ -123,7 +119,6 @@ def login(config, user, password):
     else:
         click.echo('User authenticated.')
 
-# LOGOUT INTERFACE
 @cli.command()
 @pass_config
 def logout(config):
@@ -131,7 +126,6 @@ def logout(config):
     if config.mason.logout():
         click.echo('Successfully logged out')
 
-# VERSION INTERFACE
 @cli.command()
 def version():
     """Display mason-cli version"""

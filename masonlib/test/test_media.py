@@ -3,7 +3,6 @@ import unittest
 
 from test_common import Common
 
-from masonlib.media import Media
 
 class MediaTest(unittest.TestCase):
 
