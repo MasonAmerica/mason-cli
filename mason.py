@@ -38,14 +38,15 @@ def register(config, skip_verify):
     config.skip_verify = skip_verify
 
 @register.command()
-@click.argument('apk')
+@click.argument('apks', nargs=-1)
 @pass_config
-def apk(config, apk):
+def apk(config, apks):
     """Register apk artifacts"""
-    if config.verbose:
-        click.echo('Registering ' + apk + '...')
-    if config.mason.parse_apk(apk):
-        config.mason.register(apk)
+    for app in apks:
+        if config.verbose:
+            click.echo('Registering ' + app + '...')
+        if config.mason.parse_apk(app):
+            config.mason.register(app)
 
 @register.command()
 @click.argument('yaml')

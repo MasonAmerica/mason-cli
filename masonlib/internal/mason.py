@@ -61,12 +61,12 @@ class Mason(IMason):
             response = raw_input('Continue register? (y)')
             if not response or response == 'y':
                 if not self.__register_artifact(binary):
-                    exit('Unable to register artifact')
+                    print 'Unable to register artifact'
             else:
-                exit('Artifact register aborted')
+                print 'Artifact register aborted'
         else:
             if not self.__register_artifact(binary):
-                exit('Unable to register artifact')
+                print 'Unable to register artifact'
 
     def __register_artifact(self, binary):
         self.id_token = self.persist.retrieve_id_token()
