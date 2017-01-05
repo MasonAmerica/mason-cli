@@ -2,6 +2,7 @@
 import getpass
 import pkg_resources
 import click
+import requests
 
 from masonlib.platform import Platform
 from masonlib.imason import IMason
@@ -13,6 +14,21 @@ class Config(object):
 
     def __init__(self):
         self.verbose = False
+        self.__check_version()
+
+    def __check_version(self):
+        r = requests.get('https://raw.githubusercontent.com/MasonAmerica/mason-cli/master/VERSION')
+        current_version = float(pkg_resources.require("mason-cli")[0].version)
+        if r.status_code == 200:
+            if r.text:
+                remote_version = float(r.text)
+                if remote_version > current_version:
+                    print '\n==================== NOTICE ====================\n' \
+                          'A newer version of the mason-cli is available.\n' \
+                          'Run:\n' \
+                          '    `pip install --upgrade git+git://git@github.com/MasonAmerica/mason-cli.git`\n' \
+                          'to upgrade to the latest version.\n' \
+                          '==================== NOTICE ====================\n'
 
 pass_config = click.make_pass_decorator(Config, ensure=True)
 
