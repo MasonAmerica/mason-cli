@@ -25,11 +25,12 @@ class ApkTest(unittest.TestCase):
         assert(self.test_apk.get_name() == self.test_apk.apkf.package)
 
     def test_apk_version(self):
-        assert(self.test_apk.get_version() == self.test_apk.apkf.get_androidversion_name())
+        assert(self.test_apk.get_version() == self.test_apk.apkf.get_androidversion_code())
 
     def test_apk_meta_data(self):
         meta_data = {
             'apk': {
+                'versionName': self.test_apk.apkf.get_androidversion_name(),
                 'versionCode': self.test_apk.apkf.get_androidversion_code(),
                 'packageName': self.test_apk.apkf.package
             },

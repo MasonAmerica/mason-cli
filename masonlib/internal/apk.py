@@ -8,7 +8,7 @@ class Apk(IArtifact):
     def __init__(self, apkf):
         self.apkf = apkf
         self.name = self.apkf.package
-        self.version = self.apkf.get_androidversion_name()
+        self.version = self.apkf.get_androidversion_code()
         self.details = self.apkf.cert_text
 
     @staticmethod
@@ -69,6 +69,7 @@ class Apk(IArtifact):
     def get_registry_meta_data(self):
         meta_data = {
             'apk': {
+                'versionName': self.apkf.get_androidversion_name(),
                 'versionCode': self.apkf.get_androidversion_code(),
                 'packageName': self.apkf.package
             },
