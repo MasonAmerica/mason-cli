@@ -128,6 +128,23 @@ class MasonTest(unittest.TestCase):
 
         assert(expected_payload == self.mason._Mason__get_build_payload(test_customer, test_project, test_version))
 
+    def test__deploy_item(self):
+        test_customer = 'mason-test'
+        test_item = 'TestItemName'
+        test_version = '1.2.3.5.3.6'
+        test_group = 'development'
+        test_item_type = 'apk'
+
+        expected_payload = {
+            'customer': test_customer,
+            'group': test_group,
+            'name': test_item,
+            'version': test_version,
+            'type': test_item_type
+        }
+
+        assert(expected_payload ==
+               self.mason._Mason__get_deploy_payload(test_customer, test_group, test_item, test_version, test_item_type))
 
 if __name__ == '__main__':
     unittest.main()

@@ -8,6 +8,7 @@ class Store(object):
     REGISTRY_SIGNED_URL = 'registry_signed_url'
     REGISTRY_ARTIFACT_URL = 'registry_artifact_url'
     BUILDER_URL = 'builder_url'
+    DEPLOY_URL = 'deploy_url'
 
     def __init__(self, file_path):
         self.file = file_path
@@ -36,7 +37,8 @@ class Store(object):
                self.USER_INFO_URL in self.data and \
                self.REGISTRY_SIGNED_URL in self.data and \
                self.REGISTRY_ARTIFACT_URL in self.data and \
-               self.BUILDER_URL in self.data
+               self.BUILDER_URL in self.data and \
+               self.DEPLOY_URL in self.data
 
     def _default_config(self):
         return {
@@ -45,7 +47,8 @@ class Store(object):
             self.USER_INFO_URL: 'https://bymason.auth0.com/userinfo',
             self.REGISTRY_ARTIFACT_URL: 'https://platform.bymason.com/api/registry/artifacts',
             self.REGISTRY_SIGNED_URL: 'https://platform.bymason.com/api/registry/signedurl',
-            self.BUILDER_URL: 'https://platform.bymason.com/api/builder'
+            self.BUILDER_URL: 'https://platform.bymason.com/api/builder',
+            self.DEPLOY_URL: 'https://platform.bymason.com/api/deploy'
         }
 
     def __get(self, key):
@@ -74,3 +77,6 @@ class Store(object):
 
     def builder_url(self):
         return self.__get(self.BUILDER_URL)
+
+    def deploy_url(self):
+        return self.__get(self.DEPLOY_URL)

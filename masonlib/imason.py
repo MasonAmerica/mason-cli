@@ -65,6 +65,17 @@ class IMason():
         pass
 
     @abstractmethod
+    def deploy(self, item_type, name, version, group):
+        """ Public deploy method, returns true if item is deployed, false otherwise
+
+            :param item_type: specify the item type to be deployed
+            :param name: specify the name of the item to be deployed
+            :param version: specify the version of the item to be deployed
+            :param group: specify the group to deploy the item to
+            :rtype boolean"""
+        pass
+
+    @abstractmethod
     def authenticate(self, user, password):
         """ Public authentication method, returns true if authed, false otherwise
 

@@ -29,6 +29,15 @@ class Mason(IMason):
     def set_id_token(self, id_token):
         self.id_token = id_token
 
+    def __validate_credentials(self):
+        self.id_token = self.persist.retrieve_id_token()
+        self.access_token = self.persist.retrieve_access_token()
+
+        if not self.id_token or not self.access_token:
+            print 'Please run \'mason login\' first'
+            return False
+        return True
+
     def parse_apk(self, apk):
         apk = Apk.parse(self.config, apk)
 
@@ -69,11 +78,7 @@ class Mason(IMason):
                 print 'Unable to register artifact'
 
     def __register_artifact(self, binary):
-        self.id_token = self.persist.retrieve_id_token()
-        self.access_token = self.persist.retrieve_access_token()
-
-        if not self.id_token or not self.access_token:
-            print 'Please run \'mason login\' first'
+        if not self.__validate_credentials():
             return False
 
         sha1 = Utils.hash_file(binary, 'sha1', True)
@@ -83,14 +88,10 @@ class Mason(IMason):
         if self.config.verbose:
             print 'File MD5: ' + Utils.hash_file(binary, 'md5', True)
 
-        # Get the user info
-        user_info_data = self.__request_user_info()
-
-        if not user_info_data:
+        customer = self.__get_customer()
+        if not customer:
+            print 'Could not retrieve customer information'
             return False
-
-        # Extract the customer info
-        customer = user_info_data['user_metadata']['clients'][0]
 
         # Get the signed url data for the user and artifact
         signed_url_data = self.__request_signed_url(customer, self.artifact, md5)
@@ -115,7 +116,6 @@ class Mason(IMason):
         return True
 
     def __request_user_info(self):
-        print 'Requesting user info...'
         headers = {'Authorization': 'Bearer ' + self.access_token}
         r = requests.get(self.store.user_info_url(), headers=headers)
 
@@ -126,6 +126,16 @@ class Mason(IMason):
             print 'Unable to get user info: ' + str(r.status_code)
             self.__handle_status(r.status_code)
             return None
+
+    def __get_customer(self):
+        # Get the user info
+        user_info_data = self.__request_user_info()
+
+        if not user_info_data:
+            return None
+
+        # Extract the customer info
+        return user_info_data['user_metadata']['clients'][0]
 
     def __request_signed_url(self, customer, artifact_data, md5):
         print 'Connecting to server...'
@@ -205,29 +215,23 @@ class Mason(IMason):
             print 'User token is expired or user is unauthorized'
         elif status_code == 403:
             print 'Access to domain is forbidden. Please contact support.'
+        elif status_code == 404:
+            print 'Mason service is currently unavailable'
 
     def build(self, project, version):
         return self.__build_project(project, version)
 
     def __build_project(self, project, version):
-        self.id_token = self.persist.retrieve_id_token()
-        self.access_token = self.persist.retrieve_access_token()
-
-        if not self.id_token or not self.access_token:
-            print 'Please run \'mason login\' first'
+        if not self.__validate_credentials():
             return False
 
         headers = {'Content-Type': 'application/json',
                    'Authorization': 'Bearer ' + str(self.id_token)}
 
-        # Get the user info
-        user_info_data = self.__request_user_info()
-
-        if not user_info_data:
+        customer = self.__get_customer()
+        if not customer:
+            print 'Could not retrieve customer information'
             return False
-
-        # Extract the customer info
-        customer = user_info_data['user_metadata']['clients'][0]
 
         payload = self.__get_build_payload(customer, project, version)
         builder_url = self.store.builder_url() + '/{0}/'.format(customer) + 'jobs'
@@ -250,6 +254,82 @@ class Mason(IMason):
         return {'customer': customer,
                 'project': project,
                 'version': str(version)}
+
+    def deploy(self, item_type, name, version, group):
+        if item_type == 'apk':
+            return self.__deploy_apk(name, version, group)
+        elif item_type == 'config':
+            return self.__deploy_config(name, version, group)
+        else:
+            print 'Unsupported deploy type ' + str(item_type)
+            return False
+
+    def __deploy_apk(self, name, version, group):
+        if not self.__validate_credentials():
+            return False
+
+        customer = self.__get_customer()
+        if not customer:
+            print 'Could not retrieve customer information'
+            return False
+
+        payload = self.__get_deploy_payload(customer, group, name, version, 'apk')
+        return self.__deploy_payload(payload)
+
+    def __deploy_config(self, name, version, group):
+        if not self.__validate_credentials():
+            return False
+
+        customer = self.__get_customer()
+        if not customer:
+            print 'Could not retrieve customer information'
+            return False
+
+        payload = self.__get_deploy_payload(customer, group, name, version, 'config')
+        return self.__deploy_payload(payload)
+
+    def __deploy_payload(self, payload):
+        if not payload:
+            return False
+
+        if not self.config.skip_verify:
+            print '---------- DEPLOY -----------'
+            print 'Name: ' + str(payload['name'])
+            print 'Type: ' + str(payload['type'])
+            print 'Version: ' + str(payload['version'])
+            print 'Group: ' + str(payload['group'])
+            if self.config.verbose:
+                print 'Customer: ' + str(payload['customer'])
+            print '-----------------------------'
+            response = raw_input('Continue deploy? (y)')
+            if not response or response == 'y':
+                print 'Continuing deploy...'
+            else:
+                print 'Deploy aborted'
+                return False
+
+        headers = {'Content-Type': 'application/json',
+                   'Authorization': 'Bearer ' + str(self.id_token)}
+
+        r = requests.post(self.store.deploy_url(), headers=headers, json=payload)
+
+        if r.status_code == 200:
+            if r.text:
+                if self.config.verbose:
+                    print r.text
+            return True
+        else:
+            self.__handle_status(r.status_code)
+            return False
+
+    def __get_deploy_payload(self, customer, group, name, version, item_type):
+        return {
+            'customer': customer,
+            'group': group,
+            'name': name,
+            'version': version,
+            'type': item_type
+        }
 
     def authenticate(self, user, password):
         payload = self.__get_auth_payload(user, password)

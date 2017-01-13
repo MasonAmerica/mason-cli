@@ -105,6 +105,37 @@ def build(config, project, version):
     if not config.mason.build(project, version):
         exit('Unable to start build')
 
+@cli.group()
+@click.option('--skip-verify', '-s', is_flag=True, help='skip verification of deployment')
+@pass_config
+def deploy(config, skip_verify):
+    """Register artifacts to the mason platform"""
+    config.skip_verify = skip_verify
+
+@deploy.command()
+@click.argument('name')
+@click.argument('version')
+@click.argument('group')
+@pass_config
+def apk(config, name, version, group):
+    """Deploy apk artifacts"""
+    if config.verbose:
+        click.echo('Deploying ' + name + '...')
+    if not config.mason.deploy("apk", name, version, group):
+        exit('Unable to deploy item')
+
+@deploy.command()
+@click.argument('name')
+@click.argument('version')
+@click.argument('group')
+@pass_config
+def config(config, name, version, group):
+    """Deploy apk artifacts"""
+    if config.verbose:
+        click.echo('Deploying ' + name + '...')
+    if not config.mason.deploy("config", name, version, group):
+        exit('Unable to deploy item')
+
 @cli.command()
 @click.option('--user', default=None, help='pass in user')
 @click.option('--password', default=None, help='pass in password')
