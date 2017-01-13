@@ -66,16 +66,7 @@ class Mason(IMason):
         return True
 
     def register(self, binary):
-        if not self.config.skip_verify:
-            response = raw_input('Continue register? (y)')
-            if not response or response == 'y':
-                if not self.__register_artifact(binary):
-                    print 'Unable to register artifact'
-            else:
-                print 'Artifact register aborted'
-        else:
-            if not self.__register_artifact(binary):
-                print 'Unable to register artifact'
+        self.__register_artifact(binary)
 
     def __register_artifact(self, binary):
         if not self.__validate_credentials():
@@ -125,6 +116,9 @@ class Mason(IMason):
         else:
             print 'Unable to get user info: ' + str(r.status_code)
             self.__handle_status(r.status_code)
+            if r.text:
+                if self.config.debug:
+                    print r.text
             return None
 
     def __get_customer(self):
@@ -148,6 +142,9 @@ class Mason(IMason):
         else:
             print 'Unable to get signed url: ' + str(r.status_code)
             self.__handle_status(r.status_code)
+            if r.text:
+                if self.config.debug:
+                    print r.text
             return None
 
     def __get_signed_url_request_headers(self, md5):
@@ -174,6 +171,9 @@ class Mason(IMason):
         else:
             print 'Unable to upload to signed url: ' + str(r.status_code)
             self.__handle_status(r.status_code)
+            if r.text:
+                if self.config.debug:
+                    print r.text
             return False
 
     def __get_signed_url_post_headers(self, artifact_data, md5):
@@ -198,6 +198,9 @@ class Mason(IMason):
         else:
             print 'Unable to register artifact: ' + str(r.status_code)
             self.__handle_status(r.status_code)
+            if r.text:
+                if self.config.debug:
+                    print r.text
             return False
 
     def __get_registry_payload(self, customer, download_url, sha1, artifact_data):
@@ -212,11 +215,11 @@ class Mason(IMason):
 
     def __handle_status(self, status_code):
         if status_code == 401:
-            print 'User token is expired or user is unauthorized'
+            print 'User token is expired or user is unauthorized.'
         elif status_code == 403:
             print 'Access to domain is forbidden. Please contact support.'
         elif status_code == 404:
-            print 'Mason service is currently unavailable'
+            print 'Mason service is currently unavailable.'
 
     def build(self, project, version):
         return self.__build_project(project, version)
@@ -235,19 +238,17 @@ class Mason(IMason):
 
         payload = self.__get_build_payload(customer, project, version)
         builder_url = self.store.builder_url() + '/{0}/'.format(customer) + 'jobs'
-        print 'Starting build...'
+        print 'Queueing build...'
         r = requests.post(builder_url, headers=headers, json=payload)
         if r.status_code == 200:
-            if r.text:
-                if self.config.verbose:
-                    print r.text
-            print 'Started build!'
+            print 'Build queued.'
             return True
         else:
             print 'Unable to enqueue build: ' + str(r.status_code)
             self.__handle_status(r.status_code)
-            if self.config.verbose:
-                print r.text
+            if r.text:
+                if self.config.debug:
+                    print r.text
             return False
 
     def __get_build_payload(self, customer, project, version):
@@ -317,9 +318,14 @@ class Mason(IMason):
             if r.text:
                 if self.config.verbose:
                     print r.text
+            print str(payload['name']) + ':' + str(payload['version']) \
+                  + ' was succesfully deployed to ' + str(payload['group'])
             return True
         else:
             self.__handle_status(r.status_code)
+            if r.text:
+                if self.config.debug:
+                    print r.text
             return False
 
     def __get_deploy_payload(self, customer, group, name, version, item_type):
