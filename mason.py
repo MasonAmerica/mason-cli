@@ -143,10 +143,12 @@ def build(config, project, version):
 
 @cli.group()
 @click.option('--skip-verify', '-s', is_flag=True, help='skip verification of deployment')
+@click.option('--push', '-p', is_flag=True, default=False, help='push the deployment to devices in the field')
 @pass_config
-def deploy(config, skip_verify):
+def deploy(config, skip_verify, push):
     """Deploy artifacts to groups."""
     config.skip_verify = skip_verify
+    config.push = push
 
 @deploy.command()
 @click.argument('name')
@@ -166,10 +168,12 @@ def apk(config, name, version, group):
 
        to deploy to group `development` becomes:\n
          mason deploy com.test.app 3 development
+
+       this can be used in conjunction with the --push argument
     """
     if config.verbose:
         click.echo('Deploying ' + name + '...')
-    if not config.mason.deploy("apk", name, version, group):
+    if not config.mason.deploy("apk", name, version, group, config.push):
         exit('Unable to deploy item')
 
 @deploy.command()
@@ -191,10 +195,12 @@ def config(config, name, version, group):
 
        to deploy to group `development` becomes:\n
          mason deploy mason-test 5 development
+
+       this can be used in conjunction with the --push argument
     """
     if config.verbose:
         click.echo('Deploying ' + name + '...')
-    if not config.mason.deploy("config", name, version, group):
+    if not config.mason.deploy("config", name, version, group, config.push):
         exit('Unable to deploy item')
 
 @cli.command()

@@ -269,16 +269,16 @@ class Mason(IMason):
                 'project': project,
                 'version': str(version)}
 
-    def deploy(self, item_type, name, version, group):
+    def deploy(self, item_type, name, version, group, push):
         if item_type == 'apk':
-            return self.__deploy_apk(name, version, group)
+            return self.__deploy_apk(name, version, group, push)
         elif item_type == 'config':
-            return self.__deploy_config(name, version, group)
+            return self.__deploy_config(name, version, group, push)
         else:
             print 'Unsupported deploy type ' + str(item_type)
             return False
 
-    def __deploy_apk(self, name, version, group):
+    def __deploy_apk(self, name, version, group, push):
         if not self.__validate_credentials():
             return False
 
@@ -287,10 +287,10 @@ class Mason(IMason):
             print 'Could not retrieve customer information'
             return False
 
-        payload = self.__get_deploy_payload(customer, group, name, version, 'apk')
+        payload = self.__get_deploy_payload(customer, group, name, version, 'apk', push)
         return self.__deploy_payload(payload)
 
-    def __deploy_config(self, name, version, group):
+    def __deploy_config(self, name, version, group, push):
         if not self.__validate_credentials():
             return False
 
@@ -299,7 +299,7 @@ class Mason(IMason):
             print 'Could not retrieve customer information'
             return False
 
-        payload = self.__get_deploy_payload(customer, group, name, version, 'config')
+        payload = self.__get_deploy_payload(customer, group, name, version, 'config', push)
         return self.__deploy_payload(payload)
 
     def __deploy_payload(self, payload):
@@ -312,6 +312,7 @@ class Mason(IMason):
             print 'Type: ' + str(payload['type'])
             print 'Version: ' + str(payload['version'])
             print 'Group: ' + str(payload['group'])
+            print 'Push: ' + str(payload['push'])
             if self.config.verbose:
                 print 'Customer: ' + str(payload['customer'])
             print '-----------------------------'
@@ -341,13 +342,14 @@ class Mason(IMason):
                     print r.text
             return False
 
-    def __get_deploy_payload(self, customer, group, name, version, item_type):
+    def __get_deploy_payload(self, customer, group, name, version, item_type, push):
         return {
             'customer': customer,
             'group': group,
             'name': name,
             'version': version,
-            'type': item_type
+            'type': item_type,
+            'push': push
         }
 
     def authenticate(self, user, password):
