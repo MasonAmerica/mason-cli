@@ -214,12 +214,16 @@ class Mason(IMason):
                    }}
 
     def __handle_status(self, status_code):
-        if status_code == 401:
+        if status_code == 400:
+            print 'Client made a bad request, failed.'
+        elif status_code == 401:
             print 'User token is expired or user is unauthorized.'
         elif status_code == 403:
             print 'Access to domain is forbidden. Please contact support.'
         elif status_code == 404:
-            print 'Mason service is currently unavailable.'
+            print 'Resource is unavailable, failed'
+        elif status_code == 500:
+            print 'Mason service or resource is currently unavailable.'
 
     def build(self, project, version):
         return self.__build_project(project, version)
