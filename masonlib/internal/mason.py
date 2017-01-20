@@ -66,7 +66,16 @@ class Mason(IMason):
         return True
 
     def register(self, binary):
-        self.__register_artifact(binary)
+        if not self.config.skip_verify:
+            response = raw_input('Continue register? (y)')
+            if not response or response == 'y':
+                if not self.__register_artifact(binary):
+                    print 'Unable to register artifact'
+            else:
+                print 'Artifact register aborted'
+        else:
+            if not self.__register_artifact(binary):
+                print 'Unable to register artifact'
 
     def __register_artifact(self, binary):
         if not self.__validate_credentials():
