@@ -22,9 +22,9 @@ class OSConfig(IArtifact):
         ecosystem = OSConfig.__load_ecosystem(config_yaml)
         os_config = OSConfig(ecosystem)
 
-        # Bail on non valid apk
+        # Bail on non valid os config
         if not os_config.is_valid():
-            print "Not a valid os configuration"
+            print "Not a valid os configuration, please see https://docs.bymason.com for further details."
             return None
 
         print '--------- OS Config ---------'
@@ -73,5 +73,6 @@ class OSConfig(IArtifact):
             try:
                 data = yaml.load(data_file)
                 return data
-            except ValueError:
+            except yaml.YAMLError as err:
+                print "Error in configuration file: " + str(err)
                 return None
