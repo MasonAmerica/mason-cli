@@ -4,6 +4,7 @@ import os.path
 import requests
 
 from tqdm import tqdm
+from urlparse import urlparse
 
 from masonlib.imason import IMason
 from masonlib.internal.apk import Apk
@@ -254,7 +255,8 @@ class Mason(IMason):
         print 'Queueing build...'
         r = requests.post(builder_url, headers=headers, json=payload)
         if r.status_code == 200:
-            print 'Build queued.'
+            hostname = urlparse(self.store.deploy_url()).hostname
+            print 'Build queued.\nYou can see the status of your build at https://{}/builds'.format(hostname)
             return True
         else:
             print 'Unable to enqueue build: ' + str(r.status_code)

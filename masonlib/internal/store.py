@@ -47,7 +47,7 @@ class Store(object):
             self.USER_INFO_URL: 'https://bymason.auth0.com/userinfo',
             self.REGISTRY_ARTIFACT_URL: 'https://platform.bymason.com/api/registry/artifacts',
             self.REGISTRY_SIGNED_URL: 'https://platform.bymason.com/api/registry/signedurl',
-            self.BUILDER_URL: 'https://platform.bymason.com/api/builder',
+            self.BUILDER_URL: 'https://6homlwnywe.execute-api.us-west-2.amazonaws.com/production/api/builder',
             self.DEPLOY_URL: 'https://platform.bymason.com/api/deploy'
         }
 
