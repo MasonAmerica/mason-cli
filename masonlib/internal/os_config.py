@@ -41,6 +41,13 @@ class OSConfig(IArtifact):
     def is_valid(self):
         if not self.ecosystem or not self.os or not self.name or not self.version:
             return False
+        try:
+            value = int(self.version)
+            if value > 2147483647:
+                raise ValueError('The os configuration version cannot be larger than MAX_INT (2147483647)')
+        except ValueError as err:
+            print "Error in configuration file: " + str(err)
+            return False
         return True
 
     def get_content_type(self):

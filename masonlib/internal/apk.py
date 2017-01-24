@@ -49,6 +49,13 @@ class Apk(IArtifact):
         return apkf
 
     def is_valid(self):
+        try:
+            value = int(self.version)
+            if value > 2147483647:
+                raise ValueError('The apk versionCode cannot be larger than MAX_INT (2147483647)')
+        except ValueError as err:
+            print "Error in configuration file: " + str(err)
+            return False
         return self.apkf.is_valid_APK()
 
     def get_content_type(self):
