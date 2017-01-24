@@ -208,7 +208,7 @@ def config(config, name, version, group):
 @click.argument('yaml')
 @pass_config
 def stage(config, skip_verify, yaml):
-    """Stage a registered project.
+    """Stage a project.
 
          YAML - The configuration file to register and build.
 
