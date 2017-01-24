@@ -11,13 +11,13 @@ class PersistTest(unittest.TestCase):
 
     def setUp(self):
         self.persist = Persist('.testmasonrc')
-        self.__write_test_tokens()
+        self._write_test_tokens()
         self.persist.reload()
 
     def tearDown(self):
         os.remove(self.persist.file)
 
-    def __write_test_tokens(self):
+    def _write_test_tokens(self):
         test_data = {'id_token': self.ID_TOKEN,
                      'access_token': self.ACCESS_TOKEN}
         self.persist.write_tokens(test_data)

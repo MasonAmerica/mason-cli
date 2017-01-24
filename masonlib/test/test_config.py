@@ -7,7 +7,7 @@ from test_common import Common
 class ConfigTest(unittest.TestCase):
 
     def setUp(self):
-        self.test_config = self.__create_test_config()
+        self.test_config = self._create_test_config()
 
     def test_config_is_valid(self):
         assert(self.test_config.is_valid())
@@ -30,6 +30,6 @@ class ConfigTest(unittest.TestCase):
     def test_config_meta_data(self):
         assert(self.test_config.get_registry_meta_data() is None)
 
-    def __create_test_config(self):
+    def _create_test_config(self):
         test_config = Common.create_config_file()
         return OSConfig(test_config)

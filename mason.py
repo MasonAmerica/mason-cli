@@ -14,9 +14,9 @@ class Config(object):
 
     def __init__(self):
         self.verbose = False
-        self.__check_version()
+        self._check_version()
 
-    def __check_version(self):
+    def _check_version(self):
         r = requests.get('https://raw.githubusercontent.com/MasonAmerica/mason-cli/master/VERSION')
         current_version = float(pkg_resources.require("mason-cli")[0].version)
         if r.status_code == 200:

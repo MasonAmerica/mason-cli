@@ -9,9 +9,9 @@ class Persist(object):
     def __init__(self, file_path):
         home = expanduser("~")
         self.file = os.path.join(home, file_path)
-        self.data = self.__load_stored_data()
+        self.data = self._load_stored_data()
 
-    def __load_stored_data(self):
+    def _load_stored_data(self):
         if not os.path.isfile(self.file):
             return None
 
@@ -22,20 +22,20 @@ class Persist(object):
             except ValueError:
                 return None
 
-    def __get(self, key):
+    def _get(self, key):
         if not self.data or key not in self.data:
             return None
         else:
             return self.data[key]
 
     def reload(self):
-        self.data = self.__load_stored_data()
+        self.data = self._load_stored_data()
 
     def retrieve_id_token(self):
-        return self.__get('id_token')
+        return self._get('id_token')
 
     def retrieve_access_token(self):
-        return self.__get('access_token')
+        return self._get('access_token')
 
     def write_tokens(self, data):
         with open(self.file, 'w') as outfile:

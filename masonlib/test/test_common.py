@@ -4,6 +4,12 @@ from mock import Mock
 class Common(object):
 
     @staticmethod
+    def create_mock_config():
+        mock_config = Mock()
+        mock_config._check_version = MagicMock(return_value=None)
+        mock_config.verbose = False
+
+    @staticmethod
     def create_mock_apk_file():
         test_package_name = 'com.this.is.a.test'
         test_package_version = '11'
@@ -44,7 +50,7 @@ class Common(object):
         test_ecosystem_definition = {
             'os': {
                 'name' : 'test',
-                'version' : 1.0
+                'version' : 1
             }
         }
         return test_ecosystem_definition

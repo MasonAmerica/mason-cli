@@ -7,7 +7,7 @@ from test_common import Common
 class MediaTest(unittest.TestCase):
 
     def setUp(self):
-        self.media = self.__create_media()
+        self.media = self._create_media()
 
     def test_media_is_valid(self):
         assert(self.media.is_valid())
@@ -38,6 +38,6 @@ class MediaTest(unittest.TestCase):
         }
         assert(self.media.get_registry_meta_data() == meta_data)
 
-    def __create_media(self):
+    def _create_media(self):
         media = Common.create_mock_media_file()
         return media

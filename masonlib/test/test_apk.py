@@ -7,7 +7,7 @@ from test_common import Common
 class ApkTest(unittest.TestCase):
 
     def setUp(self):
-        self.test_apk = self.__create_test_apk()
+        self.test_apk = self._create_test_apk()
 
     def test_apk_is_valid(self):
         assert(self.test_apk.is_valid())
@@ -37,6 +37,6 @@ class ApkTest(unittest.TestCase):
         }
         assert(self.test_apk.get_registry_meta_data() == meta_data)
 
-    def __create_test_apk(self):
+    def _create_test_apk(self):
         apkf = Common.create_mock_apk_file()
         return Apk(apkf)

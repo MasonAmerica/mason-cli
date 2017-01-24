@@ -12,13 +12,13 @@ class Store(object):
 
     def __init__(self, file_path):
         self.file = file_path
-        self.data = self.__load_stored_data()
-        if not self.__validate_data():
+        self.data = self._load_stored_data()
+        if not self._validate_data():
             print 'Resetting credential store...'
             os.remove(file_path)
-            self.data = self.__load_stored_data()
+            self.data = self._load_stored_data()
 
-    def __load_stored_data(self):
+    def _load_stored_data(self):
         if not os.path.isfile(self.file):
             config = self._default_config()
             with open(self.file, 'w') as stream:
@@ -31,7 +31,7 @@ class Store(object):
                     print(exc)
         return config
 
-    def __validate_data(self):
+    def _validate_data(self):
         return self.CLIENT_ID in self.data and \
                self.AUTH_URL in self.data and \
                self.USER_INFO_URL in self.data and \
@@ -51,32 +51,32 @@ class Store(object):
             self.DEPLOY_URL: 'https://platform.bymason.com/api/deploy'
         }
 
-    def __get(self, key):
+    def _get(self, key):
         if not self.data or key not in self.data:
             return None
         else:
             return self.data[key]
 
     def reload(self):
-        self.data = self.__load_stored_data()
+        self.data = self._load_stored_data()
 
     def client_id(self):
-        return self.__get(self.CLIENT_ID)
+        return self._get(self.CLIENT_ID)
 
     def auth_url(self):
-        return self.__get(self.AUTH_URL)
+        return self._get(self.AUTH_URL)
 
     def user_info_url(self):
-        return self.__get(self.USER_INFO_URL)
+        return self._get(self.USER_INFO_URL)
 
     def registry_signer_url(self):
-        return self.__get(self.REGISTRY_SIGNED_URL)
+        return self._get(self.REGISTRY_SIGNED_URL)
 
     def registry_artifact_url(self):
-        return self.__get(self.REGISTRY_ARTIFACT_URL)
+        return self._get(self.REGISTRY_ARTIFACT_URL)
 
     def builder_url(self):
-        return self.__get(self.BUILDER_URL)
+        return self._get(self.BUILDER_URL)
 
     def deploy_url(self):
-        return self.__get(self.DEPLOY_URL)
+        return self._get(self.DEPLOY_URL)

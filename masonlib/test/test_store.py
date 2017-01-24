@@ -18,13 +18,13 @@ class StoreTest(unittest.TestCase):
 
     def setUp(self):
         self.store = Store('masonlib/.test_mason.yml')
-        self.__write_test_credentials()
+        self._write_test_credentials()
         self.store.reload()
 
     def tearDown(self):
         os.remove(self.store.file)
 
-    def __write_test_credentials(self):
+    def _write_test_credentials(self):
         test_data = {'client_id': self.CLIENT_ID,
                      'auth_url': self.AUTH_URL,
                      'user_info_url': self.USER_INFO_URL,

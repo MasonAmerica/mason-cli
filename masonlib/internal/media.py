@@ -42,7 +42,7 @@ class Media(IArtifact):
 
     def is_valid(self):
         if self.type == 'bootanimation':
-            return self.__validate_bootanimation()
+            return self._validate_bootanimation()
         else:
             return False
 
@@ -75,7 +75,7 @@ class Media(IArtifact):
     def get_details(self):
         return self.details
 
-    def __validate_bootanimation(self):
+    def _validate_bootanimation(self):
         with zipfile.ZipFile(self.binary) as zip_file:
             ret = zip_file.testzip()
             desc = zip_file.read('desc.txt')

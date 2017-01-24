@@ -10,8 +10,7 @@ from test_common import Common
 class MasonTest(unittest.TestCase):
 
     def setUp(self):
-        config = Config()
-        config.verbose = False
+        config = Common.create_mock_config()
         platform = Platform(config)
         self.mason = platform.get(IMason)
 
@@ -33,7 +32,7 @@ class MasonTest(unittest.TestCase):
                    'scope': 'openid',
                    'device': ''}
 
-        assert(expected_payload == self.mason._Mason__get_auth_payload(test_user, test_password))
+        assert(expected_payload == self.mason._get_auth_payload(test_user, test_password))
 
     def test__request_signed_url(self):
         apkf = Common.create_mock_apk_file()
@@ -51,12 +50,12 @@ class MasonTest(unittest.TestCase):
                             'Content-MD5': u'bDMyazQzaDJsaDUzMmszMmprZm9kczlhZHMzNDhhaXNkZml1YW9lcjAzNGY3czkzNDd1MTIz'}
 
         # test getting the signed url request headers
-        assert(expected_headers == self.mason._Mason__get_signed_url_request_headers(test_md5))
+        assert(expected_headers == self.mason._get_signed_url_request_headers(test_md5))
         expected_url = store.registry_signer_url() \
               + '/{0}/{1}/{2}'.format(test_customer, test_apk.get_name(), test_apk.get_version()) \
               + '?type=' + test_apk.get_type()
         # test getting the signed url endpoint
-        actual_url = self.mason._Mason__get_signed_url_request_endpoint(test_customer, test_apk)
+        actual_url = self.mason._get_signed_url_request_endpoint(test_customer, test_apk)
         assert(expected_url == actual_url)
 
     def test__upload_to_signed_url(self):
@@ -73,7 +72,7 @@ class MasonTest(unittest.TestCase):
         expected_headers = {'Content-Type': test_apk.get_content_type(),
          'Content-MD5': u'bDMyazQzaDJsaDUzMmszMmprZm9kczlhZHMzNDhhaXNkZml1YW9lcjAzNGY3czkzNDd1MTIz'}
 
-        assert(expected_headers == self.mason._Mason__get_signed_url_post_headers(test_apk, test_md5))
+        assert(expected_headers == self.mason._get_signed_url_post_headers(test_apk, test_md5))
 
     def test__register_to_mason(self):
         apkf = Common.create_mock_apk_file()
@@ -97,7 +96,7 @@ class MasonTest(unittest.TestCase):
                                 'sha1': test_sha1
                             }}
 
-        assert(expected_payload == self.mason._Mason__get_registry_payload(test_customer, test_download_url, test_sha1, test_apk))
+        assert(expected_payload == self.mason._get_registry_payload(test_customer, test_download_url, test_sha1, test_apk))
 
         expected_updated_payload = {'name': test_apk.get_name(),
                                     'version': test_apk.get_version(),
@@ -108,6 +107,7 @@ class MasonTest(unittest.TestCase):
                                         'sha1': test_sha1
                                     },
                                     'apk': {
+                                        'versionName': test_apk.apkf.get_androidversion_name(),
                                         'versionCode': test_apk.apkf.get_androidversion_code(),
                                         'packageName': test_apk.apkf.package
                                     },
@@ -126,7 +126,7 @@ class MasonTest(unittest.TestCase):
                 'project': test_project,
                 'version': test_version}
 
-        assert(expected_payload == self.mason._Mason__get_build_payload(test_customer, test_project, test_version))
+        assert(expected_payload == self.mason._get_build_payload(test_customer, test_project, test_version))
 
     def test__deploy_item(self):
         test_customer = 'mason-test'
@@ -146,7 +146,7 @@ class MasonTest(unittest.TestCase):
         }
 
         assert(expected_payload ==
-               self.mason._Mason__get_deploy_payload(test_customer, test_group, test_item, test_version, test_item_type,
+               self.mason._get_deploy_payload(test_customer, test_group, test_item, test_version, test_item_type,
                                                      test_push))
 
 if __name__ == '__main__':

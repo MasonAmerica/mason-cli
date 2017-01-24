@@ -19,7 +19,7 @@ class OSConfig(IArtifact):
             print 'No file provided'
             return None
 
-        ecosystem = OSConfig.__load_ecosystem(config_yaml)
+        ecosystem = OSConfig._load_ecosystem(config_yaml)
         os_config = OSConfig(ecosystem)
 
         # Bail on non valid os config
@@ -72,7 +72,7 @@ class OSConfig(IArtifact):
         return self.ecosystem
 
     @staticmethod
-    def __load_ecosystem(path):
+    def _load_ecosystem(path):
         if not os.path.isfile(path):
             return None
 
