@@ -77,6 +77,15 @@ class IMason():
         pass
 
     @abstractmethod
+    def stage(self, yaml):
+        """ Public stage method, returns true if the configuration was staged, false otherwise.
+            The stage command effectively registers and and builds a given configuration.
+
+            :param yaml: The yaml file which needs to be staged
+            :rtype boolean"""
+        pass
+
+    @abstractmethod
     def authenticate(self, user, password):
         """ Public authentication method, returns true if authed, false otherwise
 

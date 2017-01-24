@@ -71,7 +71,7 @@ def apk(config, apks):
     """
     for app in apks:
         if config.verbose:
-            click.echo('Registering ' + app + '...')
+            click.echo('Registering {}...'.format(app))
         if config.mason.parse_apk(app):
             config.mason.register(app)
 
@@ -87,7 +87,7 @@ def config(config, yaml):
          mason register config test.yml
     """
     if config.verbose:
-        click.echo('Registering ' + yaml + '...')
+        click.echo('Registering {}...'.format(yaml))
     if config.mason.parse_os_config(yaml):
         config.mason.register(yaml)
 
@@ -110,7 +110,7 @@ def media(config, binary, name, type, version):
           mason register media bootanimation.zip bootanimation 1
     """
     if config.verbose:
-        click.echo('Registering ' + binary + '...')
+        click.echo('Registering {}...'.format(binary))
     if config.mason.parse_media(name, type, version, binary):
         config.mason.register(binary)
 
@@ -137,7 +137,7 @@ def build(config, project, version):
          mason build mason-test 5
     """
     if config.verbose:
-        click.echo('Starting build for ' + project + ':' + version)
+        click.echo('Starting build for {}:{}...'.format(project, version))
     if not config.mason.build(project, version):
         exit('Unable to start build')
 
@@ -172,7 +172,7 @@ def apk(config, name, version, group):
        this can be used in conjunction with the --push argument
     """
     if config.verbose:
-        click.echo('Deploying ' + name + '...')
+        click.echo('Deploying {}:{}...'.format(name, version))
     if not config.mason.deploy("apk", name, version, group, config.push):
         exit('Unable to deploy item')
 
@@ -199,9 +199,26 @@ def config(config, name, version, group):
        this can be used in conjunction with the --push argument
     """
     if config.verbose:
-        click.echo('Deploying ' + name + '...')
+        click.echo('Deploying {}:{}...'.format(name, version))
     if not config.mason.deploy("config", name, version, group, config.push):
         exit('Unable to deploy item')
+
+@cli.command()
+@click.option('--skip-verify', '-s', is_flag=True, help='skip verification of config stage')
+@click.argument('yaml')
+@pass_config
+def stage(config, skip_verify, yaml):
+    """Stage a registered project.
+
+         YAML - The configuration file to register and build.
+
+       The stage commands allows you to register a configuration file and immediately start a build for it.
+    """
+    config.skip_verify = skip_verify
+    if config.verbose:
+        click.echo('Staging {}...'.format(yaml))
+    if config.mason.parse_os_config(yaml):
+        config.mason.stage(yaml)
 
 @cli.command()
 @click.option('--user', default=None, help='pass in user')

@@ -72,11 +72,18 @@ class Mason(IMason):
             if not response or response == 'y':
                 if not self.__register_artifact(binary):
                     print 'Unable to register artifact'
+                    return False
+                else:
+                    return True
             else:
                 print 'Artifact register aborted'
+                return False
         else:
             if not self.__register_artifact(binary):
                 print 'Unable to register artifact'
+                return False
+            else:
+                return True
 
     def __register_artifact(self, binary):
         if not self.__validate_credentials():
@@ -353,6 +360,13 @@ class Mason(IMason):
             'type': item_type,
             'push': push
         }
+
+    def stage(self, yaml):
+        if self.register(yaml):
+            return self.__build_project(self.artifact.get_name(), self.artifact.get_version())
+        else:
+            print 'Unable to stage configuration'
+            return False
 
     def authenticate(self, user, password):
         payload = self.__get_auth_payload(user, password)
