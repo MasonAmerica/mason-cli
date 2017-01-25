@@ -425,7 +425,7 @@ class IterableToFileAdapter(object):
         self.iterator = iter(iterable)
         self.length = len(iterable)
 
-    def read(self):
+    def read(self, size=-1):
         return next(self.iterator, b'')
 
     def __len__(self):
