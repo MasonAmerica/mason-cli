@@ -4,7 +4,9 @@ import re
 from masonlib.external.apk_parse.apk import APK
 from masonlib.internal.artifacts import IArtifact
 
+
 class Apk(IArtifact):
+
     def __init__(self, apkf):
         self.apkf = apkf
         self.name = self.apkf.package
@@ -37,11 +39,11 @@ class Apk(IArtifact):
                     return False
 
         print '------------ APK ------------'
-        print 'File Name: ' + apk
-        print 'File size: ', str(os.path.getsize(apk))
-        print 'Package: ' + apkf.apkf.package
-        print 'Version Name: ' + apkf.apkf.get_androidversion_name()
-        print 'Version Code: ' + apkf.apkf.get_androidversion_code()
+        print 'File Name: {}'.format(apk)
+        print 'File size: {}'.format(os.path.getsize(apk))
+        print 'Package: {}'.format(apkf.apkf.package)
+        print 'Version Name: {}'.format(apkf.apkf.get_androidversion_name())
+        print 'Version Code: {}'.format(apkf.apkf.get_androidversion_code())
         if config.verbose:
             for line in apkf.details:
                 print line
@@ -54,7 +56,7 @@ class Apk(IArtifact):
             if value > 2147483647:
                 raise ValueError('The apk versionCode cannot be larger than MAX_INT (2147483647)')
         except ValueError as err:
-            print "Error in configuration file: " + str(err)
+            print "Error in configuration file: {}".format(err)
             return False
         return self.apkf.is_valid_APK()
 

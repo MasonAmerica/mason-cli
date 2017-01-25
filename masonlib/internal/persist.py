@@ -4,6 +4,7 @@ import os
 
 from os.path import expanduser
 
+
 class Persist(object):
 
     def __init__(self, file_path):

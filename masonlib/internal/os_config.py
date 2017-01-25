@@ -1,8 +1,8 @@
 import os
-
 import yaml
 
 from masonlib.internal.artifacts import IArtifact
+
 
 class OSConfig(IArtifact):
 
@@ -28,10 +28,10 @@ class OSConfig(IArtifact):
             return None
 
         print '--------- OS Config ---------'
-        print 'File Name: ' + config_yaml
-        print 'File size: ' + str(os.path.getsize(config_yaml))
-        print 'Name: ' + os_config.name
-        print 'Version: ' + os_config.version
+        print 'File Name: {}'.format(config_yaml)
+        print 'File size: {}'.format(os.path.getsize(config_yaml))
+        print 'Name: {}'.format(os_config.name)
+        print 'Version: {}'.format(os_config.version)
         if config.verbose:
             for k, v in os_config.ecosystem.iteritems():
                 print k, v
@@ -46,7 +46,7 @@ class OSConfig(IArtifact):
             if value > 2147483647:
                 raise ValueError('The os configuration version cannot be larger than MAX_INT (2147483647)')
         except ValueError as err:
-            print "Error in configuration file: " + str(err)
+            print 'Error in configuration file: {}'.format(err)
             return False
         return True
 
@@ -81,5 +81,5 @@ class OSConfig(IArtifact):
                 data = yaml.load(data_file)
                 return data
             except yaml.YAMLError as err:
-                print "Error in configuration file: " + str(err)
+                print 'Error in configuration file: {}'.format(err)
                 return None

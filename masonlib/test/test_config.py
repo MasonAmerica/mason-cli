@@ -1,8 +1,8 @@
-# COPYRIGHT MASONAMERICA
 import unittest
 
 from masonlib.internal.os_config import OSConfig
 from test_common import Common
+
 
 class ConfigTest(unittest.TestCase):
 
@@ -30,6 +30,7 @@ class ConfigTest(unittest.TestCase):
     def test_config_meta_data(self):
         assert(self.test_config.get_registry_meta_data() is None)
 
-    def _create_test_config(self):
+    @staticmethod
+    def _create_test_config():
         test_config = Common.create_config_file()
         return OSConfig(test_config)

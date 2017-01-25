@@ -1,6 +1,7 @@
 import yaml
 import os
 
+
 class Store(object):
     CLIENT_ID = 'client_id'
     AUTH_URL = 'auth_url'
@@ -29,6 +30,7 @@ class Store(object):
                     config = yaml.load(stream)
                 except yaml.YAMLError as exc:
                     print(exc)
+                    return
         return config
 
     def _validate_data(self):

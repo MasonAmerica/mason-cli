@@ -1,8 +1,8 @@
-# COPYRIGHT MASONAMERICA
 import unittest
 
 from masonlib.internal.apk import Apk
 from test_common import Common
+
 
 class ApkTest(unittest.TestCase):
 
@@ -37,6 +37,7 @@ class ApkTest(unittest.TestCase):
         }
         assert(self.test_apk.get_registry_meta_data() == meta_data)
 
-    def _create_test_apk(self):
+    @staticmethod
+    def _create_test_apk():
         apkf = Common.create_mock_apk_file()
         return Apk(apkf)

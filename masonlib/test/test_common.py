@@ -1,6 +1,7 @@
 from mock import MagicMock
 from mock import Mock
 
+
 class Common(object):
 
     @staticmethod

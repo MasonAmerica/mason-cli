@@ -7,6 +7,7 @@ import requests
 from masonlib.platform import Platform
 from masonlib.imason import IMason
 
+
 class Config(object):
     """
     Global config object, utilized to set verbosity of logging events
@@ -16,7 +17,8 @@ class Config(object):
         self.verbose = False
         self._check_version()
 
-    def _check_version(self):
+    @staticmethod
+    def _check_version():
         r = requests.get('https://raw.githubusercontent.com/MasonAmerica/mason-cli/master/VERSION')
         current_version = float(pkg_resources.require("mason-cli")[0].version)
         if r.status_code == 200:
@@ -31,6 +33,7 @@ class Config(object):
                           '==================== NOTICE ====================\n'
 
 pass_config = click.make_pass_decorator(Config, ensure=True)
+
 
 @click.group()
 @click.option('--debug', '-d', is_flag=True)
@@ -48,12 +51,14 @@ your configurations and packages to your devices in the field."""
     config.mason.set_id_token(id_token)
     config.mason.set_access_token(access_token)
 
+
 @cli.group()
 @click.option('--skip-verify', '-s', is_flag=True, help='skip verification of artifact details')
 @pass_config
 def register(config, skip_verify):
     """Register artifacts to the mason platform."""
     config.skip_verify = skip_verify
+
 
 @register.command()
 @click.argument('apks', nargs=-1)
@@ -75,6 +80,7 @@ def apk(config, apks):
         if config.mason.parse_apk(app):
             config.mason.register(app)
 
+
 @register.command()
 @click.argument('yaml')
 @pass_config
@@ -90,6 +96,7 @@ def config(config, yaml):
         click.echo('Registering {}...'.format(yaml))
     if config.mason.parse_os_config(yaml):
         config.mason.register(yaml)
+
 
 @register.command()
 @click.argument('binary')
@@ -113,6 +120,7 @@ def media(config, binary, name, type, version):
         click.echo('Registering {}...'.format(binary))
     if config.mason.parse_media(name, type, version, binary):
         config.mason.register(binary)
+
 
 @cli.command()
 @click.argument('project')
@@ -141,6 +149,7 @@ def build(config, project, version):
     if not config.mason.build(project, version):
         exit('Unable to start build')
 
+
 @cli.group()
 @click.option('--skip-verify', '-s', is_flag=True, help='skip verification of deployment')
 @click.option('--push', '-p', is_flag=True, default=False, help='push the deployment to devices in the field')
@@ -149,6 +158,7 @@ def deploy(config, skip_verify, push):
     """Deploy artifacts to groups."""
     config.skip_verify = skip_verify
     config.push = push
+
 
 @deploy.command()
 @click.argument('name')
@@ -175,6 +185,7 @@ def apk(config, name, version, group):
         click.echo('Deploying {}:{}...'.format(name, version))
     if not config.mason.deploy("apk", name, version, group, config.push):
         exit('Unable to deploy item')
+
 
 @deploy.command()
 @click.argument('name')
@@ -203,6 +214,7 @@ def config(config, name, version, group):
     if not config.mason.deploy("config", name, version, group, config.push):
         exit('Unable to deploy item')
 
+
 @cli.command()
 @click.option('--skip-verify', '-s', is_flag=True, help='skip verification of config stage')
 @click.argument('yaml')
@@ -219,6 +231,7 @@ def stage(config, skip_verify, yaml):
         click.echo('Staging {}...'.format(yaml))
     if config.mason.parse_os_config(yaml):
         config.mason.stage(yaml)
+
 
 @cli.command()
 @click.option('--user', default=None, help='pass in user')
@@ -251,12 +264,14 @@ def login(config, user, password):
     else:
         click.echo('User authenticated.')
 
+
 @cli.command()
 @pass_config
 def logout(config):
     """Log out of current session."""
     if config.mason.logout():
         click.echo('Successfully logged out')
+
 
 @cli.command()
 def version():

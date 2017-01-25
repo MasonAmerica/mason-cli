@@ -1,4 +1,3 @@
-# COPYRIGHT MASONAMERICA
 import os
 import unittest
 

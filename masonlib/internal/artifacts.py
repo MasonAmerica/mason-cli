@@ -1,4 +1,5 @@
-import abc, six
+import abc
+import six
 
 from abc import abstractmethod
 

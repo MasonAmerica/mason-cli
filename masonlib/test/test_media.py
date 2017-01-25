@@ -1,4 +1,3 @@
-# COPYRIGHT MASONAMERICA
 import unittest
 
 from test_common import Common
@@ -38,6 +37,7 @@ class MediaTest(unittest.TestCase):
         }
         assert(self.media.get_registry_meta_data() == meta_data)
 
-    def _create_media(self):
+    @staticmethod
+    def _create_media():
         media = Common.create_mock_media_file()
         return media

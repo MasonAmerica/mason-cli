@@ -1,11 +1,11 @@
 # COPYRIGHT MASONAMERICA
 import unittest
 
-from mason import Config
 from masonlib.imason import IMason
 from masonlib.internal.apk import Apk
 from masonlib.platform import Platform
 from test_common import Common
+
 
 class MasonTest(unittest.TestCase):
 
@@ -96,7 +96,8 @@ class MasonTest(unittest.TestCase):
                                 'sha1': test_sha1
                             }}
 
-        assert(expected_payload == self.mason._get_registry_payload(test_customer, test_download_url, test_sha1, test_apk))
+        assert(expected_payload == self.mason._get_registry_payload(test_customer, test_download_url, test_sha1,
+                                                                    test_apk))
 
         expected_updated_payload = {'name': test_apk.get_name(),
                                     'version': test_apk.get_version(),
@@ -147,7 +148,7 @@ class MasonTest(unittest.TestCase):
 
         assert(expected_payload ==
                self.mason._get_deploy_payload(test_customer, test_group, test_item, test_version, test_item_type,
-                                                     test_push))
+                                              test_push))
 
 if __name__ == '__main__':
     unittest.main()

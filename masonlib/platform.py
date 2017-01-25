@@ -2,6 +2,7 @@ from masonlib.imason import IMason
 
 from masonlib.internal.mason import Mason
 
+
 class Platform(object):
 
     def __init__(self, config):

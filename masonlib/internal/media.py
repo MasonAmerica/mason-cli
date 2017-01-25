@@ -3,6 +3,7 @@ import zipfile
 
 from masonlib.internal.artifacts import IArtifact
 
+
 class Media(IArtifact):
 
     def __init__(self, name, type, version, binary):
@@ -22,15 +23,15 @@ class Media(IArtifact):
 
         # Bail on non valid apk
         if not media.is_valid():
-            print "Not a valid " + type + ", see type requirements in the documentation"
+            print "Not a valid {}, see type requirements in the documentation".format(type)
             return None
 
         print '----------- MEDIA -----------'
-        print 'File Name: ' + media.binary
-        print 'File size: ' + str(os.path.getsize(binary))
-        print 'Name: ' + media.name
-        print 'Version: ' + media.version
-        print 'Type: ' + media.type
+        print 'File Name: {}'.format(media.binary)
+        print 'File size: {}'.format(os.path.getsize(binary))
+        print 'Name: {}'.format(media.name)
+        print 'Version: {}'.format(media.version)
+        print 'Type: {}'.format(media.type)
         if config.verbose:
             if media.details:
                 print 'Details: '
