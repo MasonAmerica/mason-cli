@@ -16,7 +16,8 @@ setup(
         'requests',
         'tqdm',
         'pyyaml',
-        'six'
+        'six',
+        'colorama'
     ],
     entry_points='''
         [console_scripts]
