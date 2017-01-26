@@ -12,7 +12,7 @@ from masonlib.internal.media import Media
 from masonlib.internal.os_config import OSConfig
 from masonlib.internal.persist import Persist
 from masonlib.internal.store import Store
-from masonlib.internal.utils import Utils
+from masonlib.internal.utils import hash_file, print_err
 
 
 class Mason(IMason):
@@ -91,12 +91,12 @@ class Mason(IMason):
         if not self._validate_credentials():
             return False
 
-        sha1 = Utils.hash_file(binary, 'sha1', True)
+        sha1 = hash_file(binary, 'sha1', True)
         if self.config.verbose:
             print 'File SHA1: {}'.format(sha1)
-        md5 = Utils.hash_file(binary, 'md5', False)
+        md5 = hash_file(binary, 'md5', False)
         if self.config.verbose:
-            print 'File MD5: {}'.format(Utils.hash_file(binary, 'md5', True))
+            print 'File MD5: {}'.format(hash_file(binary, 'md5', True))
 
         customer = self._get_customer()
         if not customer:
@@ -136,8 +136,7 @@ class Mason(IMason):
             print 'Unable to get user info: {}'.format(r.status_code)
             self._handle_status(r.status_code)
             if r.text:
-                if self.config.debug:
-                    print r.text
+                print_err(self.config, r.text)
             return None
 
     def _get_customer(self):
@@ -162,8 +161,7 @@ class Mason(IMason):
             print 'Unable to get signed url: {}'.format(r.status_code)
             self._handle_status(r.status_code)
             if r.text:
-                if self.config.debug:
-                    print r.text
+                print_err(self.config, r.text)
             return None
 
     def _get_signed_url_request_headers(self, md5):
@@ -191,8 +189,7 @@ class Mason(IMason):
             print 'Unable to upload to signed url: {}'.format(r.status_code)
             self._handle_status(r.status_code)
             if r.text:
-                if self.config.debug:
-                    print r.text
+                print_err(self.config, r.text)
             return False
 
     @staticmethod
@@ -219,8 +216,7 @@ class Mason(IMason):
             print 'Unable to register artifact: {}'.format(r.status_code)
             self._handle_status(r.status_code)
             if r.text:
-                if self.config.debug:
-                    print r.text
+                print_err(self.config, r.text)
             return False
 
     @staticmethod
@@ -271,11 +267,14 @@ class Mason(IMason):
             print 'Build queued.\nYou can see the status of your build at https://{}/builds'.format(hostname)
             return True
         else:
-            print 'Unable to enqueue build: {}'.format(r.status_code)
+            print_err(self.config, 'Unable to enqueue build: {}'.format(r.status_code))
             self._handle_status(r.status_code)
             if r.text:
-                if self.config.debug:
-                    print r.text
+                try:
+                    msg = json.loads(r.text)["message"]
+                    print_err(self.config, "Details: " + msg)
+                except ValueError:  # Something wrong in the error message received
+                    pass
             return False
 
     @staticmethod
@@ -352,8 +351,7 @@ class Mason(IMason):
         else:
             self._handle_status(r.status_code)
             if r.text:
-                if self.config.debug:
-                    print r.text
+                print_err(self.config, r.text)
             return False
 
     @staticmethod

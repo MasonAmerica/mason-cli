@@ -3,6 +3,7 @@ import getpass
 import pkg_resources
 import click
 import requests
+import colorama
 
 from masonlib.platform import Platform
 from masonlib.imason import IMason
@@ -11,10 +12,12 @@ from masonlib.imason import IMason
 class Config(object):
     """
     Global config object, utilized to set verbosity of logging events
+    and other flags.
     """
 
     def __init__(self):
         self.verbose = False
+        self.no_colorize = False
         self._check_version()
 
     @staticmethod
@@ -38,14 +41,18 @@ pass_config = click.make_pass_decorator(Config, ensure=True)
 @click.group()
 @click.option('--debug', '-d', is_flag=True)
 @click.option('--verbose', '-v', help='show verbose artifact and command details', is_flag=True)
-@click.option('--access_token', help='optional access token if already available')
-@click.option('--id_token', help='optional id token if already available')
+@click.option('--access-token', help='optional access token if already available')
+@click.option('--id-token', help='optional id token if already available')
+@click.option('--no-color', is_flag=True, help='turn off colorized output')
 @pass_config
-def cli(config, debug, verbose, id_token, access_token):
+def cli(config, debug, verbose, id_token, access_token, no_color):
     """mason-cli provides command line interfaces that allow you to register, query, build, and deploy
 your configurations and packages to your devices in the field."""
     config.debug = debug
     config.verbose = verbose
+    config.no_colorize = no_color
+    if not no_color:
+        colorama.init(autoreset=True)
     platform = Platform(config)
     config.mason = platform.get(IMason)
     config.mason.set_id_token(id_token)
