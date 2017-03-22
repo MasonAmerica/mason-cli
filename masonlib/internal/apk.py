@@ -63,6 +63,17 @@ class Apk(IArtifact):
             print "Not a valid APK, only APK's are currently supported"
             return False
 
+        # We don't support anything higher than Marshmallow as a min right now
+        if int(self.apkf.get_min_sdk_version()) > 23:
+            print '\n----------- ERROR -----------\n' \
+                  "File Name: {}\n" \
+                  "Details:\n" \
+                  "  Mason Platform does not currently support applications with a minimum sdk\n" \
+                  "  greater than 23 (Marshmallow). Please lower the minimum sdk value in your\n" \
+                  "  manifest or gradle file.\n" \
+                   '-----------------------------\n'.format(self.apkf.filename)
+            return False
+
         # We can safely assume since this cert wasn't provided that we're dealing with a v2 signed apk.
         if not self.apkf.cert_text:
             print '\n----------- ERROR -----------\n' \
