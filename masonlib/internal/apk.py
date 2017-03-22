@@ -6,7 +6,6 @@ from masonlib.internal.artifacts import IArtifact
 
 
 class Apk(IArtifact):
-
     def __init__(self, apkf):
         self.apkf = apkf
         self.name = self.apkf.package
@@ -17,26 +16,25 @@ class Apk(IArtifact):
     def parse(config, apk):
         if not os.path.isfile(apk):
             print 'No file provided'
-            return False
+            return None
 
         apk_abs = APK(apk)
         apkf = Apk(apk_abs)
 
         # Bail on non valid apk
-        if not apkf.is_valid():
-            print "Not a valid APK, only APK's are currently supported"
-            return False
+        if not apkf or not apkf.is_valid():
+            return None
 
         # Check for 'Android Debug' CN for the given artifact, disallow upload
         for line in apkf.details:
             if re.search('Subject:', line):
                 if re.search('Android Debug', line):
-                    print '\n------------------WARNING------------------\n' \
+                    print '\n----------- ERROR -----------\n' \
                           'Not allowing android debug key signed apk. \n' \
                           'Please sign the APK with your release keys \n' \
                           'before attempting to upload.               \n' \
-                          '------------------WARNING------------------\n'
-                    return False
+                          '-----------------------------\n'
+                    return None
 
         print '------------ APK ------------'
         print 'File Name: {}'.format(apk)
@@ -58,7 +56,27 @@ class Apk(IArtifact):
         except ValueError as err:
             print "Error in configuration file: {}".format(err)
             return False
-        return self.apkf.is_valid_APK()
+
+        # TODO: Move this entire validation to service side.
+        # if not parsed well by apk_parse
+        if not self.apkf.is_valid_APK():
+            print "Not a valid APK, only APK's are currently supported"
+            return False
+
+        # We can safely assume since this cert wasn't provided that we're dealing with a v2 signed apk.
+        if not self.apkf.cert_text:
+            print '\n----------- ERROR -----------\n' \
+                  "File Name: {}\n" \
+                  "Details:\n" \
+                  "  Mason Platform does not currently support v2 signing scheme for APK's.\n" \
+                  "  Full Apk (v2) signing is included for Nougat devices and an option in \n" \
+                  "  Android Studio 2.3+. Please select to either sign the APK with both v1 \n" \
+                  "  (Jar Signature) and v2 (Full APK Signature) or v1 alone. For further\n" \
+                  "  details reference https://source.android.com/security/apksigning/index.html#\n" \
+                  '-----------------------------\n'.format(self.apkf.filename)
+            return False
+
+        return True
 
     def get_content_type(self):
         return 'application/vnd.android.package-archive'
