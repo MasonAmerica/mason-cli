@@ -43,3 +43,37 @@ def print_msg(config, msg):
         print msg
     else:
         print colorama.Fore.GREEN + msg
+
+
+def format_errors(config, response):
+    """
+    Makes an effort to parse body of the `response` object as JSON, and if so, looks for the
+    following standard field schema:
+    ::
+
+        {
+            'error': 'error name',
+            'details' : 'description of error',
+            'itemized' : [
+                {
+                    'code': 'xxx',
+                    'message': 'specifics'
+                },..
+            ]
+        }
+
+    If JSON is not detected, just prints `body` as text. Colorizes in red if the option is set in
+    `config`.
+
+    :param config: Global config object
+    :param response: Text containing errors. Can be `None`
+    """
+    try:
+        err_result = response.json()
+        print_err(config, "Error: {} ('{}')".format(err_result['error'], err_result['details']))
+        if 'itemized' in err_result:
+            for item in err_result['itemized']:
+                print_err(config, u"  \u25b6 {} (code: '{}')".format(item["message"], item["code"]))
+    except ValueError:
+        if response.text:
+            print_err(config, response.text)

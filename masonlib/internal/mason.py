@@ -1,10 +1,10 @@
 import base64
 import json
 import os.path
-import requests
-
-from tqdm import tqdm
 from urlparse import urlparse
+
+import requests
+from tqdm import tqdm
 
 from masonlib.imason import IMason
 from masonlib.internal.apk import Apk
@@ -12,7 +12,7 @@ from masonlib.internal.media import Media
 from masonlib.internal.os_config import OSConfig
 from masonlib.internal.persist import Persist
 from masonlib.internal.store import Store
-from masonlib.internal.utils import hash_file, print_err
+from masonlib.internal.utils import hash_file, print_err, format_errors
 
 
 class Mason(IMason):
@@ -71,21 +71,14 @@ class Mason(IMason):
     def register(self, binary):
         if not self.config.skip_verify:
             response = raw_input('Continue register? (y)')
-            if not response or response.lower() == 'y':
-                if not self._register_artifact(binary):
-                    print 'Unable to register artifact'
-                    return False
-                else:
-                    return True
-            else:
+            if response and response.lower() != 'y':
                 print 'Artifact register aborted'
                 return False
+        if not self._register_artifact(binary):
+            print 'Unable to register artifact'
+            return False
         else:
-            if not self._register_artifact(binary):
-                print 'Unable to register artifact'
-                return False
-            else:
-                return True
+            return True
 
     def _register_artifact(self, binary):
         if not self._validate_credentials():
@@ -215,8 +208,7 @@ class Mason(IMason):
         else:
             print 'Unable to register artifact: {}'.format(r.status_code)
             self._handle_status(r.status_code)
-            if r.text:
-                print_err(self.config, r.text)
+            format_errors(self.config, r)
             return False
 
     @staticmethod

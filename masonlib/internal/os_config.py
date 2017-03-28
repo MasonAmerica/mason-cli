@@ -43,8 +43,8 @@ class OSConfig(IArtifact):
             return False
         try:
             value = int(self.version)
-            if value > 2147483647:
-                raise ValueError('The os configuration version cannot be larger than MAX_INT (2147483647)')
+            if value > 2147483647 or value < 0:
+                raise ValueError('The os configuration version cannot be negative or larger than MAX_INT (2147483647)')
         except ValueError as err:
             print 'Error in configuration file: {}'.format(err)
             return False
