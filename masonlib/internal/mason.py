@@ -343,7 +343,12 @@ class Mason(IMason):
         else:
             self._handle_status(r.status_code)
             if r.text:
-                print_err(self.config, r.text)
+                try:
+                    msg = json.loads(r.text)["data"]
+                    print_err(self.config, "Details: " + msg)
+                except (KeyError, ValueError):
+                    # Something wrong in the error message received, just show what we got (ugliness warning!)
+                    print_err(self.config, r.text)
             return False
 
     @staticmethod
