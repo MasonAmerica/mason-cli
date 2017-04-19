@@ -151,10 +151,15 @@ class Mason(IMason):
             data = json.loads(r.text)
             return data
         else:
-            print 'Unable to get signed url: {}'.format(r.status_code)
+            if self.config.debug:  # only show for --debug as this is an implementation detail
+                print 'Unable to get signed url: {}'.format(r.status_code)
             self._handle_status(r.status_code)
             if r.text:
-                print_err(self.config, r.text)
+                try:
+                    msg = json.loads(r.text)["error"]["details"]
+                    print_err(self.config, "Details: " + msg)
+                except (KeyError, ValueError):  # Something wrong in the error message received
+                    print_err(self.config, r.text)
             return None
 
     def _get_signed_url_request_headers(self, md5):

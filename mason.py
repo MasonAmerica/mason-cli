@@ -39,7 +39,7 @@ pass_config = click.make_pass_decorator(Config, ensure=True)
 
 
 @click.group()
-@click.option('--debug', '-d', is_flag=True)
+@click.option('--debug', '-d', is_flag=True, help='show additional debug information where available')
 @click.option('--verbose', '-v', help='show verbose artifact and command details', is_flag=True)
 @click.option('--access-token', help='optional access token if already available')
 @click.option('--id-token', help='optional id token if already available')
