@@ -219,10 +219,13 @@ class APK(object):
             parse the cert text and md5
         :param cert_fname:
         """
-        p = Popen(['openssl', 'pkcs7', '-inform', 'DER', '-noout', '-print_certs', '-text'], stdout=PIPE, stdin=PIPE)
-        data = p.communicate(input=self.get_file('META-INF/CERT.RSA'))[0].split('\n')
-
-        self.cert_text = data
+        p = Popen(['openssl', 'pkcs7', '-inform', 'DER', '-noout', '-print_certs', '-text'], stdout=PIPE, stdin=PIPE,
+                  stderr=PIPE)
+        data = p.communicate(input=self.get_file('META-INF/CERT.RSA'))
+        out = data[0].split('\n')
+        err = data[1].split('\n')
+        if not 'unable to load PKCS7 object' in err and out:
+            self.cert_text = out
 
     def is_valid_APK(self):
         """
