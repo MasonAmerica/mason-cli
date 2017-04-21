@@ -31,7 +31,7 @@ class Config(object):
                     print '\n==================== NOTICE ====================\n' \
                           'A newer version of the mason-cli is available.\n' \
                           'Run:\n' \
-                          '    `pip install --upgrade git+git://git@github.com/MasonAmerica/mason-cli.git`\n' \
+                          '    `pip install --upgrade git+https://git@github.com/MasonAmerica/mason-cli.git`\n' \
                           'to upgrade to the latest version.\n' \
                           '==================== NOTICE ====================\n'
 
