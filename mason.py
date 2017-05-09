@@ -89,20 +89,24 @@ def apk(config, apks):
 
 
 @register.command()
-@click.argument('yaml')
+@click.argument('yamls', nargs=-1)
 @pass_config
-def config(config, yaml):
+def config(config, yamls):
     """Register config artifacts.
 
-         YAML - The yaml file describing the configuration.
+         YAML - One or more yaml file describing a configuration.
 
        ex:\n
          mason register config test.yml
+
+       multiple in a directory:\n
+         mason register config configs/*.yml
     """
-    if config.verbose:
-        click.echo('Registering {}...'.format(yaml))
-    if config.mason.parse_os_config(yaml):
-        config.mason.register(yaml)
+    for yaml in yamls:
+        if config.verbose:
+            click.echo('Registering {}...'.format(yaml))
+        if config.mason.parse_os_config(yaml):
+            config.mason.register(yaml)
 
 
 @register.command()
@@ -170,41 +174,45 @@ def deploy(config, skip_verify, push):
 @deploy.command()
 @click.argument('name')
 @click.argument('version')
-@click.argument('group')
+@click.argument('groups', nargs=-1)
 @pass_config
-def apk(config, name, version, group):
+def apk(config, name, version, groups):
     """Deploy apk artifacts.
 
          NAME - The package name of the apk to be deployed\n
          VERSION - The versionCode of the apk\n
-         GROUP - The target group to deploy to
+         GROUP(s) - The target group(s) to deploy to
 
        As an example, a registered apk:\n
            package_name: com.test.app\n
            version_code: 3
 
        to deploy to group `development` becomes:\n
-         mason deploy com.test.app 3 development
+         mason deploy apk com.test.app 3 development\n
+
+       or to deploy to multiple groups:\n
+         mason deploy apk com.test.app 3 development staging production
 
        this can be used in conjunction with the --push argument
     """
-    if config.verbose:
-        click.echo('Deploying {}:{}...'.format(name, version))
-    if not config.mason.deploy("apk", name, version, group, config.push):
-        exit('Unable to deploy item')
+    for group in groups:
+        if config.verbose:
+            click.echo('Deploying {}:{}...'.format(name, version))
+        if not config.mason.deploy("apk", name, version, group, config.push):
+            exit('Unable to deploy item')
 
 
 @deploy.command()
 @click.argument('name')
 @click.argument('version')
-@click.argument('group')
+@click.argument('groups', nargs=-1)
 @pass_config
-def config(config, name, version, group):
+def config(config, name, version, groups):
     """Deploy config artifacts.
 
          NAME - The name of the configuration to be deployed\n
          VERSION - The version of the configuration to be deployed\n
-         GROUP - The target group to deploy to
+         GROUP(s) - The target group(s) to deploy to
 
        As an example, a registered yaml:\n
          os:\n
@@ -212,14 +220,18 @@ def config(config, name, version, group):
            version: 5\n
 
        to deploy to group `development` becomes:\n
-         mason deploy mason-test 5 development
+         mason deploy config mason-test 5 development
+
+       or to deploy to multiple groups:\n
+         mason deploy config mason-test 5 development staging production
 
        this can be used in conjunction with the --push argument
     """
-    if config.verbose:
-        click.echo('Deploying {}:{}...'.format(name, version))
-    if not config.mason.deploy("config", name, version, group, config.push):
-        exit('Unable to deploy item')
+    for group in groups:
+        if config.verbose:
+            click.echo('Deploying {}:{}...'.format(name, version))
+        if not config.mason.deploy("config", name, version, group, config.push):
+            exit('Unable to deploy item')
 
 
 @cli.command()
