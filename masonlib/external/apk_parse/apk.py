@@ -216,7 +216,7 @@ class APK(object):
 
     def parse_cert(self):
         """
-            parse the cert text and md5
+            parse the cert text
         :param cert_fname:
         """
         p = Popen(['openssl', 'pkcs7', '-inform', 'DER', '-noout', '-print_certs', '-text'], stdout=PIPE, stdin=PIPE,
@@ -226,6 +226,14 @@ class APK(object):
         err = data[1].split('\n')
         if not 'unable to load PKCS7 object' in err and out:
             self.cert_text = out
+        else:
+            # try fallback to keytool if it exists
+            p = Popen(['keytool', '-list', '-printcert', '-jarfile', self.get_filename()], stdout=PIPE, stdin=PIPE, stderr=PIPE)
+            data = p.communicate()
+            out = data[0].split('\n')
+            err = data[1].split('\n')
+            if not 'unable to load PKCS7 object' in err and out:
+                self.cert_text = out
 
     def is_valid_APK(self):
         """
