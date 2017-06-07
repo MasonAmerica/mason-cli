@@ -27,7 +27,7 @@ class Apk(IArtifact):
 
         # Check for 'Android Debug' CN for the given artifact, disallow upload
         for line in apkf.details:
-            if re.search('Subject:', line):
+            if re.search('Subject:', line) or re.search('Owner:', line):
                 if re.search('Android Debug', line):
                     print '\n----------- ERROR -----------\n' \
                           'Not allowing android debug key signed apk. \n' \
