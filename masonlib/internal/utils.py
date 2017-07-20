@@ -44,6 +44,7 @@ def print_msg(config, msg):
     else:
         print colorama.Fore.GREEN + msg
 
+
 def format_errors(config, response):
     """
     Makes an effort to parse body of the `response` object as JSON, and if so, looks for the
