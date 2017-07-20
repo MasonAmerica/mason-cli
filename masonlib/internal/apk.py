@@ -35,6 +35,13 @@ class Apk(IArtifact):
                           'before attempting to upload.               \n' \
                           '-----------------------------\n'
                     return None
+            elif re.search('Not a signed jar file', line):
+                print '\n----------- ERROR -----------\n' \
+                    'No certificate was detected in your APK. \n' \
+                    'Please sign the APK with your release keys \n' \
+                    'before attempting to upload.               \n' \
+                    '-----------------------------\n'
+                return None
 
         print '------------ APK ------------'
         print 'File Name: {}'.format(apk)
