@@ -18,22 +18,6 @@ class Config(object):
     def __init__(self):
         self.verbose = False
         self.no_colorize = False
-        self._check_version()
-
-    @staticmethod
-    def _check_version():
-        r = requests.get('https://raw.githubusercontent.com/MasonAmerica/mason-cli/master/VERSION')
-        current_version = float(pkg_resources.require("mason-cli")[0].version)
-        if r.status_code == 200:
-            if r.text:
-                remote_version = float(r.text)
-                if remote_version > current_version:
-                    print '\n==================== NOTICE ====================\n' \
-                          'A newer version of the mason-cli is available.\n' \
-                          'Run:\n' \
-                          '    `pip install --upgrade git+https://git@github.com/MasonAmerica/mason-cli.git`\n' \
-                          'to upgrade to the latest version.\n' \
-                          '==================== NOTICE ====================\n'
 
 pass_config = click.make_pass_decorator(Config, ensure=True)
 
@@ -48,6 +32,7 @@ pass_config = click.make_pass_decorator(Config, ensure=True)
 def cli(config, debug, verbose, id_token, access_token, no_color):
     """mason-cli provides command line interfaces that allow you to register, query, build, and deploy
 your configurations and packages to your devices in the field."""
+    _check_version()
     config.debug = debug
     config.verbose = verbose
     config.no_colorize = no_color
@@ -303,6 +288,21 @@ def version():
         click.echo('Originally written by Adnan Begovic')
     except pkg_resources.DistributionNotFound:
         click.echo('Unable to retrieve version information')
+
+
+def _check_version():
+    r = requests.get('https://raw.githubusercontent.com/MasonAmerica/mason-cli/master/VERSION')
+    current_version = float(pkg_resources.require("mason-cli")[0].version)
+    if r.status_code == 200:
+        if r.text:
+            remote_version = float(r.text)
+            if remote_version > current_version:
+                print '\n==================== NOTICE ====================\n' \
+                      'A newer version \'{}\' of the mason-cli is available.\n' \
+                      'Run:\n' \
+                      '    `pip install --upgrade git+https://git@github.com/MasonAmerica/mason-cli.git`\n' \
+                      'to upgrade to the latest version.\n' \
+                      '==================== NOTICE ====================\n'.format(remote_version)
 
 if __name__ == '__main__':
     cli()
