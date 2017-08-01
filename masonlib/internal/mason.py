@@ -401,9 +401,9 @@ class UploadInChunks(object):
 
     def __init__(self, filename, chunksize=1 << 13):
         self.filename = filename
-        self.chunksize = chunksize
-        self.totalsize = os.path.getsize(filename)
-        self.pbar = tqdm(total=self.totalsize, ncols=100, unit='kb', dynamic_ncols=True, unit_scale='kb')
+        self.chunksize = int(chunksize)
+        self.totalsize = os.stat(filename).st_size
+        self.pbar = tqdm(total=self.totalsize, ncols=100, unit='kb', dynamic_ncols=True)
 
     def __iter__(self):
         with open(self.filename, 'rb') as file_to_upload:

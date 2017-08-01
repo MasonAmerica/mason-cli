@@ -228,12 +228,17 @@ class APK(object):
             self.cert_text = out
         else:
             # try fallback to keytool if it exists
-            p = Popen(['keytool', '-list', '-printcert', '-jarfile', self.get_filename()], stdout=PIPE, stdin=PIPE, stderr=PIPE)
-            data = p.communicate()
-            out = data[0].split('\n')
-            err = data[1].split('\n')
-            if not 'unable to load PKCS7 object' in err and out:
-                self.cert_text = out
+            try:
+                p = Popen(['keytool', '-list', '-printcert', '-jarfile', self.get_filename()], stdout=PIPE, stdin=PIPE, stderr=PIPE)
+                data = p.communicate()
+                out = data[0].split('\n')
+                err = data[1].split('\n')
+                if not 'unable to load PKCS7 object' in err and out:
+                    self.cert_text = out
+            except OSError:
+                self.cert_text = None
+                return
+
 
     def is_valid_APK(self):
         """
