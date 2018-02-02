@@ -285,7 +285,6 @@ def version():
         click.echo('mason (Mason America) ' + version)
         click.echo('Copyright (C) 2016 Mason America')
         click.echo('License Apache 2.0 <https://www.apache.org/licenses/LICENSE-2.0>')
-        click.echo('Originally written by Adnan Begovic')
     except pkg_resources.DistributionNotFound:
         click.echo('Unable to retrieve version information')
 
