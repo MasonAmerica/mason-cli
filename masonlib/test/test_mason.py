@@ -72,7 +72,7 @@ class MasonTest(unittest.TestCase):
         expected_headers = {'Content-Type': test_apk.get_content_type(),
          'Content-MD5': u'bDMyazQzaDJsaDUzMmszMmprZm9kczlhZHMzNDhhaXNkZml1YW9lcjAzNGY3czkzNDd1MTIz'}
 
-        assert(expected_headers == self.mason._get_signed_url_post_headers(test_apk, test_md5))
+        assert(expected_headers == self.mason._get_content_headers(test_apk, test_md5))
 
     def test__register_to_mason(self):
         apkf = Common.create_mock_apk_file()

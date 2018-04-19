@@ -76,6 +76,9 @@ class Media(IArtifact):
     def get_details(self):
         return self.details
 
+    def get_rawdata(self):
+        return open(self.binary, "rb")
+
     def _validate_bootanimation(self):
         with zipfile.ZipFile(self.binary) as zip_file:
             ret = zip_file.testzip()

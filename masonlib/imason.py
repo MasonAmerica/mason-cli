@@ -48,11 +48,12 @@ class IMason():
         pass
 
     @abstractmethod
-    def register(self, binary):
+    def register(self, binary, legacy):
         """ Register a given binary. Need to call one of the parse commands prior to invoking register to validate
             a given artifact and decorate it with the necessary metadata for service upload.
 
-            :param binary: specify the path of the artifact file"""
+            :param binary: specify the path of the artifact file
+            :param legacy: if true, use the legacy code path for registering artifacts"""
         pass
 
     @abstractmethod

@@ -6,8 +6,9 @@ from masonlib.internal.artifacts import IArtifact
 
 
 class Apk(IArtifact):
-    def __init__(self, apkf):
+    def __init__(self, apkf, apk_path=None):
         self.apkf = apkf
+        self.path = apk_path
         self.name = self.apkf.package
         self.version = self.apkf.get_androidversion_code()
         self.details = self.apkf.cert_text
@@ -19,7 +20,7 @@ class Apk(IArtifact):
             return None
 
         apk_abs = APK(apk)
-        apkf = Apk(apk_abs)
+        apkf = Apk(apk_abs, apk)
 
         # Bail on non valid apk
         if not apkf or not apkf.is_valid():
@@ -123,3 +124,6 @@ class Apk(IArtifact):
 
     def get_details(self):
         return self.details
+
+    def get_rawdata(self):
+        return open(self.path, "rb")

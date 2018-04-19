@@ -115,7 +115,7 @@ def media(config, binary, name, type, version):
     if config.verbose:
         click.echo('Registering {}...'.format(binary))
     if config.mason.parse_media(name, type, version, binary):
-        config.mason.register(binary)
+        config.mason.register(binary, legacy=True)
 
 
 @cli.command()

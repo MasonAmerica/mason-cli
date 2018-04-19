@@ -68,25 +68,26 @@ class Mason(IMason):
         self.artifact = os_config
         return True
 
-    def register(self, binary):
+    def register(self, binary, legacy=False):
         if not self.config.skip_verify:
             response = raw_input('Continue register? (y)')
             if response and response.lower() != 'y':
                 print 'Artifact register aborted'
                 return False
-        if not self._register_artifact(binary):
+        if not self._register_artifact(binary, legacy):
             print 'Unable to register artifact'
             return False
         else:
             return True
 
-    def _register_artifact(self, binary):
+    def _register_artifact(self, binary, legacy):
         if not self._validate_credentials():
             return False
 
         sha1 = hash_file(binary, 'sha1', True)
         if self.config.verbose:
             print 'File SHA1: {}'.format(sha1)
+
         md5 = hash_file(binary, 'md5', False)
         if self.config.verbose:
             print 'File MD5: {}'.format(hash_file(binary, 'md5', True))
@@ -95,6 +96,14 @@ class Mason(IMason):
         if not customer:
             print 'Could not retrieve customer information'
             return False
+
+        # Publish to mason services
+        if not legacy:
+            return self._publish_to_mason(customer, sha1, self.artifact)
+
+        # LEGACY PATH for media (bootanimations) alone for now since we don't yet
+        # force customers to put versions inside the bootanimation ZIP file even
+        # though the server supports it (there's some doc work here)
 
         # Get the signed url data for the user and artifact
         signed_url_data = self._request_signed_url(customer, self.artifact, md5)
@@ -112,11 +121,7 @@ class Mason(IMason):
         if not self._upload_to_signed_url(signed_request_url, binary, self.artifact, md5):
             return False
 
-        # Publish to mason services
-        if not self._register_to_mason(customer, download_url, sha1, self.artifact):
-            return False
-
-        return True
+        return self._register_to_mason_legacy(customer, download_url, sha1, self.artifact)
 
     def _request_user_info(self):
         headers = {'Authorization': 'Bearer {}'.format(self.access_token)}
@@ -175,7 +180,7 @@ class Mason(IMason):
 
     def _upload_to_signed_url(self, url, artifact, artifact_data, md5):
         print 'Uploading artifact...'
-        headers = self._get_signed_url_post_headers(artifact_data, md5)
+        headers = self._get_content_headers(artifact_data, md5)
         artifact_file = open(artifact, 'rb')
         iterable = UploadInChunks(artifact_file.name, chunksize=10)
 
@@ -191,12 +196,12 @@ class Mason(IMason):
             return False
 
     @staticmethod
-    def _get_signed_url_post_headers(artifact_data, md5):
+    def _get_content_headers(artifact_data, md5):
         base64encodedmd5 = base64.b64encode(md5).decode('utf-8')
         return {'Content-Type': artifact_data.get_content_type(),
                 'Content-MD5': base64encodedmd5}
 
-    def _register_to_mason(self, customer, download_url, sha1, artifact_data):
+    def _register_to_mason_legacy(self, customer, download_url, sha1, artifact_data):
         print 'Registering to mason services...'
         headers = {'Content-Type': 'application/json',
                    'Authorization': 'Bearer {}'.format(self.id_token)}
@@ -211,6 +216,22 @@ class Mason(IMason):
             print 'Artifact registered.'
             return True
         else:
+            print 'Unable to register artifact: {}'.format(r.status_code)
+            self._handle_status(r.status_code)
+            format_errors(self.config, r)
+            return False
+
+    def _publish_to_mason(self, customer, sha1, artifact):
+        print 'Registering to mason services...'
+        headers = {'Authorization': 'Bearer {}'.format(self.id_token)}
+
+        url = self.store.registry_publish_url() + '/{0}/'.format(customer)
+        with artifact.get_rawdata() as rawdata:
+            files = {'binary': rawdata}
+            r = requests.post(url, headers=headers, files=files, verify=False)
+            if r.status_code == 200:
+                print 'Artifact validated and published successfully.'
+                return True
             print 'Unable to register artifact: {}'.format(r.status_code)
             self._handle_status(r.status_code)
             format_errors(self.config, r)

@@ -6,8 +6,9 @@ from masonlib.internal.artifacts import IArtifact
 
 class OSConfig(IArtifact):
 
-    def __init__(self, ecosystem):
+    def __init__(self, ecosystem, path=None):
         self.ecosystem = ecosystem
+        self.path = path
         if ecosystem:
             self.os = self.ecosystem['os']
             self.name = str(self.os['name'])
@@ -20,7 +21,7 @@ class OSConfig(IArtifact):
             return None
 
         ecosystem = OSConfig._load_ecosystem(config_yaml)
-        os_config = OSConfig(ecosystem)
+        os_config = OSConfig(ecosystem, config_yaml)
 
         # Bail on non valid os config
         if not os_config.is_valid():
@@ -70,6 +71,9 @@ class OSConfig(IArtifact):
 
     def get_details(self):
         return self.ecosystem
+
+    def get_rawdata(self):
+        return open(self.path, "rb")
 
     @staticmethod
     def _load_ecosystem(path):

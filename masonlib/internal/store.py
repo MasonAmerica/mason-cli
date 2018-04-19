@@ -8,6 +8,7 @@ class Store(object):
     USER_INFO_URL = 'user_info_url'
     REGISTRY_SIGNED_URL = 'registry_signed_url'
     REGISTRY_ARTIFACT_URL = 'registry_artifact_url'
+    REGISTRY_PUBLISH_URL = 'registry_publish_url'
     BUILDER_URL = 'builder_url'
     DEPLOY_URL = 'deploy_url'
 
@@ -50,6 +51,7 @@ class Store(object):
             self.REGISTRY_ARTIFACT_URL: 'https://platform.bymason.com/api/registry/artifacts',
             self.REGISTRY_SIGNED_URL: 'https://platform.bymason.com/api/registry/signedurl',
             self.BUILDER_URL: 'https://6homlwnywe.execute-api.us-west-2.amazonaws.com/production/api/builder',
+            self.REGISTRY_PUBLISH_URL: 'https://platform.bymason.com/api/registry/publish',
             self.DEPLOY_URL: 'https://platform.bymason.com/api/deploy'
         }
 
@@ -76,6 +78,9 @@ class Store(object):
 
     def registry_artifact_url(self):
         return self._get(self.REGISTRY_ARTIFACT_URL)
+
+    def registry_publish_url(self):
+        return self._get(self.REGISTRY_PUBLISH_URL)
 
     def builder_url(self):
         return self._get(self.BUILDER_URL)

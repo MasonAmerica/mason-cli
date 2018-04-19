@@ -37,3 +37,7 @@ class IArtifact():
     @abstractmethod
     def get_details(self):
         pass
+
+    @abstractmethod
+    def get_rawdata(self):
+        pass
