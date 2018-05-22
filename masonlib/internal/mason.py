@@ -228,7 +228,7 @@ class Mason(IMason):
         url = self.store.registry_publish_url() + '/{0}/'.format(customer)
         with artifact.get_rawdata() as rawdata:
             files = {'binary': rawdata}
-            r = requests.post(url, headers=headers, files=files, verify=False)
+            r = requests.post(url, headers=headers, files=files)
             if r.status_code == 200:
                 print 'Artifact validated and published successfully.'
                 return True
