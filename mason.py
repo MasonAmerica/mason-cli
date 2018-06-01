@@ -192,6 +192,37 @@ def apk(config, name, version, groups):
 @click.argument('version')
 @click.argument('groups', nargs=-1)
 @pass_config
+def ota(config, name, version, groups):
+    """Deploy ota artifacts.
+
+         NAME - The name of the ota to be deployed (usually mason-os)\n
+         VERSION - The release version (semantic version) of the ota  \n
+         GROUP(s) - The target group(s) to deploy to
+
+       As an example, Mason OS 2.0.0 (Nougat Release):\n
+           name: mason-os\n
+           release version: 2.0.0
+
+       to deploy to group `development` becomes:\n
+         mason deploy ota mason-os 2.0.0 development\n
+
+       or to deploy to multiple groups:\n
+         mason deploy ota mason-os 2.0.0 development staging production
+
+       this can be used in conjunction with the --push argument
+    """
+    for group in groups:
+        if config.verbose:
+            click.echo('Deploying {}:{}...'.format(name, version))
+        if not config.mason.deploy("ota", name, version, group, config.push):
+            exit('Unable to deploy item')
+
+
+@deploy.command()
+@click.argument('name')
+@click.argument('version')
+@click.argument('groups', nargs=-1)
+@pass_config
 def config(config, name, version, groups):
     """Deploy config artifacts.
 
