@@ -18,6 +18,7 @@ class Config(object):
     def __init__(self):
         self.verbose = False
         self.no_colorize = False
+        self.output = None
 
 pass_config = click.make_pass_decorator(Config, ensure=True)
 
@@ -144,6 +145,34 @@ def build(config, project, version):
         click.echo('Starting build for {}:{}...'.format(project, version))
     if not config.mason.build(project, version):
         exit('Unable to start build')
+
+
+@cli.group()
+@click.option('--output', type=click.Choice(('text', 'json')), default='text', help='Output format of the command')
+@pass_config
+def info(config, output):
+    """Get info from various services."""
+    config.output = output
+
+
+@info.command()
+@click.option('--build-id', help='Optional build id')
+@pass_config
+def build(config, build_id):
+    """Get info about builds.
+    """
+    if not config.mason.build_info(build_id, config.output):
+        exit('Unable to get build info')
+
+
+@info.command()
+@click.option('--type', 'artifact_type', help='Artifact type to show', default=None)
+@pass_config
+def artifact(config, artifact_type):
+    """Get info about artifacts.
+    """
+    if not config.mason.artifact_info(artifact_type, output=config.output):
+        exit('Unable to get apk info')
 
 
 @cli.group()

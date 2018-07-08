@@ -1,4 +1,6 @@
 import base64
+import collections
+import datetime
 import json
 import os.path
 from urlparse import urlparse
@@ -13,6 +15,13 @@ from masonlib.internal.os_config import OSConfig
 from masonlib.internal.persist import Persist
 from masonlib.internal.store import Store
 from masonlib.internal.utils import hash_file, print_err, format_errors
+
+
+OUTPUT_TIME_FORMAT = '%Y-%m-%d %H:%M:%S'
+
+
+class MasonApiException(Exception):
+    pass
 
 
 class Mason(IMason):
@@ -281,8 +290,11 @@ class Mason(IMason):
         print 'Queueing build...'
         r = requests.post(builder_url, headers=headers, json=payload)
         if r.status_code == 200:
+            data = r.json()['data']
             hostname = urlparse(self.store.deploy_url()).hostname
-            print 'Build queued.\nYou can see the status of your build at https://{}/builds'.format(hostname)
+            print 'Build queued.'
+            print 'Id: {}'.format(data['id'])
+            print 'You can see the status of your build at https://{}/builds'.format(hostname)
             return True
         else:
             print_err(self.config, 'Unable to enqueue build: {}'.format(r.status_code))
@@ -300,6 +312,159 @@ class Mason(IMason):
         return {'customer': customer,
                 'project': project,
                 'version': str(version)}
+
+    def api_build_info(self):
+        if not self._validate_credentials():
+            raise MasonApiException('Invalid credentials')
+
+        customer = self._get_customer()
+        if not customer:
+            raise MasonApiException('Could not retrieve customer')
+
+        headers = {'Content-Type': 'application/json',
+                   'Authorization': 'Bearer {}'.format(self.id_token)}
+
+        builder_url = self.store.builder_url() + '/{0}/'.format(customer) + 'jobs'
+        r = requests.get(builder_url, headers=headers)
+        if r.status_code != 200:
+            r.raise_for_status()
+        data = r.json()['data']
+
+        def fmt_ts(ts):
+            return datetime.datetime.fromtimestamp(ts / 1000.)
+
+        for build in data:
+            yield collections.OrderedDict((
+                ('id', build['id']),
+                ('project', build['project']),
+                ('version', build['configVersion']),
+                ('status', build['status']),
+                ('result', build.get('result', '')),
+                ('submitted', fmt_ts(build['submittedAt'])),
+                ('updated', fmt_ts(build['lastUpdatedAt']))
+            ))
+
+    def build_info(self, build_id=None, output=None):
+        output_choices = ('text', 'json')
+        if output is None:
+            output = output_choices[0]
+        if output not in output_choices:
+            raise ValueError(
+                'output must be one of the following: {!r}'
+                .format(output_choices))
+
+        try:
+            data = list(self.api_build_info())
+
+        except MasonApiException as e:
+            print(e.message)
+            return False
+
+        except requests.exceptions.HTTPError as e:
+            r = e.request
+            print_err(self.config, 'Unable to retrieve build info: {}'.format(r.status_code))
+            self._handle_status(status_code)
+            if r.text:
+                try:
+                    msg = json.loads(r.text)["message"]
+                    print_err(self.config, "Details: " + msg)
+                except ValueError:  # Something wrong in the error message received
+                    pass
+            return False
+
+        if build_id is None:
+            filter_fn = lambda build: True
+        else:
+            filter_fn = lambda build: build['id'] == build_id
+
+        if output == 'json':
+            print(json.dumps(filter(filter_fn, data), default=_json_serial))
+
+        else:
+            lines = []
+            for num, build in enumerate(data, start=1):
+                if not filter_fn(build):
+                    continue
+                build['submitted'] = build['submitted'].strftime(OUTPUT_TIME_FORMAT)
+                build['updated'] = build['updated'].strftime(OUTPUT_TIME_FORMAT)
+                pairs = ('  {}: {}'.format(k.capitalize(), v) for k, v in build.items())
+                lines.append(
+                    'Build #{num}\n'
+                    '{info}'
+                    .format(num=num, info='\n'.join(pairs)))
+            print('\n\n'.join(lines))
+        return True
+
+    def api_artifact_info(self):
+        if not self._validate_credentials():
+            raise MasonApiException('Invalid credentials')
+
+        customer = self._get_customer()
+        if not customer:
+            raise MasonApiException('Could not retrieve customer')
+
+        headers = {'Content-Type': 'application/json',
+                   'Authorization': 'Bearer {}'.format(self.id_token)}
+
+        builder_url = self.store.registry_artifact_url() + '/{0}/'.format(customer)
+        r = requests.get(builder_url, headers=headers)
+        if r.status_code != 200:
+            r.raise_for_status()
+        for obj in r.json():
+            yield collections.OrderedDict((
+                ('name', obj['name']),
+                ('type', obj['type']),
+                ('version', obj['version']),
+                ('created',
+                    datetime.datetime.strptime(obj['createdAt'], '%Y-%m-%dT%H:%M:%S.%fZ'))))
+
+    def artifact_info(self, artifact_type=None, output=None):
+        output_choices = ('text', 'json')
+        if output is None:
+            output = output_choices[0]
+        if output not in output_choices:
+            raise ValueError(
+                'output must be one of the following: {!r}'
+                .format(output_choices))
+
+        try:
+            data = list(self.api_artifact_info())
+
+        except MasonApiException as e:
+            print(e.message)
+            return False
+
+        except requests.exceptions.HTTPError as e:
+            r = e.request
+            print_err(self.config, 'Unable to retrieve apk info: {}'.format(r.status_code))
+            self._handle_status(status_code)
+            if r.text:
+                try:
+                    msg = json.loads(r.text)["message"]
+                    print_err(self.config, "Details: " + msg)
+                except ValueError:  # Something wrong in the error message received
+                    pass
+            return False
+
+        if artifact_type is None:
+            filter_fn = lambda artifact: True
+        else:
+            filter_fn = lambda artifact: artifact['type'] == artifact_type
+
+        if output == 'json':
+            print(json.dumps(filter(filter_fn, data), default=_json_serial))
+
+        else:
+            lines = []
+            for num, artifact in enumerate(filter(filter_fn, data), start=1):
+                artifact['created'] = artifact['created'].strftime(OUTPUT_TIME_FORMAT)
+                pairs = ('  {}: {}'.format(k.capitalize(), v) for k, v in artifact.items())
+                lines.append(
+                    'Artifact #{num}\n'
+                    '{info}'
+                    .format(num=num, info='\n'.join(pairs)))
+            print('\n\n'.join(lines))
+        return True
 
     def deploy(self, item_type, name, version, group, push):
         if item_type == 'apk':
@@ -451,3 +616,11 @@ class IterableToFileAdapter(object):
 
     def __len__(self):
         return self.length
+
+
+def _json_serial(obj):
+    """JSON serializer for objects not serializable by default json code"""
+
+    if isinstance(obj, (datetime.datetime, datetime.date)):
+        return obj.isoformat()
+    raise TypeError("Type {} not serializable".format(type(obj)))
