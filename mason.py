@@ -5,6 +5,7 @@ import click
 import requests
 import colorama
 
+import masonlib.external.apk_parse.apk
 from masonlib.platform import Platform
 from masonlib.imason import IMason
 
@@ -43,6 +44,29 @@ your configurations and packages to your devices in the field."""
     config.mason = platform.get(IMason)
     config.mason.set_id_token(id_token)
     config.mason.set_access_token(access_token)
+
+
+@cli.group()
+@pass_config
+def apk(config):
+    """APK commands"""
+    pass
+
+
+@apk.command(help='get a key value from the specified apk')
+@click.argument(
+    'key',
+    type=click.Choice(('versionName', 'versionCode', 'package')))
+@click.argument('apk')
+@pass_config
+def get(config, apk, key):
+    apk_obj = masonlib.external.apk_parse.apk.APK(apk)
+    key_map = {
+        'versionName': apk_obj.get_androidversion_name(),
+        'versionCode': apk_obj.get_androidversion_code(),
+        'package': apk_obj.get_package()
+    }
+    print(key_map[key])
 
 
 @cli.group()
