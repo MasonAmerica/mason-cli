@@ -1,4 +1,6 @@
 #!/usr/bin/env python2
+import sys
+
 import getpass
 import pkg_resources
 import click
@@ -95,7 +97,8 @@ def apk(config, apks):
         if config.verbose:
             click.echo('Registering {}...'.format(app))
         if config.mason.parse_apk(app):
-            config.mason.register(app)
+            if not config.mason.register(app):
+                sys.exit(1)
 
 
 @register.command()
@@ -116,7 +119,8 @@ def config(config, yamls):
         if config.verbose:
             click.echo('Registering {}...'.format(yaml))
         if config.mason.parse_os_config(yaml):
-            config.mason.register(yaml)
+            if not config.mason.register(yaml):
+                sys.exit(1)
 
 
 @register.command()
@@ -140,7 +144,8 @@ def media(config, binary, name, type, version):
     if config.verbose:
         click.echo('Registering {}...'.format(binary))
     if config.mason.parse_media(name, type, version, binary):
-        config.mason.register(binary, legacy=True)
+        if not config.mason.register(binary, legacy=True):
+            sys.exit(1)
 
 
 @cli.command()
@@ -287,7 +292,8 @@ def stage(config, skip_verify, yaml):
     if config.verbose:
         click.echo('Staging {}...'.format(yaml))
     if config.mason.parse_os_config(yaml):
-        config.mason.stage(yaml)
+        if not config.mason.stage(yaml):
+            sys.exit(1)
 
 
 @cli.command()
