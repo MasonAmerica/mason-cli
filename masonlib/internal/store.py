@@ -1,8 +1,10 @@
 import yaml
 import os
 
+CURRENT_CONFIG_VERSION = 1
 
 class Store(object):
+    CONFIG_VERSION = 'config_version'
     CLIENT_ID = 'client_id'
     AUTH_URL = 'auth_url'
     USER_INFO_URL = 'user_info_url'
@@ -15,7 +17,7 @@ class Store(object):
         self.file = file_path
         self.data = self._load_stored_data()
         if not self._validate_data():
-            print 'Resetting credential store...'
+            print 'Resetting config...'
             os.remove(file_path)
             self.data = self._load_stored_data()
 
@@ -40,7 +42,8 @@ class Store(object):
                self.REGISTRY_SIGNED_URL in self.data and \
                self.REGISTRY_ARTIFACT_URL in self.data and \
                self.BUILDER_URL in self.data and \
-               self.DEPLOY_URL in self.data
+               self.DEPLOY_URL in self.data and \
+               self.CONFIG_VERSION in self.data and self.data[self.CONFIG_VERSION] == CURRENT_CONFIG_VERSION
 
     def _default_config(self):
         return {
@@ -49,8 +52,9 @@ class Store(object):
             self.USER_INFO_URL: 'https://bymason.auth0.com/userinfo',
             self.REGISTRY_ARTIFACT_URL: 'https://platform.bymason.com/api/registry/artifacts',
             self.REGISTRY_SIGNED_URL: 'https://platform.bymason.com/api/registry/signedurl',
-            self.BUILDER_URL: 'https://6homlwnywe.execute-api.us-west-2.amazonaws.com/production/api/builder',
-            self.DEPLOY_URL: 'https://platform.bymason.com/api/deploy'
+            self.BUILDER_URL: 'https://platform.bymason.com/api/tracker/builder',
+            self.DEPLOY_URL: 'https://platform.bymason.com/api/deploy',
+            self.CONFIG_VERSION: CURRENT_CONFIG_VERSION
         }
 
     def _get(self, key):

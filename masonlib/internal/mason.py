@@ -285,6 +285,8 @@ class Mason(IMason):
             return self._deploy_apk(name, version, group, push)
         elif item_type == 'config':
             return self._deploy_config(name, version, group, push)
+        elif item_type == 'ota':
+            return self._deploy_ota(name, version, group, push)
         else:
             print 'Unsupported deploy type {}'.format(item_type)
             return False
@@ -311,6 +313,18 @@ class Mason(IMason):
             return False
 
         payload = self._get_deploy_payload(customer, group, name, version, 'config', push)
+        return self._deploy_payload(payload)
+
+    def _deploy_ota(self, name, version, group, push):
+        if not self._validate_credentials():
+            return False
+
+        customer = self._get_customer()
+        if not customer:
+            print 'Could not retrieve customer information'
+            return False
+
+        payload = self._get_deploy_payload(customer, group, name, version, 'ota', push)
         return self._deploy_payload(payload)
 
     def _deploy_payload(self, payload):
