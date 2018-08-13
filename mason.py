@@ -332,6 +332,9 @@ def _check_version():
                       'Run:\n' \
                       '    `pip install --upgrade git+https://git@github.com/MasonAmerica/mason-cli.git`\n' \
                       'to upgrade to the latest version.\n' \
+                      '\n' \
+                      'Release notes: https://github.com/MasonAmerica/mason-cli/releases' \
+                      '\n' \
                       '==================== NOTICE ====================\n'.format(remote_version)
 
 if __name__ == '__main__':
