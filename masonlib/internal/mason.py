@@ -324,6 +324,9 @@ class Mason(IMason):
             print 'Could not retrieve customer information'
             return False
 
+        if name != 'mason-os':
+            print "Warning: Unknown name '{0}' for 'ota' deployments, forcing it to 'mason-os'".format(name)
+            name = 'mason-os'
         payload = self._get_deploy_payload(customer, group, name, version, 'ota', push)
         return self._deploy_payload(payload)
 

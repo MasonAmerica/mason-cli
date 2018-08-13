@@ -314,9 +314,8 @@ def version():
     try:
         version = pkg_resources.require("mason-cli")[0].version
         click.echo('mason (Mason America) ' + version)
-        click.echo('Copyright (C) 2016 Mason America')
+        click.echo('Copyright (C) 2018 Mason America')
         click.echo('License Apache 2.0 <https://www.apache.org/licenses/LICENSE-2.0>')
-        click.echo('Originally written by Adnan Begovic')
     except pkg_resources.DistributionNotFound:
         click.echo('Unable to retrieve version information')
 
@@ -333,6 +332,9 @@ def _check_version():
                       'Run:\n' \
                       '    `pip install --upgrade git+https://git@github.com/MasonAmerica/mason-cli.git`\n' \
                       'to upgrade to the latest version.\n' \
+                      '\n' \
+                      'Release notes: https://github.com/MasonAmerica/mason-cli/releases' \
+                      '\n' \
                       '==================== NOTICE ====================\n'.format(remote_version)
 
 if __name__ == '__main__':
