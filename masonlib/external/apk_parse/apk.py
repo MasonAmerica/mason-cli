@@ -221,12 +221,17 @@ class APK(object):
         """
         p = Popen(['openssl', 'pkcs7', '-inform', 'DER', '-noout', '-print_certs', '-text'], stdout=PIPE, stdin=PIPE,
                   stderr=PIPE)
-        data = p.communicate(input=self.get_file('META-INF/CERT.RSA'))
-        out = data[0].split('\n')
-        err = data[1].split('\n')
-        if not 'unable to load PKCS7 object' in err and out:
-            self.cert_text = out
-        else:
+
+        cert_like = filter(lambda f: re.match("META-INF/.*\.RSA", f), self.zip.namelist())
+        if len(cert_like) > 0:
+            cert_name = cert_like[0]
+            data = p.communicate(input=self.get_file(cert_name))
+            out = data[0].split('\n')
+            err = data[1].split('\n')
+            if not 'unable to load PKCS7 object' in err and out:
+                self.cert_text = out
+
+        if not self.cert_text:
             # try fallback to keytool if it exists
             try:
                 p = Popen(['keytool', '-list', '-printcert', '-jarfile', self.get_filename()], stdout=PIPE, stdin=PIPE, stderr=PIPE)
