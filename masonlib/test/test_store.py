@@ -16,7 +16,7 @@ class StoreTest(unittest.TestCase):
     DEPLOY_URL = 'https://deploy.url.in.the.sky'
 
     def setUp(self):
-        self.store = Store('masonlib/.test_mason.yml')
+        self.store = Store('./.test_mason.yml')
         self._write_test_credentials()
         self.store.reload()
 

@@ -21,6 +21,7 @@ class Common(object):
         mock_apk.get_androidversion_name = MagicMock(return_value=test_package_version)
         mock_apk.get_androidversion_code = MagicMock(return_value=test_package_version_code)
         mock_apk.is_valid_APK = MagicMock(return_value=True)
+        mock_apk.get_min_sdk_version = MagicMock(return_value=23)
         return mock_apk
 
     @staticmethod
