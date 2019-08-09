@@ -29,7 +29,7 @@ class Store(object):
         else:
             with open(self.file, 'r') as stream:
                 try:
-                    config = yaml.load(stream)
+                    config = yaml.load(stream, Loader=yaml.SafeLoader)
                 except yaml.YAMLError as exc:
                     print(exc)
                     return

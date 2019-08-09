@@ -78,7 +78,7 @@ class OSConfig(IArtifact):
 
         with open(path) as data_file:
             try:
-                data = yaml.load(data_file)
+                data = yaml.load(data_file, Loader=yaml.SafeLoader)
                 return data
             except yaml.YAMLError as err:
                 print 'Error in configuration file: {}'.format(err)
