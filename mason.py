@@ -5,6 +5,7 @@ import click
 import os
 import requests
 import colorama
+import packaging.version
 
 from masonlib.platform import Platform
 from masonlib.imason import IMason
@@ -313,9 +314,9 @@ def logout(config):
 def version():
     """Display mason-cli version."""
     try:
-        version = pkg_resources.require("mason-cli")[0].version
-        click.echo('mason (Mason America) ' + version)
-        click.echo('Copyright (C) 2018 Mason America')
+        our_version = pkg_resources.require("mason-cli")[0].version
+        click.echo('Mason Platform CLI ' + our_version)
+        click.echo('Copyright (C) 2019 Mason America (https://www.bymason.com)')
         click.echo('License Apache 2.0 <https://www.apache.org/licenses/LICENSE-2.0>')
     except pkg_resources.DistributionNotFound:
         click.echo('Unable to retrieve version information')
@@ -323,10 +324,10 @@ def version():
 
 def _check_version():
     r = requests.get('https://raw.githubusercontent.com/MasonAmerica/mason-cli/master/VERSION')
-    current_version = float(pkg_resources.require("mason-cli")[0].version)
+    current_version = packaging.version.parse(pkg_resources.require("mason-cli")[0].version)
     if r.status_code == 200:
         if r.text:
-            remote_version = float(r.text)
+            remote_version = packaging.version.parse(r.text)
             if remote_version > current_version:
                 if isMasonDocker():
                     upgrade_command = 'docker pull masonamerica/mason-cli:latest'

@@ -17,7 +17,8 @@ setup(
         'tqdm',
         'pyyaml',
         'six',
-        'colorama'
+        'colorama',
+        'packaging'
     ],
     entry_points='''
         [console_scripts]
