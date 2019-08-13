@@ -2,6 +2,7 @@
 import getpass
 import pkg_resources
 import click
+import os
 import requests
 import colorama
 
@@ -327,15 +328,22 @@ def _check_version():
         if r.text:
             remote_version = float(r.text)
             if remote_version > current_version:
+                if isMasonDocker():
+                    upgrade_command = 'docker pull masonamerica/mason-cli:latest'
+                else:
+                    upgrade_command = 'pip install --upgrade git+https://git@github.com/MasonAmerica/mason-cli.git'
                 print '\n==================== NOTICE ====================\n' \
                       'A newer version \'{}\' of the mason-cli is available.\n' \
                       'Run:\n' \
-                      '    `pip install --upgrade git+https://git@github.com/MasonAmerica/mason-cli.git`\n' \
+                      '    `{}`\n' \
                       'to upgrade to the latest version.\n' \
                       '\n' \
                       'Release notes: https://github.com/MasonAmerica/mason-cli/releases' \
                       '\n' \
-                      '==================== NOTICE ====================\n'.format(remote_version)
+                      '==================== NOTICE ====================\n'.format(remote_version, upgrade_command)
+
+def isMasonDocker():
+    return bool(os.environ.get('MASON_CLI_DOCKER', False))
 
 if __name__ == '__main__':
     cli()

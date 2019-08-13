@@ -1,5 +1,8 @@
 FROM python:2.7-slim
 
+# Set environment variable to check if we are running this image
+ENV MASON_CLI_DOCKER true
+
 # Create non-root user
 RUN useradd -ms /bin/bash masoncli
 
