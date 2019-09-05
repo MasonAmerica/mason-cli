@@ -261,7 +261,7 @@ class Mason(IMason):
         r = requests.post(builder_url, headers=headers, json=payload)
         if r.status_code == 200:
             hostname = urlparse(self.store.deploy_url()).hostname
-            print 'Build queued.\nYou can see the status of your build at https://{}/builds'.format(hostname)
+            print 'Build queued.\nYou can see the status of your build at https://{}/controller/projects/{}'.format(hostname, project)
             return True
         else:
             print_err(self.config, 'Unable to enqueue build: {}'.format(r.status_code))
