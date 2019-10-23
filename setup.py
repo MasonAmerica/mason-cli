@@ -7,9 +7,7 @@ setup(
     name='mason-cli',
     version=version_file.read().strip(),
     py_modules=['mason', 'masonlib.imason', 'masonlib.platform', 'masonlib.internal.mason', 'masonlib.internal.persist', 'masonlib.internal.store',
-                'masonlib.internal.utils', 'masonlib.internal.artifacts', 'masonlib.internal.apk', 'masonlib.internal.media', 'masonlib.internal.os_config',
-                'masonlib.external.apk_parse', 'masonlib.external.apk_parse.apk', 'masonlib.external.apk_parse.bytecode', 'masonlib.external.apk_parse.androconf',
-                'masonlib.external.apk_parse.dvm_permissions', 'masonlib.external.apk_parse.util'],
+                'masonlib.internal.utils', 'masonlib.internal.artifacts', 'masonlib.internal.apk', 'masonlib.internal.media', 'masonlib.internal.os_config'],
     include_package_data=True,
     install_requires=[
         'click',

@@ -7,3 +7,4 @@ requests[security]==2.22.0
 six==1.10.0
 tqdm==4.11.2
 colorama==0.3.7
+pyaxmlparser==0.3.20

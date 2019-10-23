@@ -38,7 +38,7 @@ class MasonTest(unittest.TestCase):
         apkf = Common.create_mock_apk_file()
         store = Common.create_mock_store()
 
-        test_md5 = 'l32k43h2lh532k32jkfods9ads348aisdfiuaoer034f7s9347u123'
+        test_md5 = b'l32k43h2lh532k32jkfods9ads348aisdfiuaoer034f7s9347u123'
         test_customer = 'mason'
         test_apk = Apk(apkf)
 
@@ -62,7 +62,7 @@ class MasonTest(unittest.TestCase):
         apkf = Common.create_mock_apk_file()
         store = Common.create_mock_store()
 
-        test_md5 = 'l32k43h2lh532k32jkfods9ads348aisdfiuaoer034f7s9347u123'
+        test_md5 = b'l32k43h2lh532k32jkfods9ads348aisdfiuaoer034f7s9347u123'
         test_apk = Apk(apkf)
 
         self.mason.set_id_token('09ads09a8dsfa0re')

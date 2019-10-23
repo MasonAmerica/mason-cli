@@ -1,16 +1,19 @@
 import os
 import re
 
-from masonlib.external.apk_parse.apk import APK
+from pyaxmlparser import APK
+from pyaxmlparser.core import FileNotPresent
 from masonlib.internal.artifacts import IArtifact
+from subprocess import Popen, PIPE
 
 
 class Apk(IArtifact):
-    def __init__(self, apkf):
+    def __init__(self, apkf, cert_finder=None):
         self.apkf = apkf
+        self.cert_finder = cert_finder or CertFinder(apkf)
         self.name = self.apkf.package
         self.version = self.apkf.get_androidversion_code()
-        self.details = self.apkf.cert_text
+        self.details = None
 
     @staticmethod
     def parse(config, apk):
@@ -26,7 +29,7 @@ class Apk(IArtifact):
             return None
 
         # Check for 'Android Debug' CN for the given artifact, disallow upload
-        for line in apkf.details:
+        for line in apkf.get_details().split('\n'):
             if re.search('Subject:', line) or re.search('Owner:', line):
                 if re.search('Android Debug', line):
                     print('\n----------- ERROR -----------\n' \
@@ -50,7 +53,7 @@ class Apk(IArtifact):
         print('Version Name: {}'.format(apkf.apkf.get_androidversion_name()))
         print('Version Code: {}'.format(apkf.apkf.get_androidversion_code()))
         if config.verbose:
-            for line in apkf.details:
+            for line in apkf.get_details():
                 print(line)
         print('-----------------------------')
         return apkf
@@ -82,7 +85,7 @@ class Apk(IArtifact):
             return False
 
         # We can safely assume since this cert wasn't provided that we're dealing with a v2 signed apk.
-        if not self.apkf.cert_text:
+        if not self.get_details():
             print('\n----------- ERROR -----------\n' \
                   "File Name: {}\n" \
                   "Details:\n" \
@@ -122,4 +125,20 @@ class Apk(IArtifact):
         return meta_data
 
     def get_details(self):
+        if not self.details:
+            self.details = self.cert_finder.find()
         return self.details
+
+
+class CertFinder:
+    def __init__(self, apkf):
+        self.apkf = apkf
+
+    def find(self):
+        try:
+            cert = self.apkf.get_file("META-INF/CERT.RSA")
+            p = Popen(['openssl', 'pkcs7', '-inform', 'DER', '-noout', '-print_certs', '-text'],
+                      stdout=PIPE, stdin=PIPE, stderr=PIPE)
+            return p.communicate(input=cert)[0].decode('utf-8')
+        except FileNotPresent:
+            return None
