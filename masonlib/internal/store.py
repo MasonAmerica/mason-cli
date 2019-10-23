@@ -17,7 +17,7 @@ class Store(object):
         self.file = file_path
         self.data = self._load_stored_data()
         if not self._validate_data():
-            print 'Resetting config...'
+            print('Resetting config...')
             os.remove(file_path)
             self.data = self._load_stored_data()
 

@@ -16,7 +16,7 @@ class OSConfig(IArtifact):
     @staticmethod
     def parse(config, config_yaml):
         if not os.path.isfile(config_yaml):
-            print 'No file provided'
+            print('No file provided')
             return None
 
         ecosystem = OSConfig._load_ecosystem(config_yaml)
@@ -24,18 +24,18 @@ class OSConfig(IArtifact):
 
         # Bail on non valid os config
         if not os_config.is_valid():
-            print "Not a valid os configuration, please see https://docs.bymason.com for further details."
+            print("Not a valid os configuration, please see https://docs.bymason.com for further details.")
             return None
 
-        print '--------- OS Config ---------'
-        print 'File Name: {}'.format(config_yaml)
-        print 'File size: {}'.format(os.path.getsize(config_yaml))
-        print 'Name: {}'.format(os_config.name)
-        print 'Version: {}'.format(os_config.version)
+        print('--------- OS Config ---------')
+        print('File Name: {}'.format(config_yaml))
+        print('File size: {}'.format(os.path.getsize(config_yaml)))
+        print('Name: {}'.format(os_config.name))
+        print('Version: {}'.format(os_config.version))
         if config.verbose:
-            for k, v in os_config.ecosystem.iteritems():
-                print k, v
-        print '-----------------------------'
+            for k, v in os_config.ecosystem.items():
+                print(k, v)
+        print('-----------------------------')
         return os_config
 
     def is_valid(self):
@@ -46,7 +46,7 @@ class OSConfig(IArtifact):
             if value > 2147483647 or value < 0:
                 raise ValueError('The os configuration version cannot be negative or larger than MAX_INT (2147483647)')
         except ValueError as err:
-            print 'Error in configuration file: {}'.format(err)
+            print('Error in configuration file: {}'.format(err))
             return False
         return True
 
@@ -81,5 +81,5 @@ class OSConfig(IArtifact):
                 data = yaml.load(data_file, Loader=yaml.SafeLoader)
                 return data
             except yaml.YAMLError as err:
-                print 'Error in configuration file: {}'.format(err)
+                print('Error in configuration file: {}'.format(err))
                 return None

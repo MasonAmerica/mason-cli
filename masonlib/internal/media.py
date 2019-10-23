@@ -16,29 +16,29 @@ class Media(IArtifact):
     @staticmethod
     def parse(config, name, type, version, binary):
         if not os.path.isfile(binary):
-            print 'No file provided'
+            print('No file provided')
             return None
 
         media = Media(name, type, version, binary)
 
         # Bail on non valid apk
         if not media.is_valid():
-            print "Not a valid {}, see type requirements in the documentation".format(type)
+            print("Not a valid {}, see type requirements in the documentation".format(type))
             return None
 
-        print '----------- MEDIA -----------'
-        print 'File Name: {}'.format(media.binary)
-        print 'File size: {}'.format(os.path.getsize(binary))
-        print 'Name: {}'.format(media.name)
-        print 'Version: {}'.format(media.version)
-        print 'Type: {}'.format(media.type)
+        print('----------- MEDIA -----------')
+        print('File Name: {}'.format(media.binary))
+        print('File size: {}'.format(os.path.getsize(binary)))
+        print('Name: {}'.format(media.name))
+        print('Version: {}'.format(media.version))
+        print('Type: {}'.format(media.type))
         if config.verbose:
             if media.details:
-                print 'Details: '
+                print('Details: ')
                 lines = list(line for line in (l.strip() for l in media.details) if line)
                 for line in lines:
-                    print line
-        print '-----------------------------'
+                    print(line)
+        print('-----------------------------')
         return media
 
     def is_valid(self):

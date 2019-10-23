@@ -278,7 +278,7 @@ def login(config, user, password):
     """Authenticate via user/password."""
     if not user or not password:
         # Prompt for user name
-        response = raw_input('User: ')
+        response = input('User: ')
 
         # Exit on empty user
         if not response:
@@ -333,7 +333,7 @@ def _check_version():
                     upgrade_command = 'docker pull masonamerica/mason-cli:latest'
                 else:
                     upgrade_command = 'pip install --upgrade git+https://git@github.com/MasonAmerica/mason-cli.git'
-                print '\n==================== NOTICE ====================\n' \
+                print('\n==================== NOTICE ====================\n' \
                       'A newer version \'{}\' of the mason-cli is available.\n' \
                       'Run:\n' \
                       '    `{}`\n' \
@@ -341,7 +341,7 @@ def _check_version():
                       '\n' \
                       'Release notes: https://github.com/MasonAmerica/mason-cli/releases' \
                       '\n' \
-                      '==================== NOTICE ====================\n'.format(remote_version, upgrade_command)
+                      '==================== NOTICE ====================\n'.format(remote_version, upgrade_command))
 
 def isMasonDocker():
     return bool(os.environ.get('MASON_CLI_DOCKER', False))

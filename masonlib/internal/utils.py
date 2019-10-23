@@ -33,16 +33,16 @@ def hash_file(filename, type_of_hash, as_hex):
 
 def print_err(config, msg):
     if config.no_colorize:
-        print msg
+        print(msg)
     else:
-        print colorama.Fore.RED + msg
+        print(colorama.Fore.RED + msg)
 
 
 def print_msg(config, msg):
     if config.no_colorize:
-        print msg
+        print(msg)
     else:
-        print colorama.Fore.GREEN + msg
+        print(colorama.Fore.GREEN + msg)
 
 
 def format_errors(config, response):
@@ -73,7 +73,7 @@ def format_errors(config, response):
         print_err(config, "Error: {} ('{}')".format(err_result['error'], err_result['details']))
         if 'itemized' in err_result:
             for item in err_result['itemized']:
-                print_err(config, u"  \u25b6 {} (code: '{}')".format(item["message"], item["code"]))
+                print_err(config, "  \u25b6 {} (code: '{}')".format(item["message"], item["code"]))
     except ValueError:
         if response.text:
             print_err(config, response.text)

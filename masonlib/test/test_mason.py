@@ -47,7 +47,7 @@ class MasonTest(unittest.TestCase):
         self.mason.store = store
 
         expected_headers = {'Content-Type': 'application/json', 'Authorization': 'Bearer 09ads09a8dsfa0re',
-                            'Content-MD5': u'bDMyazQzaDJsaDUzMmszMmprZm9kczlhZHMzNDhhaXNkZml1YW9lcjAzNGY3czkzNDd1MTIz'}
+                            'Content-MD5': 'bDMyazQzaDJsaDUzMmszMmprZm9kczlhZHMzNDhhaXNkZml1YW9lcjAzNGY3czkzNDd1MTIz'}
 
         # test getting the signed url request headers
         assert(expected_headers == self.mason._get_signed_url_request_headers(test_md5))
@@ -70,7 +70,7 @@ class MasonTest(unittest.TestCase):
         self.mason.store = store
 
         expected_headers = {'Content-Type': test_apk.get_content_type(),
-         'Content-MD5': u'bDMyazQzaDJsaDUzMmszMmprZm9kczlhZHMzNDhhaXNkZml1YW9lcjAzNGY3czkzNDd1MTIz'}
+         'Content-MD5': 'bDMyazQzaDJsaDUzMmszMmprZm9kczlhZHMzNDhhaXNkZml1YW9lcjAzNGY3czkzNDd1MTIz'}
 
         assert(expected_headers == self.mason._get_signed_url_post_headers(test_apk, test_md5))
 
