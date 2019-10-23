@@ -1,7 +1,13 @@
 import base64
 import json
 import os.path
-from urllib.parse import urlparse
+
+try:
+    # noinspection PyCompatibility
+    from urllib.parse import urlparse
+except ImportError:
+    # noinspection PyCompatibility,PyUnresolvedReferences
+    from urlparse import urlparse
 
 import requests
 from tqdm import tqdm

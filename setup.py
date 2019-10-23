@@ -16,7 +16,9 @@ setup(
         'pyyaml',
         'six',
         'colorama',
-        'packaging'
+        'packaging',
+        'pyaxmlparser',
+        'future'  # Needed for Python 2 compatibility
     ],
     entry_points='''
         [console_scripts]
