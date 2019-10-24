@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 import getpass
 import pkg_resources
 import click
@@ -6,7 +6,9 @@ import os
 import requests
 import colorama
 import packaging.version
+from sys import exit
 
+import version_loader
 from masonlib.platform import Platform
 from masonlib.imason import IMason
 
@@ -20,6 +22,7 @@ class Config(object):
     def __init__(self):
         self.verbose = False
         self.no_colorize = False
+
 
 pass_config = click.make_pass_decorator(Config, ensure=True)
 
@@ -314,8 +317,7 @@ def logout(config):
 def version():
     """Display mason-cli version."""
     try:
-        our_version = pkg_resources.require("mason-cli")[0].version
-        click.echo('Mason Platform CLI ' + our_version)
+        click.echo('Mason Platform CLI ' + version_loader.load_version())
         click.echo('Copyright (C) 2019 Mason America (https://www.bymason.com)')
         click.echo('License Apache 2.0 <https://www.apache.org/licenses/LICENSE-2.0>')
     except pkg_resources.DistributionNotFound:
@@ -324,9 +326,9 @@ def version():
 
 def _check_version():
     r = requests.get('https://raw.githubusercontent.com/MasonAmerica/mason-cli/master/VERSION')
-    current_version = packaging.version.parse(pkg_resources.require("mason-cli")[0].version)
     if r.status_code == 200:
         if r.text:
+            current_version = packaging.version.parse(version_loader.load_version())
             remote_version = packaging.version.parse(r.text)
             if remote_version > current_version:
                 if isMasonDocker():
@@ -343,8 +345,10 @@ def _check_version():
                       '\n' \
                       '==================== NOTICE ====================\n'.format(remote_version, upgrade_command))
 
+
 def isMasonDocker():
     return bool(os.environ.get('MASON_CLI_DOCKER', False))
+
 
 if __name__ == '__main__':
     cli()

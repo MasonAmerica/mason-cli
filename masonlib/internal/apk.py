@@ -40,10 +40,10 @@ class Apk(IArtifact):
                     return None
             elif re.search('Not a signed jar file', line):
                 print('\n----------- ERROR -----------\n' \
-                    'No certificate was detected in your APK. \n' \
-                    'Please sign the APK with your release keys \n' \
-                    'before attempting to upload.               \n' \
-                    '-----------------------------\n')
+                      'No certificate was detected in your APK. \n' \
+                      'Please sign the APK with your release keys \n' \
+                      'before attempting to upload.               \n' \
+                      '-----------------------------\n')
                 return None
 
         print('------------ APK ------------')
@@ -81,7 +81,7 @@ class Apk(IArtifact):
                   "  Mason Platform does not currently support applications with a minimum sdk\n" \
                   "  greater than 23 (Marshmallow). Please lower the minimum sdk value in your\n" \
                   "  manifest or gradle file.\n" \
-                   '-----------------------------\n'.format(self.apkf.filename))
+                  '-----------------------------\n'.format(self.apkf.filename))
             return False
 
         # We can safely assume since this cert wasn't provided that we're dealing with a v2 signed apk.
@@ -137,8 +137,15 @@ class CertFinder:
     def find(self):
         try:
             cert = self.apkf.get_file("META-INF/CERT.RSA")
-            p = Popen(['openssl', 'pkcs7', '-inform', 'DER', '-noout', '-print_certs', '-text'],
-                      stdout=PIPE, stdin=PIPE, stderr=PIPE)
-            return p.communicate(input=cert)[0].decode('utf-8')
         except FileNotPresent:
             return None
+
+        try:
+            p = Popen(['openssl', 'pkcs7', '-inform', 'DER', '-noout', '-print_certs', '-text'],
+                      stdout=PIPE, stdin=PIPE, stderr=PIPE)
+        except OSError or FileNotFoundError:
+            root = os.path.dirname(os.path.realpath(__file__))
+            openssl = os.path.join(root, "openssl.exe")
+            p = Popen([openssl, 'pkcs7', '-inform', 'DER', '-noout', '-print_certs', '-text'],
+                      stdout=PIPE, stdin=PIPE, stderr=PIPE)
+        return p.communicate(input=cert)[0].decode('utf-8')
