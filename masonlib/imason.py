@@ -65,7 +65,7 @@ class IMason():
         pass
 
     @abstractmethod
-    def deploy(self, item_type, name, version, group, push):
+    def deploy(self, item_type, name, version, group, push, no_https):
         """ Public deploy method, returns true if item is deployed, false otherwise
 
             :param item_type: specify the item type to be deployed
@@ -73,6 +73,7 @@ class IMason():
             :param version: specify the version of the item to be deployed
             :param group: specify the group to deploy the item to
             :param push: whether to push the deploy to the devices in the group
+            :param no_https: whether deployments should be delivered to devices insecurely
             :rtype boolean"""
         pass
 

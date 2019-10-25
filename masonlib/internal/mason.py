@@ -286,18 +286,18 @@ class Mason(IMason):
                 'project': project,
                 'version': str(version)}
 
-    def deploy(self, item_type, name, version, group, push):
+    def deploy(self, item_type, name, version, group, push, no_https):
         if item_type == 'apk':
-            return self._deploy_apk(name, version, group, push)
+            return self._deploy_apk(name, version, group, push, no_https)
         elif item_type == 'config':
-            return self._deploy_config(name, version, group, push)
+            return self._deploy_config(name, version, group, push, no_https)
         elif item_type == 'ota':
-            return self._deploy_ota(name, version, group, push)
+            return self._deploy_ota(name, version, group, push, no_https)
         else:
             print('Unsupported deploy type {}'.format(item_type))
             return False
 
-    def _deploy_apk(self, name, version, group, push):
+    def _deploy_apk(self, name, version, group, push, no_https):
         if not self._validate_credentials():
             return False
 
@@ -306,10 +306,10 @@ class Mason(IMason):
             print('Could not retrieve customer information')
             return False
 
-        payload = self._get_deploy_payload(customer, group, name, version, 'apk', push)
+        payload = self._get_deploy_payload(customer, group, name, version, 'apk', push, no_https)
         return self._deploy_payload(payload)
 
-    def _deploy_config(self, name, version, group, push):
+    def _deploy_config(self, name, version, group, push, no_https):
         if not self._validate_credentials():
             return False
 
@@ -318,10 +318,10 @@ class Mason(IMason):
             print('Could not retrieve customer information')
             return False
 
-        payload = self._get_deploy_payload(customer, group, name, version, 'config', push)
+        payload = self._get_deploy_payload(customer, group, name, version, 'config', push, no_https)
         return self._deploy_payload(payload)
 
-    def _deploy_ota(self, name, version, group, push):
+    def _deploy_ota(self, name, version, group, push, no_https):
         if not self._validate_credentials():
             return False
 
@@ -333,7 +333,7 @@ class Mason(IMason):
         if name != 'mason-os':
             print("Warning: Unknown name '{0}' for 'ota' deployments, forcing it to 'mason-os'".format(name))
             name = 'mason-os'
-        payload = self._get_deploy_payload(customer, group, name, version, 'ota', push)
+        payload = self._get_deploy_payload(customer, group, name, version, 'ota', push, no_https)
         return self._deploy_payload(payload)
 
     def _deploy_payload(self, payload):
@@ -349,6 +349,11 @@ class Mason(IMason):
             print('Push: {}'.format(payload['push']))
             if self.config.verbose:
                 print('Customer: {}'.format(payload['customer']))
+            if payload.get('deployInsecure', False):
+                print()
+                print("***WARNING***")
+                print("--no-https enabled: this deployment will be delivered to devices over HTTP.")
+                print("***WARNING***")
             print('-----------------------------')
             response = input('Continue deploy? (y)')
             if not response or response.lower() == 'y':
@@ -380,8 +385,8 @@ class Mason(IMason):
             return False
 
     @staticmethod
-    def _get_deploy_payload(customer, group, name, version, item_type, push):
-        return {
+    def _get_deploy_payload(customer, group, name, version, item_type, push, no_https):
+        payload = {
             'customer': customer,
             'group': group,
             'name': name,
@@ -389,6 +394,9 @@ class Mason(IMason):
             'type': item_type,
             'push': push
         }
+        if no_https:
+            payload['deployInsecure'] = no_https
+        return payload
 
     def stage(self, yaml):
         if self.register(yaml):

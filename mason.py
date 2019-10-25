@@ -28,11 +28,11 @@ pass_config = click.make_pass_decorator(Config, ensure=True)
 
 
 @click.group()
-@click.option('--debug', '-d', is_flag=True, help='show additional debug information where available')
+@click.option('--debug', '-d', is_flag=True, default=False, help='show additional debug information where available')
 @click.option('--verbose', '-v', help='show verbose artifact and command details', is_flag=True)
 @click.option('--access-token', help='optional access token if already available')
 @click.option('--id-token', help='optional id token if already available')
-@click.option('--no-color', is_flag=True, help='turn off colorized output')
+@click.option('--no-color', is_flag=True, default=False, help='turn off colorized output')
 @pass_config
 def cli(config, debug, verbose, id_token, access_token, no_color):
     """mason-cli provides command line interfaces that allow you to register, query, build, and deploy
@@ -50,7 +50,7 @@ your configurations and packages to your devices in the field."""
 
 
 @cli.group()
-@click.option('--skip-verify', '-s', is_flag=True, help='skip verification of artifact details')
+@click.option('--skip-verify', '-s', is_flag=True, default=False, help='skip verification of artifact details')
 @pass_config
 def register(config, skip_verify):
     """Register artifacts to the mason platform."""
@@ -152,13 +152,15 @@ def build(config, project, version):
 
 
 @cli.group()
-@click.option('--skip-verify', '-s', is_flag=True, help='skip verification of deployment')
+@click.option('--skip-verify', '-s', is_flag=True, default=False, help='skip verification of deployment')
 @click.option('--push', '-p', is_flag=True, default=False, help='push the deployment to devices in the field')
+@click.option('--no-https', is_flag=True, default=False, hidden=True, help='use insecure download links to enable caching via local proxies')
 @pass_config
-def deploy(config, skip_verify, push):
+def deploy(config, skip_verify, push, no_https):
     """Deploy artifacts to groups."""
     config.skip_verify = skip_verify
     config.push = push
+    config.no_https = no_https
 
 
 @deploy.command()
@@ -188,7 +190,7 @@ def apk(config, name, version, groups):
     for group in groups:
         if config.verbose:
             click.echo('Deploying {}:{}...'.format(name, version))
-        if not config.mason.deploy("apk", name, version, group, config.push):
+        if not config.mason.deploy("apk", name, version, group, config.push, config.no_https):
             exit('Unable to deploy item')
 
 
@@ -219,7 +221,7 @@ def ota(config, name, version, groups):
     for group in groups:
         if config.verbose:
             click.echo('Deploying {}:{}...'.format(name, version))
-        if not config.mason.deploy("ota", name, version, group, config.push):
+        if not config.mason.deploy("ota", name, version, group, config.push, config.no_https):
             exit('Unable to deploy item')
 
 
@@ -251,12 +253,12 @@ def config(config, name, version, groups):
     for group in groups:
         if config.verbose:
             click.echo('Deploying {}:{}...'.format(name, version))
-        if not config.mason.deploy("config", name, version, group, config.push):
+        if not config.mason.deploy("config", name, version, group, config.push, config.no_https):
             exit('Unable to deploy item')
 
 
 @cli.command()
-@click.option('--skip-verify', '-s', is_flag=True, help='skip verification of config stage')
+@click.option('--skip-verify', '-s', is_flag=True, default=False, help='skip verification of config stage')
 @click.argument('yaml')
 @pass_config
 def stage(config, skip_verify, yaml):

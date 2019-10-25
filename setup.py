@@ -10,7 +10,7 @@ setup(
                 'masonlib.internal.utils', 'masonlib.internal.artifacts', 'masonlib.internal.apk', 'masonlib.internal.media', 'masonlib.internal.os_config'],
     include_package_data=True,
     install_requires=[
-        'click',
+        'click==7.0',
         'requests',
         'tqdm',
         'pyyaml',
