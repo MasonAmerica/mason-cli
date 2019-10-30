@@ -56,11 +56,12 @@ class IMason():
         pass
 
     @abstractmethod
-    def build(self, project, version):
+    def build(self, project, version, block):
         """ Public build method, returns true if build started, false otherwise
 
             :param project: specify the name of the project to start a build for
             :param version: specify the version of the project for which to start a build for
+            :param block: should the method block until the build has finished
             :rtype: boolean"""
         pass
 
@@ -78,11 +79,12 @@ class IMason():
         pass
 
     @abstractmethod
-    def stage(self, yaml):
+    def stage(self, yaml, block):
         """ Public stage method, returns true if the configuration was staged, false otherwise.
             The stage command effectively registers and and builds a given configuration.
 
             :param yaml: The yaml file which needs to be staged
+            :param block: should the method block until the build has finished
             :rtype boolean"""
         pass
 

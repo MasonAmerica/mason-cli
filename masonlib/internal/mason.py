@@ -1,6 +1,7 @@
 import base64
 import json
 import os.path
+import time
 
 try:
     # noinspection PyCompatibility
@@ -246,10 +247,10 @@ class Mason(IMason):
         elif status_code == 500:
             print('Mason service or resource is currently unavailable.')
 
-    def build(self, project, version):
-        return self._build_project(project, version)
+    def build(self, project, version, block):
+        return self._build_project(project, version, block)
 
-    def _build_project(self, project, version):
+    def _build_project(self, project, version, block):
         if not self._validate_credentials():
             return False
 
@@ -268,6 +269,30 @@ class Mason(IMason):
         if r.status_code == 200:
             hostname = urlparse(self.store.deploy_url()).hostname
             print('Build queued.\nYou can see the status of your build at https://{}/controller/projects/{}'.format(hostname, project))
+
+            if block:
+                job_url = '{}/{}'.format(builder_url, r.json().get('data').get('submittedAt'))
+
+                # 40 minutes approximately since this doesn't account for the request time
+                timeout_seconds = 40 * 60
+                time_blocked = 0
+                while time_blocked < timeout_seconds:
+                    r = requests.get(job_url, headers=headers)
+                    if not r.status_code == 200:
+                        print('Build status check failed')
+                        return False
+
+                    if r.json().get('data').get('status') == 'COMPLETED':
+                        print('Build completed')
+                        return True
+
+                    print('Waiting for build to complete...')
+                    time.sleep(20)
+                    time_blocked += 20
+
+                print('Timed out waiting for build to complete.')
+                return False
+
             return True
         else:
             print_err(self.config, 'Unable to enqueue build: {}'.format(r.status_code))
@@ -398,9 +423,9 @@ class Mason(IMason):
             payload['deployInsecure'] = no_https
         return payload
 
-    def stage(self, yaml):
+    def stage(self, yaml, block):
         if self.register(yaml):
-            return self._build_project(self.artifact.get_name(), self.artifact.get_version())
+            return self._build_project(self.artifact.get_name(), self.artifact.get_version(), block)
         else:
             print('Unable to stage configuration')
             return False

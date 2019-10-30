@@ -123,10 +123,11 @@ def media(config, binary, name, type, version):
 
 
 @cli.command()
+@click.option('--await', 'block', is_flag=True, default=False, help='waits syncronously for the build to finish')
 @click.argument('project')
 @click.argument('version')
 @pass_config
-def build(config, project, version):
+def build(config, block, project, version):
     """Build a registered project.
 
          PROJECT - The name of the configuration project\n
@@ -146,7 +147,7 @@ def build(config, project, version):
     """
     if config.verbose:
         click.echo('Starting build for {}:{}...'.format(project, version))
-    if not config.mason.build(project, version):
+    if not config.mason.build(project, version, block):
         exit('Unable to start build')
 
 
@@ -258,9 +259,10 @@ def config(config, name, version, groups):
 
 @cli.command()
 @click.option('--skip-verify', '-s', is_flag=True, default=False, help='skip verification of config stage')
+@click.option('--await', 'block', is_flag=True, default=False, help='waits syncronously for the build to finish')
 @click.argument('yaml')
 @pass_config
-def stage(config, skip_verify, yaml):
+def stage(config, skip_verify, block, yaml):
     """Stage a project.
 
          YAML - The configuration file to register and build.
@@ -271,7 +273,7 @@ def stage(config, skip_verify, yaml):
     if config.verbose:
         click.echo('Staging {}...'.format(yaml))
     if config.mason.parse_os_config(yaml):
-        config.mason.stage(yaml)
+        config.mason.stage(yaml, block)
 
 
 @cli.command()
