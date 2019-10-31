@@ -14,9 +14,9 @@ test:
     - pip3 install mock
     - cd masonlib/test && python -m unittest discover .
   only:
+    - merge_requests
     - branches
     - tags
-    - merge_requests
 
 build_linux:
   stage: build
@@ -31,6 +31,7 @@ build_linux:
       - dist
     expire_in: 90 days
   only:
+    - merge_requests
     - branches
     - tags
 
@@ -46,6 +47,7 @@ build_windows:
       - dist
     expire_in: 90 days
   only:
+    - merge_requests
     - branches
     - tags
 
@@ -62,6 +64,7 @@ build_macos:
       - dist
     expire_in: 90 days
   only:
+    - merge_requests
     - branches
     - tags
 
