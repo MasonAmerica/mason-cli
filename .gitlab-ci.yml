@@ -24,7 +24,7 @@ build_linux:
     - mason-deploy
   image: registry.gitlab.com/masonamerica/cli/mason-cli-builder/master-linux:latest
   script:
-    - ./gen_lin_bin.sh
+    - ./scripts/gen_lin_bin.sh
     - mv dist/mason dist/mason-linux
   artifacts:
     paths:
@@ -40,7 +40,7 @@ build_windows:
     - mason-deploy
   image: registry.gitlab.com/masonamerica/cli/mason-cli-builder/master-windows:latest
   script:
-    - ./gen_win_exe.sh
+    - ./scripts/gen_win_exe.sh
   artifacts:
     paths:
       - dist
@@ -55,7 +55,7 @@ build_macos:
     - mason-build-apple
   script:
     - pip3 install pyinstaller
-    - ./gen_mac_bin.sh
+    - ./scripts/gen_mac_bin.sh
     - mv dist/mason dist/mason-macos
   artifacts:
     paths:

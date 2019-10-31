@@ -1,6 +1,19 @@
-# The Mason Command Line tools (mason-cli)
+# Mason CLI
 
-The Mason Command Line tools (or `mason-cli`) provides command line interfaces that allow you to publish, query, and deploy your configurations and packages to your devices in the field.
+The Mason CLI provides command line tools to help you manage your configurations in the Mason
+Platform.
 
-For further details regarding the mason-cli and the mason platform
-  See http://docs.bymason.com/getting-started/
+The full docs to get started with the Mason Platform are available here:
+https://docs.bymason.com/intro/
+For docs on using the Mason CLI, see the setup guide here: https://docs.bymason.com/getting-started/
+
+### Using the CLI
+
+Find the [latest release](https://github.com/MasonAmerica/mason-cli/releases/latest) and download
+the CLI for your platform under "Assets".
+
+### Developing the CLI
+
+1. Clone this repo: `git clone https://github.com/MasonAmerica/mason-cli.git && cd mason-cli`
+1. Build the CLI: `pip3 install mock .`
+1. Run the tests: `cd masonlib/test && python3 -m unittest discover .`
