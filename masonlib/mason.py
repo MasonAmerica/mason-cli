@@ -4,7 +4,6 @@ from sys import exit
 import click
 import colorama
 import packaging.version
-import pkg_resources
 import requests
 
 from masonlib import __version__
@@ -26,7 +25,18 @@ class Config(object):
 pass_config = click.make_pass_decorator(Config, ensure=True)
 
 
+def _version_callback(ctx, param, value):
+    if not value or ctx.resilient_parsing:
+        return
+
+    _print_version_info()
+    ctx.exit()
+
+
 @click.group()
+@click.option('--version', '-V', is_flag=True, is_eager=True, expose_value=False,
+              callback=_version_callback,
+              help='Show the version and exit.')
 @click.option('--debug', '-d', is_flag=True, default=False,
               help='Log diagnostic data.')
 @click.option('--verbose', '-v', is_flag=True,
@@ -45,6 +55,7 @@ def cli(config, debug, verbose, id_token, access_token, no_color):
     """
 
     _check_version()
+
     config.debug = debug
     config.verbose = verbose
     config.no_colorize = no_color
@@ -359,16 +370,17 @@ def logout(config):
         click.echo('Successfully logged out')
 
 
-@cli.command()
+@cli.command(hidden=True)
 def version():
     """Display the Mason CLI version."""
 
-    try:
-        click.echo('Mason Platform CLI {}'.format(__version__))
-        click.echo('Copyright (C) 2019 Mason America (https://www.bymason.com)')
-        click.echo('License Apache 2.0 <https://www.apache.org/licenses/LICENSE-2.0>')
-    except pkg_resources.DistributionNotFound:
-        click.echo('Unable to retrieve version information')
+    _print_version_info()
+
+
+def _print_version_info():
+    click.echo('Mason CLI v{}'.format(__version__))
+    click.echo('Copyright (C) 2019 Mason America (https://bymason.com)')
+    click.echo('License Apache 2.0 <https://www.apache.org/licenses/LICENSE-2.0>')
 
 
 def _check_version():
