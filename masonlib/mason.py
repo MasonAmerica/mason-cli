@@ -1,15 +1,15 @@
-import getpass
-import pkg_resources
-import click
 import os
-import requests
-import colorama
-import packaging.version
 from sys import exit
 
+import click
+import colorama
+import packaging.version
+import pkg_resources
+import requests
+
 from masonlib import __version__
-from masonlib.platform import Platform
 from masonlib.imason import IMason
+from masonlib.platform import Platform
 
 
 class Config(object):
@@ -27,15 +27,23 @@ pass_config = click.make_pass_decorator(Config, ensure=True)
 
 
 @click.group()
-@click.option('--debug', '-d', is_flag=True, default=False, help='show additional debug information where available')
-@click.option('--verbose', '-v', help='show verbose artifact and command details', is_flag=True)
-@click.option('--access-token', help='optional access token if already available')
-@click.option('--id-token', help='optional id token if already available')
-@click.option('--no-color', is_flag=True, default=False, help='turn off colorized output')
+@click.option('--debug', '-d', is_flag=True, default=False,
+              help='Log diagnostic data.')
+@click.option('--verbose', '-v', is_flag=True,
+              help='Log verbose artifact and command details.')
+@click.option('--access-token',
+              help='Supply an access token for this command.')
+@click.option('--id-token',
+              help='Supply an ID token for this command.')
+@click.option('--no-color', is_flag=True, default=False,
+              help='Disable rich console output.')
 @pass_config
 def cli(config, debug, verbose, id_token, access_token, no_color):
-    """mason-cli provides command line interfaces that allow you to register, query, build, and deploy
-your configurations and packages to your devices in the field."""
+    """
+    The Mason CLI provides command line tools to help you manage your configurations in the Mason
+    Platform.
+    """
+
     _check_version()
     config.debug = debug
     config.verbose = verbose
@@ -49,10 +57,12 @@ your configurations and packages to your devices in the field."""
 
 
 @cli.group()
-@click.option('--skip-verify', '-s', is_flag=True, default=False, help='skip verification of artifact details')
+@click.option('--skip-verify', '-y', '-s', is_flag=True, default=False,
+              help='Don\'t require confirmation.')
 @pass_config
 def register(config, skip_verify):
-    """Register artifacts to the mason platform."""
+    """Register artifacts to the Mason Platform."""
+
     config.skip_verify = skip_verify
 
 
@@ -60,16 +70,20 @@ def register(config, skip_verify):
 @click.argument('apks', nargs=-1)
 @pass_config
 def apk(config, apks):
-    """Register apk artifacts.
-
-         APK - One or many apk's to be registered to the mason platform.
-
-       ex:\n
-         mason register apk test.apk
-
-       multiple in a directory:\n
-         mason register apk apks/*.apk
     """
+    Register APK artifacts.
+
+      APKS to be registered to the Mason Platform.
+
+    \b
+    For example, register a single APK:
+      $ mason register apk test.apk
+
+    \b
+    Or all in a subdirectory:
+      $ mason register apk apks/*.apk
+    """
+
     for app in apks:
         if config.verbose:
             click.echo('Registering {}...'.format(app))
@@ -78,24 +92,31 @@ def apk(config, apks):
 
 
 @register.command()
-@click.argument('yamls', nargs=-1)
+@click.argument('configs', nargs=-1)
 @pass_config
-def config(config, yamls):
-    """Register config artifacts.
-
-         YAML - One or more yaml file describing a configuration.
-
-       ex:\n
-         mason register config test.yml
-
-       multiple in a directory:\n
-         mason register config configs/*.yml
+def config(config, configs):
     """
-    for yaml in yamls:
+    Register config artifacts.
+
+      CONFIGS describing a configuration to be registered to the Mason Platform.
+
+    \b
+    For example, register a single config:
+      $ mason register config test.yml
+
+    \b
+    Or all in a subdirectory:
+      $ mason register config configs/*.yml
+
+    For more information on configs, view the full documentation here:
+    https://docs.bymason.com/project-config/
+    """
+
+    for file in configs:
         if config.verbose:
-            click.echo('Registering {}...'.format(yaml))
-        if config.mason.parse_os_config(yaml):
-            config.mason.register(yaml)
+            click.echo('Registering {}...'.format(file))
+        if config.mason.parse_os_config(file):
+            config.mason.register(file)
 
 
 @register.command()
@@ -105,17 +126,21 @@ def config(config, yamls):
 @click.argument('version')
 @pass_config
 def media(config, binary, name, type, version):
-    """Register media artifacts.
-
-         NAME - The name of the media artifact.\n
-         TYPE - The given type of the media artifact.\n
-            supported:\n
-                - bootanimation\n
-         VERSION - The version of the media artifact.
-
-       ex:\n
-          mason register media bootanimation.zip bootanimation 1
     """
+    Register media artifacts.
+
+    \b
+      NAME of the media artifact.
+      TYPE of the media artifact. One of:
+        - bootanimation
+      VERSION of the media artifact.
+      BINARY file to be uploaded.
+
+    \b
+    For example, register a boot animation:
+      $ mason register media bootanimation.zip bootanimation 1
+    """
+
     if config.verbose:
         click.echo('Registering {}...'.format(binary))
     if config.mason.parse_media(name, type, version, binary):
@@ -123,28 +148,33 @@ def media(config, binary, name, type, version):
 
 
 @cli.command()
-@click.option('--await', 'block', is_flag=True, default=False, help='waits syncronously for the build to finish')
+@click.option('--await', 'block', is_flag=True, default=False,
+              help='Wait synchronously for the build to finish before continuing.')
 @click.argument('project')
 @click.argument('version')
 @pass_config
 def build(config, block, project, version):
-    """Build a registered project.
-
-         PROJECT - The name of the configuration project\n
-         VERSION - The version of the configuration project
-
-       The name and the version of the configuration project
-       can be found in the YAML definition which was registered
-       to the mason platform.
-
-       As an example, a registered yaml:\n
-         os:\n
-           name: mason-test\n
-           version: 5
-
-       becomes a build command:\n
-         mason build mason-test 5
     """
+    Build a registered project. Use the "register" command to upload artifacts for a project.
+
+    \b
+      PROJECT name.
+      VERSION of the project.
+
+    The name and version of the project can either be found in the config file you register, or in
+    the Mason Console: https://platform.bymason.com/controller/projects/YOUR_PROJECT_NAME_HERE.
+
+    \b
+    For example, this registered project:
+      os:
+        name: mason-test
+        version: 5
+
+    \b
+    can be built with:
+      $ mason build mason-test 5
+    """
+
     if config.verbose:
         click.echo('Starting build for {}:{}...'.format(project, version))
     if not config.mason.build(project, version, block):
@@ -152,12 +182,16 @@ def build(config, block, project, version):
 
 
 @cli.group()
-@click.option('--skip-verify', '-s', is_flag=True, default=False, help='skip verification of deployment')
-@click.option('--push', '-p', is_flag=True, default=False, help='push the deployment to devices in the field')
-@click.option('--no-https', is_flag=True, default=False, hidden=True, help='use insecure download links to enable caching via local proxies')
+@click.option('--skip-verify', '-y', '-s', is_flag=True, default=False,
+              help='Don\'t require confirmation.')
+@click.option('--push', '-p', is_flag=True, default=False,
+              help='Push the deployment to devices in the field immediately.')
+@click.option('--no-https', is_flag=True, default=False, hidden=True,
+              help='Use insecure download links to enable caching via local proxies.')
 @pass_config
 def deploy(config, skip_verify, push, no_https):
     """Deploy artifacts to groups."""
+
     config.skip_verify = skip_verify
     config.push = push
     config.no_https = no_https
@@ -169,24 +203,30 @@ def deploy(config, skip_verify, push, no_https):
 @click.argument('groups', nargs=-1)
 @pass_config
 def apk(config, name, version, groups):
-    """Deploy apk artifacts.
-
-         NAME - The package name of the apk to be deployed\n
-         VERSION - The versionCode of the apk\n
-         GROUP(s) - The target group(s) to deploy to
-
-       As an example, a registered apk:\n
-           package_name: com.test.app\n
-           version_code: 3
-
-       to deploy to group `development` becomes:\n
-         mason deploy apk com.test.app 3 development\n
-
-       or to deploy to multiple groups:\n
-         mason deploy apk com.test.app 3 development staging production
-
-       this can be used in conjunction with the --push argument
     """
+    Deploy APK artifacts.
+
+    \b
+      NAME is the package name of the apk to be deployed.
+      VERSION code of the APK.
+      GROUP(S) to deploy the APK to.
+
+    \b
+    For example, this registered APK:
+      apps:
+        - name: App Name
+          package_name: com.test.app
+          version_code: 1
+
+    \b
+    can be deployed to the "development" group with:
+      $ mason deploy apk com.test.app 1 development
+
+    \b
+    or deployed to multiple groups:
+      $ mason deploy apk com.test.app 1 group1 group2 group3
+    """
+
     for group in groups:
         if config.verbose:
             click.echo('Deploying {}:{}...'.format(name, version))
@@ -200,24 +240,23 @@ def apk(config, name, version, groups):
 @click.argument('groups', nargs=-1)
 @pass_config
 def ota(config, name, version, groups):
-    """Deploy ota artifacts.
-
-         NAME - The name of the ota to be deployed (usually mason-os)\n
-         VERSION - The release version (semantic version) of the ota  \n
-         GROUP(s) - The target group(s) to deploy to
-
-       As an example, Mason OS 2.0.0 (Nougat Release):\n
-           name: mason-os\n
-           release version: 2.0.0
-
-       to deploy to group `development` becomes:\n
-         mason deploy ota mason-os 2.0.0 development\n
-
-       or to deploy to multiple groups:\n
-         mason deploy ota mason-os 2.0.0 development staging production
-
-       this can be used in conjunction with the --push argument
     """
+    Deploy ota artifacts.
+
+    \b
+      NAME of the ota to be deployed (usually "mason-os").
+      VERSION of the ota.
+      GROUP(S) to deploy the ota to.
+
+    \b
+    For example, deploy Mason OS 2.0.0 to the "development" group:
+      $ mason deploy ota mason-os 2.0.0 development
+
+    \b
+    or to multiple groups:
+      $ mason deploy ota mason-os 2.0.0 group1 group2 group3
+    """
+
     for group in groups:
         if config.verbose:
             click.echo('Deploying {}:{}...'.format(name, version))
@@ -231,25 +270,28 @@ def ota(config, name, version, groups):
 @click.argument('groups', nargs=-1)
 @pass_config
 def config(config, name, version, groups):
-    """Deploy config artifacts.
-
-         NAME - The name of the configuration to be deployed\n
-         VERSION - The version of the configuration to be deployed\n
-         GROUP(s) - The target group(s) to deploy to
-
-       As an example, a registered yaml:\n
-         os:\n
-           name: mason-test\n
-           version: 5\n
-
-       to deploy to group `development` becomes:\n
-         mason deploy config mason-test 5 development
-
-       or to deploy to multiple groups:\n
-         mason deploy config mason-test 5 development staging production
-
-       this can be used in conjunction with the --push argument
     """
+    Deploy config artifacts.
+
+      NAME of the configuration to be deployed.
+      VERSION of the configuration to be deployed.
+      GROUP(S) to deploy the configuration to.
+
+    \b
+    For example, this registered configuration:
+      os:
+        name: mason-test
+        version: 1
+
+    \b
+    can be deployed to the "development" group with:
+      $ mason deploy config mason-test 1 development
+
+    \b
+    or deployed to multiple groups:
+      $ mason deploy config mason-test 1 group1 group2 group3
+    """
+
     for group in groups:
         if config.verbose:
             click.echo('Deploying {}:{}...'.format(name, version))
@@ -258,17 +300,32 @@ def config(config, name, version, groups):
 
 
 @cli.command()
-@click.option('--skip-verify', '-s', is_flag=True, default=False, help='skip verification of config stage')
-@click.option('--await', 'block', is_flag=True, default=False, help='waits syncronously for the build to finish')
+@click.option('--skip-verify', '-y', '-s', is_flag=True, default=False,
+              help='Don\'t require confirmation.')
+@click.option('--await', 'block', is_flag=True, default=False,
+              help='Wait synchronously for the build to finish before continuing.')
 @click.argument('yaml')
 @pass_config
 def stage(config, skip_verify, block, yaml):
-    """Stage a project.
-
-         YAML - The configuration file to register and build.
-
-       The stage commands allows you to register a configuration file and immediately start a build for it.
     """
+    Register and build (aka stage) a project.
+
+      YAML describing a configuration to be registered to the Mason Platform and then subsequently
+    built.
+
+    \b
+    For example, register and build a single config:
+      $ mason stage test.yml
+
+    For more information on configs, view the full documentation here:
+    https://docs.bymason.com/project-config/
+
+    \b
+    The stage command is equivalent to running:
+      $ mason register config ...
+      $ mason build ...
+    """
+
     config.skip_verify = skip_verify
     if config.verbose:
         click.echo('Staging {}...'.format(yaml))
@@ -277,32 +334,17 @@ def stage(config, skip_verify, block, yaml):
 
 
 @cli.command()
-@click.option('--user', default=None, help='pass in user')
-@click.option('--password', default=None, help='pass in password')
+@click.option('--username', '--user', '-u', prompt=True,
+              help='Your Mason Platform username.')
+@click.option('--password', '--pass', '-p', prompt=True, hide_input=True,
+              help='Your Mason Platform password.')
 @pass_config
-def login(config, user, password):
-    """Authenticate via user/password."""
-    if not user or not password:
-        # Prompt for user name
-        response = input('User: ')
+def login(config, username, password):
+    """Authenticate via username and password."""
 
-        # Exit on empty user
-        if not response:
-            exit('Authentication requires a valid user')
-
-        user = response
-
-        # Prompt for password
-        response = getpass.getpass()
-
-        # Exit on empty password
-        if not response:
-            exit('Authentication requires a valid password')
-
-        password = response
     if config.verbose:
-        click.echo('Authing ' + user)
-    if not config.mason.authenticate(user, password):
+        click.echo('Authenticating ' + username)
+    if not config.mason.authenticate(username, password):
         exit('Unable to authenticate')
     else:
         click.echo('User authenticated.')
@@ -311,14 +353,16 @@ def login(config, user, password):
 @cli.command()
 @pass_config
 def logout(config):
-    """Log out of current session."""
+    """Log out of the Mason CLI."""
+
     if config.mason.logout():
         click.echo('Successfully logged out')
 
 
 @cli.command()
 def version():
-    """Display mason-cli version."""
+    """Display the Mason CLI version."""
+
     try:
         click.echo('Mason Platform CLI {}'.format(__version__))
         click.echo('Copyright (C) 2019 Mason America (https://www.bymason.com)')
@@ -346,7 +390,8 @@ def _check_version():
                       '\n' \
                       'Release notes: https://github.com/MasonAmerica/mason-cli/releases' \
                       '\n' \
-                      '==================== NOTICE ====================\n'.format(remote_version, upgrade_command))
+                      '==================== NOTICE ====================\n'.format(remote_version,
+                                                                                  upgrade_command))
 
 
 def isMasonDocker():
