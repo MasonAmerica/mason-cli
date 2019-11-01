@@ -28,24 +28,6 @@ class Apk(IArtifact):
         if not apkf or not apkf.is_valid():
             return None
 
-        # Check for 'Android Debug' CN for the given artifact, disallow upload
-        for line in apkf.get_details().split('\n'):
-            if re.search('Subject:', line) or re.search('Owner:', line):
-                if re.search('Android Debug', line):
-                    print('\n----------- ERROR -----------\n' \
-                          'Not allowing android debug key signed apk. \n' \
-                          'Please sign the APK with your release keys \n' \
-                          'before attempting to upload.               \n' \
-                          '-----------------------------\n')
-                    return None
-            elif re.search('Not a signed jar file', line):
-                print('\n----------- ERROR -----------\n' \
-                      'No certificate was detected in your APK. \n' \
-                      'Please sign the APK with your release keys \n' \
-                      'before attempting to upload.               \n' \
-                      '-----------------------------\n')
-                return None
-
         print('------------ APK ------------')
         print('File Name: {}'.format(apk))
         print('File size: {}'.format(os.path.getsize(apk)))
@@ -84,18 +66,29 @@ class Apk(IArtifact):
                   '-----------------------------\n'.format(self.apkf.filename))
             return False
 
-        # We can safely assume since this cert wasn't provided that we're dealing with a v2 signed apk.
+        # Check if the app was signed with v1
         if not self.get_details():
             print('\n----------- ERROR -----------\n' \
                   "File Name: {}\n" \
                   "Details:\n" \
-                  "  Mason Platform does not currently support v2 signing scheme for APK's.\n" \
-                  "  Full Apk (v2) signing is included for Nougat devices and an option in \n" \
-                  "  Android Studio 2.3+. Please select to either sign the APK with both v1 \n" \
-                  "  (Jar Signature) and v2 (Full APK Signature) or v1 alone. For further\n" \
-                  "  details reference https://source.android.com/security/apksigning/index.html#\n" \
+                  "A v1 signing certificate was not detected.\n" \
+                  "Mason Platform requires your app to be signed with a v1 signing scheme.\n" \
+                  "Please ensure your app is either signed exclusively with v1 or with some\n" \
+                  "combination of v1 and other signing schemes. For more details on app\n" \
+                  "signing, visit https://s.android.com/security/apksigning\n" \
                   '-----------------------------\n'.format(self.apkf.filename))
             return False
+
+        # Check for 'Android Debug' CN for the given artifact, disallow upload
+        for line in self.get_details().split('\n'):
+            if re.search('Subject:', line) or re.search('Owner:', line):
+                if re.search('Android Debug', line):
+                    print('\n----------- ERROR -----------\n' \
+                          'Not allowing android debug key signed apk. \n' \
+                          'Please sign the APK with your release keys \n' \
+                          'before attempting to upload.               \n' \
+                          '-----------------------------\n')
+                    return False
 
         return True
 

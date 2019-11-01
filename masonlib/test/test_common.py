@@ -25,6 +25,12 @@ class Common(object):
         return mock_apk
 
     @staticmethod
+    def create_mock_cert_finder():
+        mock_finder = Mock()
+        mock_finder.find = MagicMock(return_value='foo')
+        return mock_finder
+
+    @staticmethod
     def create_mock_media_file():
         test_bootanimation_name = 'test-boot'
         test_bootanimation_version = 1

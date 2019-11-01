@@ -77,4 +77,5 @@ class ApkTest(unittest.TestCase):
     @staticmethod
     def _create_test_apk():
         apkf = Common.create_mock_apk_file()
-        return Apk(apkf, apkf)
+        cert_finder = Common.create_mock_cert_finder()
+        return Apk(apkf, cert_finder)
