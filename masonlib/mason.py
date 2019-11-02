@@ -1,6 +1,7 @@
 import inspect
 import logging
 import os
+import time
 
 import click
 import click_log
@@ -416,6 +417,20 @@ def _show_version_info():
 
 
 def _check_version():
+    app_dir = click.get_app_dir('Mason CLI')
+    cache = os.path.join(app_dir, 'version-check-cache')
+    current_time = time.time_ns()
+    if os.path.isfile(cache):
+        with open(cache, 'r') as f:
+            last_check = int(f.read().strip())
+            if current_time - last_check < 8.64e+13:  # 1 day
+                logger.debug('Skipped version check')
+                return
+    if not os.path.exists(app_dir):
+        os.mkdir(app_dir)
+    with open(cache, 'w') as f:
+        f.write(str(current_time))
+
     try:
         r = requests.get('https://raw.githubusercontent.com/MasonAmerica/mason-cli/master/VERSION')
     except requests.RequestException as e:
