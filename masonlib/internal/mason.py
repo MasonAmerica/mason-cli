@@ -279,25 +279,25 @@ class Mason(IMason):
         self._deploy_payload(payload, 'ota')
 
     def _deploy_payload(self, payload, type):
+        self.config.logger.info('---------- DEPLOY -----------')
+
+        self.config.logger.info('Name: {}'.format(payload['name']))
+        self.config.logger.info('Type: {}'.format(payload['type']))
+        self.config.logger.info('Version: {}'.format(payload['version']))
+        self.config.logger.info('Group: {}'.format(payload['group']))
+        self.config.logger.info('Push: {}'.format(payload['push']))
+        self.config.logger.debug('Customer: {}'.format(payload['customer']))
+
+        if payload.get('deployInsecure', False):
+            self.config.logger.info()
+            self.config.logger.info('***WARNING***')
+            self.config.logger.info('--no-https enabled: this deployment will be delivered to '
+                                    'devices over HTTP.')
+            self.config.logger.info('***WARNING***')
+
+        self.config.logger.info('-----------------------------')
+
         if not self.config.skip_verify:
-            self.config.logger.info('---------- DEPLOY -----------')
-
-            self.config.logger.info('Name: {}'.format(payload['name']))
-            self.config.logger.info('Type: {}'.format(payload['type']))
-            self.config.logger.info('Version: {}'.format(payload['version']))
-            self.config.logger.info('Group: {}'.format(payload['group']))
-            self.config.logger.info('Push: {}'.format(payload['push']))
-            self.config.logger.debug('Customer: {}'.format(payload['customer']))
-
-            if payload.get('deployInsecure', False):
-                self.config.logger.info()
-                self.config.logger.info('***WARNING***')
-                self.config.logger.info('--no-https enabled: this deployment will be delivered to '
-                                        'devices over HTTP.')
-                self.config.logger.info('***WARNING***')
-
-            self.config.logger.info('-----------------------------')
-
             click.confirm('Continue deploy?', default=True, abort=True)
 
         headers = {'Content-Type': 'application/json',

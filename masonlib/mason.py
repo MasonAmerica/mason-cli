@@ -83,13 +83,18 @@ def cli(config, debug, verbose, id_token, access_token, no_color):
 
 
 @cli.group()
-@click.option('--skip-verify', '-y', '-s', is_flag=True, default=False,
+@click.option('--assume-yes', '--yes', '-y', is_flag=True, default=False,
+              help='Don\'t require confirmation.')
+@click.option('--skip-verify', '-s', is_flag=True, default=False, hidden=True,
               help='Don\'t require confirmation.')
 @pass_config
-def register(config, skip_verify):
+def register(config, assume_yes, skip_verify):
     """Register artifacts to the Mason Platform."""
 
-    config.skip_verify = skip_verify
+    if skip_verify:
+        logger.warning('--skip-verify is deprecated. Use --assume-yes instead.')
+
+    config.skip_verify = assume_yes or skip_verify
 
 
 @register.command()
@@ -218,17 +223,22 @@ def build(config, block, project, version):
 
 
 @cli.group()
-@click.option('--skip-verify', '-y', '-s', is_flag=True, default=False,
+@click.option('--assume-yes', '--yes', '-y', is_flag=True, default=False,
               help='Don\'t require confirmation.')
 @click.option('--push', '-p', is_flag=True, default=False,
               help='Push the deployment to devices in the field immediately.')
 @click.option('--no-https', is_flag=True, default=False, hidden=True,
               help='Use insecure download links to enable caching via local proxies.')
+@click.option('--skip-verify', '-s', is_flag=True, default=False, hidden=True,
+              help='Don\'t require confirmation.')
 @pass_config
-def deploy(config, skip_verify, push, no_https):
+def deploy(config, assume_yes, push, no_https, skip_verify):
     """Deploy artifacts to groups."""
 
-    config.skip_verify = skip_verify
+    if skip_verify:
+        logger.warning('--skip-verify is deprecated. Use --assume-yes instead.')
+
+    config.skip_verify = assume_yes or skip_verify
     config.push = push
     config.no_https = no_https
 
@@ -330,13 +340,15 @@ def config(config, name, version, groups):
 
 
 @cli.command()
-@click.option('--skip-verify', '-y', '-s', is_flag=True, default=False,
+@click.option('--assume-yes', '--yes', '-y', is_flag=True, default=False,
               help='Don\'t require confirmation.')
 @click.option('--await', 'block', is_flag=True, default=False,
               help='Wait synchronously for the build to finish before continuing.')
+@click.option('--skip-verify', '-s', is_flag=True, default=False, hidden=True,
+              help='Don\'t require confirmation.')
 @click.argument('configs', type=click.Path(exists=True), nargs=-1, required=True)
 @pass_config
-def stage(config, skip_verify, block, configs):
+def stage(config, assume_yes, block, skip_verify, configs):
     """
     Register and build (aka stage) a project.
 
@@ -356,7 +368,11 @@ def stage(config, skip_verify, block, configs):
       $ mason build ...
     """
 
-    config.skip_verify = skip_verify
+    if skip_verify:
+        logger.warning('--skip-verify is deprecated. Use --assume-yes instead.')
+
+    config.skip_verify = assume_yes or skip_verify
+
     for file in configs:
         logger.debug('Staging {}...'.format(file))
         config.mason.validate_os_config(file)
