@@ -145,12 +145,12 @@ def config(config, configs):
 
 
 @register.command()
-@click.argument('binary')
 @click.argument('name')
 @click.argument('type')
 @click.argument('version')
+@click.argument('media')
 @pass_config
-def media(config, binary, name, type, version):
+def media(config, name, type, version, media):
     """
     Register media artifacts.
 
@@ -159,16 +159,30 @@ def media(config, binary, name, type, version):
       TYPE of the media artifact. One of:
         - bootanimation
       VERSION of the media artifact.
-      BINARY file to be uploaded.
+      MEDIA file to be uploaded.
 
     \b
     For example, register a boot animation:
-      $ mason register media bootanimation.zip bootanimation 1
+      $ mason register media mason-test bootanimation 1 bootanimation.zip
     """
 
-    logger.debug('Registering {}...'.format(binary))
-    if config.mason.parse_media(name, type, version, binary):
-        config.mason.register(binary)
+    if os.path.isfile(name):
+        logger.warning('This command order is deprecated and will be removed. Use --help to see '
+                       'up-to-date argument order.')
+
+        # Media used to be the first argument
+        old_media = name
+        old_name = type
+        old_type = version
+        old_version = media
+        name = old_name
+        type = old_type
+        version = old_version
+        media = old_media
+
+    logger.debug('Registering {}...'.format(media))
+    if config.mason.parse_media(name, type, version, media):
+        config.mason.register(media)
 
 
 @cli.command()
