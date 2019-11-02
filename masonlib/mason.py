@@ -100,7 +100,7 @@ def apk(config, apks):
     """
     Register APK artifacts.
 
-      APKS to be registered to the Mason Platform.
+      APK(S) to be registered to the Mason Platform.
 
     \b
     For example, register a single APK:
@@ -124,7 +124,7 @@ def config(config, configs):
     """
     Register config artifacts.
 
-      CONFIGS describing a configuration to be registered to the Mason Platform.
+      CONFIG(S) describing a configuration to be registered to the Mason Platform.
 
     \b
     For example, register a single config:
@@ -339,14 +339,14 @@ def config(config, name, version, groups):
               help='Don\'t require confirmation.')
 @click.option('--await', 'block', is_flag=True, default=False,
               help='Wait synchronously for the build to finish before continuing.')
-@click.argument('yaml', type=click.Path(exists=True))
+@click.argument('configs', type=click.Path(exists=True), nargs=-1)
 @pass_config
-def stage(config, skip_verify, block, yaml):
+def stage(config, skip_verify, block, configs):
     """
     Register and build (aka stage) a project.
 
-      YAML describing a configuration to be registered to the Mason Platform and then subsequently
-    built.
+      CONFIG(S) describing a configuration to be registered to the Mason Platform and then
+    subsequently built.
 
     \b
     For example, register and build a single config:
@@ -362,9 +362,10 @@ def stage(config, skip_verify, block, yaml):
     """
 
     config.skip_verify = skip_verify
-    logger.debug('Staging {}...'.format(yaml))
-    if config.mason.parse_os_config(yaml):
-        config.mason.stage(yaml, block)
+    for file in configs:
+        logger.debug('Staging {}...'.format(file))
+        if config.mason.parse_os_config(file):
+            config.mason.stage(file, block)
 
 
 @cli.command()
