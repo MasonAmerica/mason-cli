@@ -94,7 +94,7 @@ def register(config, skip_verify):
 
 
 @register.command()
-@click.argument('apks', type=click.Path(exists=True), nargs=-1)
+@click.argument('apks', type=click.Path(exists=True), nargs=-1, required=True)
 @pass_config
 def apk(config, apks):
     """
@@ -118,7 +118,7 @@ def apk(config, apks):
 
 
 @register.command()
-@click.argument('configs', type=click.Path(exists=True), nargs=-1)
+@click.argument('configs', type=click.Path(exists=True), nargs=-1, required=True)
 @pass_config
 def config(config, configs):
     """
@@ -238,7 +238,7 @@ def deploy(config, skip_verify, push, no_https):
 @deploy.command()
 @click.argument('name')
 @click.argument('version', type=click.IntRange(min=0))
-@click.argument('groups', nargs=-1)
+@click.argument('groups', nargs=-1, required=True)
 @pass_config
 def apk(config, name, version, groups):
     """
@@ -274,7 +274,7 @@ def apk(config, name, version, groups):
 @deploy.command()
 @click.argument('name')
 @click.argument('version', type=click.IntRange(min=0))
-@click.argument('groups', nargs=-1)
+@click.argument('groups', nargs=-1, required=True)
 @pass_config
 def ota(config, name, version, groups):
     """
@@ -303,7 +303,7 @@ def ota(config, name, version, groups):
 @deploy.command()
 @click.argument('name')
 @click.argument('version', type=click.IntRange(min=0))
-@click.argument('groups', nargs=-1)
+@click.argument('groups', nargs=-1, required=True)
 @pass_config
 def config(config, name, version, groups):
     """
@@ -339,7 +339,7 @@ def config(config, name, version, groups):
               help='Don\'t require confirmation.')
 @click.option('--await', 'block', is_flag=True, default=False,
               help='Wait synchronously for the build to finish before continuing.')
-@click.argument('configs', type=click.Path(exists=True), nargs=-1)
+@click.argument('configs', type=click.Path(exists=True), nargs=-1, required=True)
 @pass_config
 def stage(config, skip_verify, block, configs):
     """
