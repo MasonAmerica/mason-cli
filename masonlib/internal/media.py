@@ -1,12 +1,15 @@
 import os
 import zipfile
 
+import click
+
 from masonlib.internal.artifacts import IArtifact
 
 
 class Media(IArtifact):
 
-    def __init__(self, name, type, version, binary):
+    def __init__(self, config, name, type, version, binary):
+        self.config = config
         self.name = str(name)
         self.type = type
         self.version = str(version)
@@ -17,15 +20,10 @@ class Media(IArtifact):
     def parse(config, name, type, version, binary):
         if not os.path.isfile(binary):
             config.logger.error('No file provided')
-            return None
+            raise click.Abort()
 
-        media = Media(name, type, version, binary)
-
-        # Bail on non valid apk
-        if not media.is_valid():
-            config.logger.error('Not a valid {}, '
-                                'see type requirements in the documentation'.format(type))
-            return None
+        media = Media(config, name, type, version, binary)
+        media.validate()
 
         config.logger.info('----------- MEDIA -----------')
         config.logger.info('File Name: {}'.format(media.binary))
@@ -43,17 +41,13 @@ class Media(IArtifact):
 
         return media
 
-    def is_valid(self):
+    def validate(self):
         if self.type == 'bootanimation':
-            return self._validate_bootanimation()
-        else:
-            return False
+            self._validate_bootanimation()
 
     def get_content_type(self):
         if self.get_sub_type() == 'bootanimation':
             return 'application/zip'
-        else:
-            return None
 
     def get_type(self):
         return 'media'
@@ -79,11 +73,23 @@ class Media(IArtifact):
         return self.details
 
     def _validate_bootanimation(self):
-        with zipfile.ZipFile(self.binary) as zip_file:
-            ret = zip_file.testzip()
-            desc = zip_file.read('desc.txt')
+        try:
+            zip = zipfile.ZipFile(self.binary)
+        except zipfile.BadZipFile as e:
+            self.config.logger.error('Invalid boot animation: {}'.format(e))
+            raise click.Abort()
+
+        with zip as zip_file:
+            error = zip_file.testzip()
+            if error:
+                self.config.logger.error('Invalid boot animation contents: {}'.format(error))
+                raise click.Abort()
+
+            try:
+                zip_file.read('desc.txt')
+            except KeyError:
+                self.config.logger.error('Invalid boot animation contents: desc.txt not found')
+                raise click.Abort()
+
             with zip_file.open('desc.txt') as filename:
                 self.details = filename.readlines()
-            if not desc:
-                return False
-        return ret is None

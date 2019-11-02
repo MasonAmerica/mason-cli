@@ -1,8 +1,10 @@
 import os
 
+import click
 import yaml
 
 from masonlib.internal.artifacts import IArtifact
+from masonlib.internal.utils import validate_version
 
 
 class OSConfig(IArtifact):
@@ -25,16 +27,10 @@ class OSConfig(IArtifact):
                 ecosystem = yaml.load(file, Loader=yaml.SafeLoader)
             except yaml.YAMLError as err:
                 config.logger.error('Invalid configuration file: {}'.format(err))
-                return
+                raise click.Abort()
 
         os_config = OSConfig(config, ecosystem)
-
-        # Bail on non valid os config
-        if not os_config.is_valid():
-            config.logger.error('Not a valid os configuration. For more information on project '
-                                'configuration, view the full docs here: '
-                                'https://docs.bymason.com/project-config/.')
-            return None
+        os_config.validate()
 
         config.logger.info('--------- OS Config ---------')
         config.logger.info('File Name: {}'.format(config_yaml))
@@ -46,22 +42,17 @@ class OSConfig(IArtifact):
         config.logger.debug(yaml.dump(ecosystem))
 
         config.logger.info('-----------------------------')
+
         return os_config
 
-    def is_valid(self):
+    def validate(self):
         if not self.ecosystem or not self.os or not self.name or not self.version:
-            return False
+            self.config.logger.error(
+                'Not a valid os configuration. For more information on project configuration, view '
+                'the full docs here: https://docs.bymason.com/project-config/.')
+            raise click.Abort()
 
-        try:
-            value = int(self.version)
-            if value > 2147483647 or value < 0:
-                raise ValueError('The os configuration version cannot be negative or larger '
-                                 'than MAX_INT (2147483647)')
-        except ValueError as err:
-            self.config.logger.error('Error in configuration file: {}'.format(err))
-            return False
-
-        return True
+        validate_version(self.config, self.version, 'os configuration')
 
     def get_content_type(self):
         return 'text/x-yaml'
@@ -70,7 +61,7 @@ class OSConfig(IArtifact):
         return 'config'
 
     def get_sub_type(self):
-        return None
+        return
 
     def get_name(self):
         return self.name
@@ -79,7 +70,7 @@ class OSConfig(IArtifact):
         return self.version
 
     def get_registry_meta_data(self):
-        return None
+        return
 
     def get_details(self):
         return self.ecosystem

@@ -1,5 +1,20 @@
 import hashlib
 
+import click
+
+
+def validate_version(config, version, type):
+    try:
+        version = int(version)
+    except ValueError:
+        config.logger.error("Error in {}: '{}' is not a number.".format(type, version))
+        raise click.Abort()
+
+    if not (0 < version < 2147483647):
+        config.logger.error('The {} version cannot be negative or larger '
+                            'than MAX_INT (2147483647).'.format(type))
+        raise click.Abort()
+
 
 def hash_file(filename, type_of_hash, as_hex):
     """
@@ -82,7 +97,13 @@ def _format_errors_new_type(config, r):
 
     try:
         err_result = r.json()
-        config.logger.error("{} ('{}')".format(err_result['error'], err_result['details']))
+        config.logger.debug(err_result)
+
+        details = err_result['details']
+        if type(details) is list:
+            details = [detail['message'] for detail in details]
+        config.logger.error('{}: {}'.format(err_result['error'], details))
+
         if 'itemized' in err_result:
             for item in err_result['itemized']:
                 config.logger.error("{} (code: '{}')".format(item['message'], item['code']))

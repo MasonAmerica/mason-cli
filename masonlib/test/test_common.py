@@ -49,7 +49,7 @@ class Common(object):
         mock_media.get_sub_type = MagicMock(return_value=test_bootanimation_sub_type)
         mock_media.get_content_type = MagicMock(return_value=test_bootanimation_content_type)
         mock_media.get_registry_meta_data = MagicMock(return_value=test_bootanimation_meta_data)
-        mock_media.is_valid = MagicMock(return_value=True)
+        mock_media.validate = MagicMock()
         return mock_media
 
     @staticmethod

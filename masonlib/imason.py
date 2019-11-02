@@ -32,18 +32,17 @@ class IMason:
         pass
 
     @abstractmethod
-    def parse_apk(self, apk):
+    def validate_apk(self, apk):
         """
         Public apk parse method, returns true if supported artifact, false otherwise.
 
         :param apk: specify the path of the apk file
-        :rtype: boolean
         """
 
         pass
 
     @abstractmethod
-    def parse_media(self, name, type, version, binary):
+    def validate_media(self, name, type, version, binary):
         """
         Public media parse method, returns true if supported artifact, false otherwise.
 
@@ -51,18 +50,16 @@ class IMason:
         :param type: specify the type of the media artifact
         :param version: specify the unique version of the media artifact
         :param binary: specify the path of the media binary file
-        :rtype: boolean
         """
 
         pass
 
     @abstractmethod
-    def parse_os_config(self, config_yaml):
+    def validate_os_config(self, config_yaml):
         """
         Public os parse method, returns true if supported artifact, false otherwise.
 
         :param config_yaml: specify the path of the os configuration yaml file
-        :rtype: boolean
         """
 
         pass
@@ -86,7 +83,6 @@ class IMason:
         :param project: specify the name of the project to start a build for
         :param version: specify the version of the project for which to start a build for
         :param block: should the method block until the build has finished
-        :rtype: boolean
         """
 
         pass
@@ -102,7 +98,6 @@ class IMason:
         :param group: specify the group to deploy the item to
         :param push: whether to push the deploy to the devices in the group
         :param no_https: whether deployments should be delivered to devices insecurely
-        :rtype boolean
         """
 
         pass
@@ -115,7 +110,6 @@ class IMason:
 
         :param yaml: The yaml file which needs to be staged
         :param block: should the method block until the build has finished
-        :rtype boolean
         """
 
         pass
@@ -127,7 +121,6 @@ class IMason:
 
         :param user: specify a user as string
         :param password: specify a password as string
-        :rtype: boolean
         """
 
         pass
@@ -136,8 +129,6 @@ class IMason:
     def logout(self):
         """
         Public logout method, returns true if successfully logged out.
-
-        :rtype: boolean
         """
 
         pass

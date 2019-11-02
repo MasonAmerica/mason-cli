@@ -3,10 +3,12 @@ import os
 import re
 from subprocess import Popen, PIPE
 
+import click
 from pyaxmlparser import APK
 from pyaxmlparser.core import FileNotPresent
 
 from masonlib.internal.artifacts import IArtifact
+from masonlib.internal.utils import validate_version
 
 
 class Apk(IArtifact):
@@ -22,10 +24,7 @@ class Apk(IArtifact):
     def parse(config, apk):
         apk_abs = APK(apk)
         apkf = Apk(config, apk_abs)
-
-        # Bail on non valid apk
-        if not apkf or not apkf.is_valid():
-            return None
+        apkf.validate()
 
         config.logger.info('------------ APK ------------')
         config.logger.info('File Name: {}'.format(apk))
@@ -35,22 +34,17 @@ class Apk(IArtifact):
         config.logger.info('Version Code: {}'.format(apkf.apkf.get_androidversion_code()))
         config.logger.debug(apkf.get_details())
         config.logger.info('-----------------------------')
+
         return apkf
 
-    def is_valid(self):
-        try:
-            value = int(self.version)
-            if value > 2147483647:
-                raise ValueError('The apk versionCode cannot be larger than MAX_INT (2147483647)')
-        except ValueError as err:
-            self.config.logger.error("Error in configuration file: {}".format(err))
-            return False
+    # TODO: Move this entire validation to service side.
+    def validate(self):
+        validate_version(self.config, self.version, 'apk')
 
-        # TODO: Move this entire validation to service side.
-        # if not parsed well by apk_parse
+        # If not parsed well by apk_parse
         if not self.apkf.is_valid_APK():
-            self.config.logger.error("Not a valid APK, only APK's are currently supported")
-            return False
+            self.config.logger.error('Not a valid APK.')
+            raise click.Abort()
 
         # We don't support anything higher than Marshmallow as a min right now
         if int(self.apkf.get_min_sdk_version()) > 23:
@@ -61,7 +55,7 @@ class Apk(IArtifact):
                 than 23 (Marshmallow). Please lower the minimum sdk value in your manifest or
                 gradle file.
                 """.format(self.apkf.filename)))
-            return False
+            raise click.Abort()
 
         # Check if the app was signed with v1
         if not self.get_details():
@@ -74,7 +68,7 @@ class Apk(IArtifact):
                 of v1 and other signing schemes. For more details on app signing, visit
                 https://s.android.com/security/apksigning
                 """.format(self.apkf.filename)))
-            return False
+            raise click.Abort()
 
         # Check for 'Android Debug' CN for the given artifact, disallow upload
         for line in self.get_details().split('\n'):
@@ -84,9 +78,7 @@ class Apk(IArtifact):
                         Apps signed with a debug key are not allowed.
                         Please sign the APK with your release keys and try again.
                         """))
-                    return False
-
-        return True
+                    raise click.Abort()
 
     def get_content_type(self):
         return 'application/vnd.android.package-archive'
@@ -95,7 +87,7 @@ class Apk(IArtifact):
         return 'apk'
 
     def get_sub_type(self):
-        return None
+        return
 
     def get_name(self):
         return self.name
@@ -127,7 +119,7 @@ class CertFinder:
         try:
             cert = self.apkf.get_file("META-INF/CERT.RSA")
         except FileNotPresent:
-            return None
+            return
 
         try:
             p = Popen(['openssl', 'pkcs7', '-inform', 'DER', '-noout', '-print_certs', '-text'],

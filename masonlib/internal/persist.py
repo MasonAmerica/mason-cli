@@ -13,18 +13,18 @@ class Persist(object):
 
     def _load_stored_data(self):
         if not os.path.isfile(self.file):
-            return None
+            return
 
         with open(self.file) as data_file:
             try:
                 data = json.load(data_file)
                 return data
             except ValueError:
-                return None
+                return
 
     def _get(self, key):
         if not self.data or key not in self.data:
-            return None
+            return
         else:
             return self.data[key]
 
@@ -40,11 +40,9 @@ class Persist(object):
     def write_tokens(self, data):
         with open(self.file, 'w') as outfile:
             json.dump(data, outfile)
-            return True
 
     def delete_tokens(self):
         try:
             os.remove(self.file)
-            return True
         except FileNotFoundError:
-            return False
+            pass

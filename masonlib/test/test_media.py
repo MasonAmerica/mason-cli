@@ -9,7 +9,7 @@ class MediaTest(unittest.TestCase):
         self.media = self._create_media()
 
     def test_media_is_valid(self):
-        assert(self.media.is_valid())
+        assert(self.media.validate())
 
     def test_media_content_type(self):
         if self.media.get_sub_type() == 'bootanimation':

@@ -1,7 +1,6 @@
 import inspect
 import logging
 import os
-from sys import exit
 
 import click
 import click_log
@@ -113,8 +112,8 @@ def apk(config, apks):
 
     for app in apks:
         logger.debug('Registering {}...'.format(app))
-        if config.mason.parse_apk(app):
-            config.mason.register(app)
+        config.mason.validate_apk(app)
+        config.mason.register(app)
 
 
 @register.command()
@@ -140,8 +139,8 @@ def config(config, configs):
 
     for file in configs:
         logger.debug('Registering {}...'.format(file))
-        if config.mason.parse_os_config(file):
-            config.mason.register(file)
+        config.mason.validate_os_config(file)
+        config.mason.register(file)
 
 
 # TODO: add types when support for the deprecated param order is removed.
@@ -182,8 +181,8 @@ def media(config, name, type, version, media):
         media = old_media
 
     logger.debug('Registering {}...'.format(media))
-    if config.mason.parse_media(name, type, version, media):
-        config.mason.register(media)
+    config.mason.validate_media(name, type, version, media)
+    config.mason.register(media)
 
 
 @cli.command()
@@ -215,8 +214,7 @@ def build(config, block, project, version):
     """
 
     logger.debug('Starting build for {}:{}...'.format(project, version))
-    if not config.mason.build(project, version, block):
-        exit('Unable to start build')
+    config.mason.build(project, version, block)
 
 
 @cli.group()
@@ -267,8 +265,7 @@ def apk(config, name, version, groups):
 
     for group in groups:
         logger.debug('Deploying {}:{}...'.format(name, version))
-        if not config.mason.deploy("apk", name, version, group, config.push, config.no_https):
-            exit('Unable to deploy item')
+        config.mason.deploy('apk', name, version, group, config.push, config.no_https)
 
 
 @deploy.command()
@@ -296,8 +293,7 @@ def ota(config, name, version, groups):
 
     for group in groups:
         logger.debug('Deploying {}:{}...'.format(name, version))
-        if not config.mason.deploy("ota", name, version, group, config.push, config.no_https):
-            exit('Unable to deploy item')
+        config.mason.deploy('ota', name, version, group, config.push, config.no_https)
 
 
 @deploy.command()
@@ -330,8 +326,7 @@ def config(config, name, version, groups):
 
     for group in groups:
         logger.debug('Deploying {}:{}...'.format(name, version))
-        if not config.mason.deploy("config", name, version, group, config.push, config.no_https):
-            exit('Unable to deploy item')
+        config.mason.deploy('config', name, version, group, config.push, config.no_https)
 
 
 @cli.command()
@@ -364,8 +359,8 @@ def stage(config, skip_verify, block, configs):
     config.skip_verify = skip_verify
     for file in configs:
         logger.debug('Staging {}...'.format(file))
-        if config.mason.parse_os_config(file):
-            config.mason.stage(file, block)
+        config.mason.validate_os_config(file)
+        config.mason.stage(file, block)
 
 
 @cli.command()
@@ -378,10 +373,8 @@ def login(config, username, password):
     """Authenticate via username and password."""
 
     logger.debug('Authenticating ' + username)
-    if not config.mason.authenticate(username, password):
-        exit('Unable to authenticate')
-    else:
-        logger.info('User authenticated.')
+    config.mason.authenticate(username, password)
+    logger.info('Successfully logged in.')
 
 
 @cli.command()
@@ -389,10 +382,8 @@ def login(config, username, password):
 def logout(config):
     """Log out of the Mason CLI."""
 
-    if config.mason.logout():
-        logger.info('Successfully logged out.')
-    else:
-        logger.info('Already logged out.')
+    config.mason.logout()
+    logger.info('Successfully logged out.')
 
 
 @cli.command(hidden=True)

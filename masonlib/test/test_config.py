@@ -10,7 +10,7 @@ class ConfigTest(unittest.TestCase):
         self.test_config = self._create_test_config()
 
     def test_config_is_valid(self):
-        assert(self.test_config.is_valid())
+        self.test_config.validate()
 
     def test_config_content_type(self):
         assert(self.test_config.get_content_type() == 'text/x-yaml')

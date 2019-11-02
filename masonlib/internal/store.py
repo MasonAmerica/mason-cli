@@ -62,7 +62,7 @@ class Store(object):
 
     def _get(self, key):
         if not self.data or key not in self.data:
-            return None
+            return
         else:
             return self.data[key]
 

@@ -8,7 +8,7 @@ import six
 class IArtifact:
 
     @abstractmethod
-    def is_valid(self):
+    def validate(self):
         pass
 
     @abstractmethod
