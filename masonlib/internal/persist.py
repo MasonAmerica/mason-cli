@@ -1,4 +1,3 @@
-# COPYRIGHT MASONAMERICA
 import json
 import os
 
@@ -45,6 +44,7 @@ class Persist(object):
 
     def delete_tokens(self):
         try:
-            return os.remove(self.file)
-        except OSError:
+            os.remove(self.file)
+            return True
+        except FileNotFoundError:
             return False

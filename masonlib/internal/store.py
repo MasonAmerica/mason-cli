@@ -1,7 +1,9 @@
-import yaml
 import os
 
+import yaml
+
 CURRENT_CONFIG_VERSION = 1
+
 
 class Store(object):
     CONFIG_VERSION = 'config_version'
@@ -43,7 +45,8 @@ class Store(object):
                self.REGISTRY_ARTIFACT_URL in self.data and \
                self.BUILDER_URL in self.data and \
                self.DEPLOY_URL in self.data and \
-               self.CONFIG_VERSION in self.data and self.data[self.CONFIG_VERSION] == CURRENT_CONFIG_VERSION
+               self.CONFIG_VERSION in self.data and \
+               self.data[self.CONFIG_VERSION] == CURRENT_CONFIG_VERSION
 
     def _default_config(self):
         return {

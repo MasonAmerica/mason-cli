@@ -35,12 +35,13 @@ class MasonTest(unittest.TestCase):
         assert(expected_payload == self.mason._get_auth_payload(test_user, test_password))
 
     def test__request_signed_url(self):
+        config = Common.create_mock_config()
         apkf = Common.create_mock_apk_file()
         store = Common.create_mock_store()
 
         test_md5 = b'l32k43h2lh532k32jkfods9ads348aisdfiuaoer034f7s9347u123'
         test_customer = 'mason'
-        test_apk = Apk(apkf)
+        test_apk = Apk(config, apkf)
 
         self.mason.set_id_token('09ads09a8dsfa0re')
         self.mason.set_access_token('oads098fa9830924qdf09asfd')
@@ -59,11 +60,12 @@ class MasonTest(unittest.TestCase):
         assert(expected_url == actual_url)
 
     def test__upload_to_signed_url(self):
+        config = Common.create_mock_config()
         apkf = Common.create_mock_apk_file()
         store = Common.create_mock_store()
 
         test_md5 = b'l32k43h2lh532k32jkfods9ads348aisdfiuaoer034f7s9347u123'
-        test_apk = Apk(apkf)
+        test_apk = Apk(config, apkf)
 
         self.mason.set_id_token('09ads09a8dsfa0re')
         self.mason.set_access_token('oads098fa9830924qdf09asfd')
@@ -75,13 +77,14 @@ class MasonTest(unittest.TestCase):
         assert(expected_headers == self.mason._get_signed_url_post_headers(test_apk, test_md5))
 
     def test__register_to_mason(self):
+        config = Common.create_mock_config()
         apkf = Common.create_mock_apk_file()
         store = Common.create_mock_store()
 
         test_download_url = 'https://signed.magic.url.in.the.sky'
         test_sha1 = 'l32k43h2lh532k32jkfods9ads348aisdfiuaoer034f7s9347u123'
         test_customer = 'mason'
-        test_apk = Apk(apkf)
+        test_apk = Apk(config, apkf)
 
         self.mason.set_id_token('09ads09a8dsfa0re')
         self.mason.set_access_token('oads098fa9830924qdf09asfd')

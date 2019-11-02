@@ -1,5 +1,4 @@
 import hashlib
-import colorama
 
 
 def hash_file(filename, type_of_hash, as_hex):
@@ -10,6 +9,7 @@ def hash_file(filename, type_of_hash, as_hex):
     :param as_hex: True to return a string of hex digits
     :return: The hash of the requested file
     """
+
     if type_of_hash == 'sha1':
         h = hashlib.sha1()
     else:
@@ -31,21 +31,32 @@ def hash_file(filename, type_of_hash, as_hex):
         return h.digest()
 
 
-def print_err(config, msg):
-    if config.no_colorize:
-        print(msg)
-    else:
-        print(colorama.Fore.RED + msg)
+def log_failed_response(config, r, message):
+    config.logger.debug('{}: {}'.format(message, r.status_code))
+    _handle_status(config, r.status_code)
+
+    if r.text:
+        if _format_errors_new_type(config, r):
+            return
+        if _format_errors_old_type(config, r):
+            return
+        config.logger.error(r.text)
 
 
-def print_msg(config, msg):
-    if config.no_colorize:
-        print(msg)
-    else:
-        print(colorama.Fore.GREEN + msg)
+def _handle_status(config, status_code):
+    if status_code == 400:
+        config.logger.debug('Client made a bad request, failed.')
+    elif status_code == 401:
+        config.logger.error('User token is expired or user is unauthorized.')
+    elif status_code == 403:
+        config.logger.error('Access to domain is forbidden. Please contact support.')
+    elif status_code == 404:
+        config.logger.debug('Resource is unavailable, failed')
+    elif status_code == 500:
+        config.logger.debug('Mason service or resource is currently unavailable.')
 
 
-def format_errors(config, response):
+def _format_errors_new_type(config, r):
     """
     Makes an effort to parse body of the `response` object as JSON, and if so, looks for the
     following standard field schema:
@@ -66,14 +77,26 @@ def format_errors(config, response):
     `config`.
 
     :param config: Global config object
-    :param response: Text containing errors. Can be `None`
+    :param r: Response
     """
+
     try:
-        err_result = response.json()
-        print_err(config, "Error: {} ('{}')".format(err_result['error'], err_result['details']))
+        err_result = r.json()
+        config.logger.error("{} ('{}')".format(err_result['error'], err_result['details']))
         if 'itemized' in err_result:
             for item in err_result['itemized']:
-                print_err(config, "  \u25b6 {} (code: '{}')".format(item["message"], item["code"]))
-    except ValueError:
-        if response.text:
-            print_err(config, response.text)
+                config.logger.error("{} (code: '{}')".format(item['message'], item['code']))
+    except (KeyError, ValueError):
+        return False
+
+    return True
+
+
+def _format_errors_old_type(config, r):
+    try:
+        details = r.json()['error']['details']
+        config.logger.error(details)
+    except (KeyError, ValueError):
+        return False
+
+    return True

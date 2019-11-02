@@ -1,10 +1,11 @@
 import abc
-import six
-
 from abc import abstractmethod
 
+import six
+
+
 @six.add_metaclass(abc.ABCMeta)
-class IArtifact():
+class IArtifact:
 
     @abstractmethod
     def is_valid(self):

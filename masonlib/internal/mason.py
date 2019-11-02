@@ -1,7 +1,8 @@
 import base64
-import json
 import os.path
 import time
+
+import click
 
 try:
     # noinspection PyCompatibility
@@ -19,7 +20,7 @@ from masonlib.internal.media import Media
 from masonlib.internal.os_config import OSConfig
 from masonlib.internal.persist import Persist
 from masonlib.internal.store import Store
-from masonlib.internal.utils import hash_file, print_err, format_errors
+from masonlib.internal.utils import hash_file, log_failed_response
 
 
 class Mason(IMason):
@@ -44,8 +45,9 @@ class Mason(IMason):
         self.access_token = self.persist.retrieve_access_token()
 
         if not self.id_token or not self.access_token:
-            print('Please run \'mason login\' first')
+            self.config.logger.error('Not authenticated. Run \'mason login\' to sign in.')
             return False
+
         return True
 
     def parse_apk(self, apk):
@@ -77,30 +79,28 @@ class Mason(IMason):
 
     def register(self, binary):
         if not self.config.skip_verify:
-            response = input('Continue register? (y)')
-            if response and response.lower() != 'y':
-                print('Artifact register aborted')
+            if not click.confirm('Continue register?', default=True):
+                self.config.logger.debug('Artifact registration aborted.')
                 return False
-        if not self._register_artifact(binary):
-            print('Unable to register artifact')
-            return False
-        else:
-            return True
 
-    def _register_artifact(self, binary):
         if not self._validate_credentials():
             return False
 
+        if not self._register_artifact(binary):
+            self.config.logger.error('Unable to register artifact')
+            return False
+
+        return True
+
+    def _register_artifact(self, binary):
         sha1 = hash_file(binary, 'sha1', True)
-        if self.config.verbose:
-            print('File SHA1: {}'.format(sha1))
         md5 = hash_file(binary, 'md5', False)
-        if self.config.verbose:
-            print('File MD5: {}'.format(hash_file(binary, 'md5', True)))
+
+        self.config.logger.debug('File SHA1: {}'.format(sha1))
+        self.config.logger.debug('File MD5: {}'.format(hash_file(binary, 'md5', True)))
 
         customer = self._get_customer()
         if not customer:
-            print('Could not retrieve customer information')
             return False
 
         # Get the signed url data for the user and artifact
@@ -130,13 +130,9 @@ class Mason(IMason):
         r = requests.get(self.store.user_info_url(), headers=headers)
 
         if r.status_code == 200:
-            data = json.loads(r.text)
-            return data
+            return r.json()
         else:
-            print('Unable to get user info: {}'.format(r.status_code))
-            self._handle_status(r.status_code)
-            if r.text:
-                print_err(self.config, r.text)
+            log_failed_response(self.config, r, 'Unable to get user info')
             return None
 
     def _get_customer(self):
@@ -147,26 +143,21 @@ class Mason(IMason):
             return None
 
         # Extract the customer info
-        return user_info_data['user_metadata']['clients'][0]
+        customer = user_info_data['user_metadata']['clients'][0]
+        if not customer:
+            self.config.logger.critical('Could not retrieve customer information.')
+        return customer
 
     def _request_signed_url(self, customer, artifact_data, md5):
-        print('Connecting to server...')
+        self.config.logger.debug('Connecting to server...')
         headers = self._get_signed_url_request_headers(md5)
         url = self._get_signed_url_request_endpoint(customer, artifact_data)
+
         r = requests.get(url, headers=headers)
         if r.status_code == 200:
-            data = json.loads(r.text)
-            return data
+            return r.json()
         else:
-            if self.config.debug:  # only show for --debug as this is an implementation detail
-                print('Unable to get signed url: {}'.format(r.status_code))
-            self._handle_status(r.status_code)
-            if r.text:
-                try:
-                    msg = json.loads(r.text)["error"]["details"]
-                    print_err(self.config, "Details: " + msg)
-                except (KeyError, ValueError):  # Something wrong in the error message received
-                    print_err(self.config, r.text)
+            log_failed_response(self.config, r, 'Unable to get signed url')
             return None
 
     def _get_signed_url_request_headers(self, md5):
@@ -177,24 +168,22 @@ class Mason(IMason):
 
     def _get_signed_url_request_endpoint(self, customer, artifact_data):
         return self.store.registry_signer_url() \
-              + '/{0}/{1}/{2}?type={3}'.format(customer, artifact_data.get_name(), artifact_data.get_version(),
-                                               artifact_data.get_type())
+               + '/{0}/{1}/{2}?type={3}'.format(customer, artifact_data.get_name(),
+                                                artifact_data.get_version(),
+                                                artifact_data.get_type())
 
     def _upload_to_signed_url(self, url, artifact, artifact_data, md5):
-        print('Uploading artifact...')
+        self.config.logger.debug('Uploading artifact...')
         headers = self._get_signed_url_post_headers(artifact_data, md5)
         artifact_file = open(artifact, 'rb')
         iterable = UploadInChunks(artifact_file.name, chunksize=10)
 
         r = requests.put(url, data=IterableToFileAdapter(iterable), headers=headers)
         if r.status_code == 200:
-            print('File upload complete.')
+            self.config.logger.debug('File upload complete.')
             return True
         else:
-            print('Unable to upload to signed url: {}'.format(r.status_code))
-            self._handle_status(r.status_code)
-            if r.text:
-                print_err(self.config, r.text)
+            log_failed_response(self.config, r, 'Unable to upload to signed url')
             return False
 
     @staticmethod
@@ -204,7 +193,7 @@ class Mason(IMason):
                 'Content-MD5': base64encodedmd5}
 
     def _register_to_mason(self, customer, download_url, sha1, artifact_data):
-        print('Registering to mason services...')
+        self.config.logger.debug('Registering to mason services...')
         headers = {'Content-Type': 'application/json',
                    'Authorization': 'Bearer {}'.format(self.id_token)}
         payload = self._get_registry_payload(customer, download_url, sha1, artifact_data)
@@ -215,12 +204,10 @@ class Mason(IMason):
         url = self.store.registry_artifact_url() + '/{0}/'.format(customer)
         r = requests.post(url, headers=headers, json=payload)
         if r.status_code == 200:
-            print('Artifact registered.')
+            self.config.logger.info('Artifact registered.')
             return True
         else:
-            print('Unable to register artifact: {}'.format(r.status_code))
-            self._handle_status(r.status_code)
-            format_errors(self.config, r)
+            log_failed_response(self.config, r, 'Unable to register artifact')
             return False
 
     @staticmethod
@@ -234,19 +221,6 @@ class Mason(IMason):
                     'sha1': sha1
                 }}
 
-    @staticmethod
-    def _handle_status(status_code):
-        if status_code == 400:
-            print('Client made a bad request, failed.')
-        elif status_code == 401:
-            print('User token is expired or user is unauthorized.')
-        elif status_code == 403:
-            print('Access to domain is forbidden. Please contact support.')
-        elif status_code == 404:
-            print('Resource is unavailable, failed')
-        elif status_code == 500:
-            print('Mason service or resource is currently unavailable.')
-
     def build(self, project, version, block):
         return self._build_project(project, version, block)
 
@@ -259,16 +233,17 @@ class Mason(IMason):
 
         customer = self._get_customer()
         if not customer:
-            print('Could not retrieve customer information')
             return False
 
         payload = self._get_build_payload(customer, project, version)
         builder_url = self.store.builder_url() + '/{0}/'.format(customer) + 'jobs'
-        print('Queueing build...')
+        self.config.logger.debug('Queueing build...')
         r = requests.post(builder_url, headers=headers, json=payload)
         if r.status_code == 200:
             hostname = urlparse(self.store.deploy_url()).hostname
-            print('Build queued.\nYou can see the status of your build at https://{}/controller/projects/{}'.format(hostname, project))
+            self.config.logger.info('Build queued.')
+            self.config.logger.info('You can see the status of your build at '
+                                    'https://{}/controller/projects/{}'.format(hostname, project))
 
             if block:
                 job_url = '{}/{}'.format(builder_url, r.json().get('data').get('submittedAt'))
@@ -279,30 +254,23 @@ class Mason(IMason):
                 while time_blocked < timeout_seconds:
                     r = requests.get(job_url, headers=headers)
                     if not r.status_code == 200:
-                        print('Build status check failed')
+                        self.config.logger.error('Build status check failed')
                         return False
 
                     if r.json().get('data').get('status') == 'COMPLETED':
-                        print('Build completed')
+                        self.config.logger.info('Build completed')
                         return True
 
-                    print('Waiting for build to complete...')
+                    self.config.logger.info('Waiting for build to complete...')
                     time.sleep(20)
                     time_blocked += 20
 
-                print('Timed out waiting for build to complete.')
+                self.config.logger.error('Timed out waiting for build to complete.')
                 return False
 
             return True
         else:
-            print_err(self.config, 'Unable to enqueue build: {}'.format(r.status_code))
-            self._handle_status(r.status_code)
-            if r.text:
-                try:
-                    msg = json.loads(r.text)["message"]
-                    print_err(self.config, "Details: " + msg)
-                except ValueError:  # Something wrong in the error message received
-                    pass
+            log_failed_response(self.config, r, 'Unable to enqueue build')
             return False
 
     @staticmethod
@@ -319,7 +287,7 @@ class Mason(IMason):
         elif item_type == 'ota':
             return self._deploy_ota(name, version, group, push, no_https)
         else:
-            print('Unsupported deploy type {}'.format(item_type))
+            self.config.logger.critical('Unsupported deploy type {}'.format(item_type))
             return False
 
     def _deploy_apk(self, name, version, group, push, no_https):
@@ -328,11 +296,10 @@ class Mason(IMason):
 
         customer = self._get_customer()
         if not customer:
-            print('Could not retrieve customer information')
             return False
 
         payload = self._get_deploy_payload(customer, group, name, version, 'apk', push, no_https)
-        return self._deploy_payload(payload)
+        return self._deploy_payload(payload, 'apk')
 
     def _deploy_config(self, name, version, group, push, no_https):
         if not self._validate_credentials():
@@ -340,11 +307,10 @@ class Mason(IMason):
 
         customer = self._get_customer()
         if not customer:
-            print('Could not retrieve customer information')
             return False
 
         payload = self._get_deploy_payload(customer, group, name, version, 'config', push, no_https)
-        return self._deploy_payload(payload)
+        return self._deploy_payload(payload, 'config')
 
     def _deploy_ota(self, name, version, group, push, no_https):
         if not self._validate_credentials():
@@ -352,39 +318,39 @@ class Mason(IMason):
 
         customer = self._get_customer()
         if not customer:
-            print('Could not retrieve customer information')
             return False
 
         if name != 'mason-os':
-            print("Warning: Unknown name '{0}' for 'ota' deployments, forcing it to 'mason-os'".format(name))
+            self.config.logger.warning("Unknown name '{0}' for 'ota' deployments. "
+                                       "Forcing it to 'mason-os'".format(name))
             name = 'mason-os'
         payload = self._get_deploy_payload(customer, group, name, version, 'ota', push, no_https)
-        return self._deploy_payload(payload)
+        return self._deploy_payload(payload, 'ota')
 
-    def _deploy_payload(self, payload):
+    def _deploy_payload(self, payload, type):
         if not payload:
             return False
 
         if not self.config.skip_verify:
-            print('---------- DEPLOY -----------')
-            print('Name: {}'.format(payload['name']))
-            print('Type: {}'.format(payload['type']))
-            print('Version: {}'.format(payload['version']))
-            print('Group: {}'.format(payload['group']))
-            print('Push: {}'.format(payload['push']))
-            if self.config.verbose:
-                print('Customer: {}'.format(payload['customer']))
+            self.config.logger.info('---------- DEPLOY -----------')
+
+            self.config.logger.info('Name: {}'.format(payload['name']))
+            self.config.logger.info('Type: {}'.format(payload['type']))
+            self.config.logger.info('Version: {}'.format(payload['version']))
+            self.config.logger.info('Group: {}'.format(payload['group']))
+            self.config.logger.info('Push: {}'.format(payload['push']))
+            self.config.logger.debug('Customer: {}'.format(payload['customer']))
+
             if payload.get('deployInsecure', False):
-                print()
-                print("***WARNING***")
-                print("--no-https enabled: this deployment will be delivered to devices over HTTP.")
-                print("***WARNING***")
-            print('-----------------------------')
-            response = input('Continue deploy? (y)')
-            if not response or response.lower() == 'y':
-                print('Continuing deploy...')
-            else:
-                print('Deploy aborted')
+                self.config.logger.info()
+                self.config.logger.info('***WARNING***')
+                self.config.logger.info('--no-https enabled: this deployment will be delivered to '
+                                        'devices over HTTP.')
+                self.config.logger.info('***WARNING***')
+
+            self.config.logger.info('-----------------------------')
+
+            if not click.confirm('Continue deploy?', default=True):
                 return False
 
         headers = {'Content-Type': 'application/json',
@@ -394,19 +360,12 @@ class Mason(IMason):
 
         if r.status_code == 200:
             if r.text:
-                if self.config.verbose:
-                    print(r.text)
-            print('{}:{} was successfully deployed to {}'.format(payload['name'], payload['version'], payload['group']))
+                self.config.logger.debug(r.text)
+            self.config.logger.info('{}:{} was successfully deployed to {}'.format(
+                payload['name'], payload['version'], payload['group']))
             return True
         else:
-            self._handle_status(r.status_code)
-            if r.text:
-                try:
-                    msg = json.loads(r.text)["data"]
-                    print_err(self.config, "Details: " + msg)
-                except (KeyError, ValueError):
-                    # Something wrong in the error message received, just show what we got (ugliness warning!)
-                    print_err(self.config, r.text)
+            log_failed_response(self.config, r, 'Unable to deploy {}'.format(type))
             return False
 
     @staticmethod
@@ -427,14 +386,14 @@ class Mason(IMason):
         if self.register(yaml):
             return self._build_project(self.artifact.get_name(), self.artifact.get_version(), block)
         else:
-            print('Unable to stage configuration')
+            self.config.logger.error('Unable to stage configuration')
             return False
 
     def authenticate(self, user, password):
         payload = self._get_auth_payload(user, password)
         r = requests.post(self.store.auth_url(), json=payload)
         if r.status_code == 200:
-            data = json.loads(r.text)
+            data = r.json()
             return self.persist.write_tokens(data)
         else:
             return False

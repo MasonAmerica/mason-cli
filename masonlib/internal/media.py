@@ -16,29 +16,31 @@ class Media(IArtifact):
     @staticmethod
     def parse(config, name, type, version, binary):
         if not os.path.isfile(binary):
-            print('No file provided')
+            config.logger.error('No file provided')
             return None
 
         media = Media(name, type, version, binary)
 
         # Bail on non valid apk
         if not media.is_valid():
-            print("Not a valid {}, see type requirements in the documentation".format(type))
+            config.logger.error('Not a valid {}, '
+                                'see type requirements in the documentation'.format(type))
             return None
 
-        print('----------- MEDIA -----------')
-        print('File Name: {}'.format(media.binary))
-        print('File size: {}'.format(os.path.getsize(binary)))
-        print('Name: {}'.format(media.name))
-        print('Version: {}'.format(media.version))
-        print('Type: {}'.format(media.type))
-        if config.verbose:
-            if media.details:
-                print('Details: ')
-                lines = list(line for line in (l.strip() for l in media.details) if line)
-                for line in lines:
-                    print(line)
-        print('-----------------------------')
+        config.logger.info('----------- MEDIA -----------')
+        config.logger.info('File Name: {}'.format(media.binary))
+        config.logger.info('File size: {}'.format(os.path.getsize(binary)))
+        config.logger.info('Name: {}'.format(media.name))
+        config.logger.info('Version: {}'.format(media.version))
+        config.logger.info('Type: {}'.format(media.type))
+
+        if media.details:
+            config.logger.debug('Details: ')
+            lines = list(line for line in (l.strip() for l in media.details) if line)
+            for line in lines:
+                config.logger.debug(line)
+        config.logger.info('-----------------------------')
+
         return media
 
     def is_valid(self):
@@ -54,7 +56,7 @@ class Media(IArtifact):
             return None
 
     def get_type(self):
-        return "media"
+        return 'media'
 
     def get_sub_type(self):
         return self.type

@@ -1,14 +1,21 @@
+import inspect
+import logging
 import os
 from sys import exit
 
 import click
-import colorama
+import click_log
 import packaging.version
 import requests
 
 from masonlib import __version__
 from masonlib.imason import IMason
 from masonlib.platform import Platform
+
+logger = logging.getLogger(__name__)
+logger.setLevel(os.environ.get('LOGLEVEL', 'INFO').upper())
+click_log.ClickHandler._use_stderr = False
+click_log.basic_config(logger)
 
 
 class Config(object):
@@ -18,18 +25,18 @@ class Config(object):
     """
 
     def __init__(self):
-        self.verbose = False
-        self.no_colorize = False
+        self.logger = logger
 
 
 pass_config = click.make_pass_decorator(Config, ensure=True)
 
 
+# noinspection PyUnusedLocal
 def _version_callback(ctx, param, value):
     if not value or ctx.resilient_parsing:
         return
 
-    _print_version_info()
+    _show_version_info()
     ctx.exit()
 
 
@@ -37,16 +44,17 @@ def _version_callback(ctx, param, value):
 @click.option('--version', '-V', is_flag=True, is_eager=True, expose_value=False,
               callback=_version_callback,
               help='Show the version and exit.')
-@click.option('--debug', '-d', is_flag=True, default=False,
-              help='Log diagnostic data.')
-@click.option('--verbose', '-v', is_flag=True,
-              help='Log verbose artifact and command details.')
 @click.option('--access-token',
               help='Supply an access token for this command.')
 @click.option('--id-token',
               help='Supply an ID token for this command.')
 @click.option('--no-color', is_flag=True, default=False,
               help='Disable rich console output.')
+@click.option('--debug', '-d', is_flag=True, default=False, hidden=True,
+              help='Log diagnostic data.')
+@click.option('--verbose', is_flag=True, hidden=True,
+              help='Log verbose artifact and command details.')
+@click_log.simple_verbosity_option(logger)
 @pass_config
 def cli(config, debug, verbose, id_token, access_token, no_color):
     """
@@ -56,15 +64,23 @@ def cli(config, debug, verbose, id_token, access_token, no_color):
 
     _check_version()
 
-    config.debug = debug
-    config.verbose = verbose
-    config.no_colorize = no_color
-    if not no_color:
-        colorama.init(autoreset=True)
     platform = Platform(config)
     config.mason = platform.get(IMason)
     config.mason.set_id_token(id_token)
     config.mason.set_access_token(access_token)
+
+    if no_color:
+        click_log.ColorFormatter.colors = {
+            'error': {},
+            'exception': {},
+            'critical': {},
+            'debug': {},
+            'warning': {}
+        }
+    if verbose or debug:
+        logger.warning('--debug and --verbose options are deprecated. Please use --verbosity debug '
+                       'instead.')
+        logger.setLevel('DEBUG')
 
 
 @cli.group()
@@ -96,8 +112,7 @@ def apk(config, apks):
     """
 
     for app in apks:
-        if config.verbose:
-            click.echo('Registering {}...'.format(app))
+        logger.debug('Registering {}...'.format(app))
         if config.mason.parse_apk(app):
             config.mason.register(app)
 
@@ -124,8 +139,7 @@ def config(config, configs):
     """
 
     for file in configs:
-        if config.verbose:
-            click.echo('Registering {}...'.format(file))
+        logger.debug('Registering {}...'.format(file))
         if config.mason.parse_os_config(file):
             config.mason.register(file)
 
@@ -152,8 +166,7 @@ def media(config, binary, name, type, version):
       $ mason register media bootanimation.zip bootanimation 1
     """
 
-    if config.verbose:
-        click.echo('Registering {}...'.format(binary))
+    logger.debug('Registering {}...'.format(binary))
     if config.mason.parse_media(name, type, version, binary):
         config.mason.register(binary)
 
@@ -186,8 +199,7 @@ def build(config, block, project, version):
       $ mason build mason-test 5
     """
 
-    if config.verbose:
-        click.echo('Starting build for {}:{}...'.format(project, version))
+    logger.debug('Starting build for {}:{}...'.format(project, version))
     if not config.mason.build(project, version, block):
         exit('Unable to start build')
 
@@ -239,8 +251,7 @@ def apk(config, name, version, groups):
     """
 
     for group in groups:
-        if config.verbose:
-            click.echo('Deploying {}:{}...'.format(name, version))
+        logger.debug('Deploying {}:{}...'.format(name, version))
         if not config.mason.deploy("apk", name, version, group, config.push, config.no_https):
             exit('Unable to deploy item')
 
@@ -269,8 +280,7 @@ def ota(config, name, version, groups):
     """
 
     for group in groups:
-        if config.verbose:
-            click.echo('Deploying {}:{}...'.format(name, version))
+        logger.debug('Deploying {}:{}...'.format(name, version))
         if not config.mason.deploy("ota", name, version, group, config.push, config.no_https):
             exit('Unable to deploy item')
 
@@ -304,8 +314,7 @@ def config(config, name, version, groups):
     """
 
     for group in groups:
-        if config.verbose:
-            click.echo('Deploying {}:{}...'.format(name, version))
+        logger.debug('Deploying {}:{}...'.format(name, version))
         if not config.mason.deploy("config", name, version, group, config.push, config.no_https):
             exit('Unable to deploy item')
 
@@ -338,8 +347,7 @@ def stage(config, skip_verify, block, yaml):
     """
 
     config.skip_verify = skip_verify
-    if config.verbose:
-        click.echo('Staging {}...'.format(yaml))
+    logger.debug('Staging {}...'.format(yaml))
     if config.mason.parse_os_config(yaml):
         config.mason.stage(yaml, block)
 
@@ -353,12 +361,11 @@ def stage(config, skip_verify, block, yaml):
 def login(config, username, password):
     """Authenticate via username and password."""
 
-    if config.verbose:
-        click.echo('Authenticating ' + username)
+    logger.debug('Authenticating ' + username)
     if not config.mason.authenticate(username, password):
         exit('Unable to authenticate')
     else:
-        click.echo('User authenticated.')
+        logger.info('User authenticated.')
 
 
 @cli.command()
@@ -367,43 +374,53 @@ def logout(config):
     """Log out of the Mason CLI."""
 
     if config.mason.logout():
-        click.echo('Successfully logged out')
+        logger.info('Successfully logged out.')
+    else:
+        logger.info('Already logged out.')
 
 
 @cli.command(hidden=True)
 def version():
     """Display the Mason CLI version."""
 
-    _print_version_info()
+    _show_version_info()
 
 
-def _print_version_info():
-    click.echo('Mason CLI v{}'.format(__version__))
-    click.echo('Copyright (C) 2019 Mason America (https://bymason.com)')
-    click.echo('License Apache 2.0 <https://www.apache.org/licenses/LICENSE-2.0>')
+def _show_version_info():
+    logger.info('Mason CLI v{}'.format(__version__))
+    logger.info('Copyright (C) 2019 Mason America (https://bymason.com)')
+    logger.info('License Apache 2.0 <https://www.apache.org/licenses/LICENSE-2.0>')
 
 
 def _check_version():
-    r = requests.get('https://raw.githubusercontent.com/MasonAmerica/mason-cli/master/VERSION')
-    if r.status_code == 200:
-        if r.text:
-            current_version = packaging.version.parse(__version__)
-            remote_version = packaging.version.parse(r.text)
-            if remote_version > current_version:
-                if isMasonDocker():
-                    upgrade_command = 'docker pull masonamerica/mason-cli:latest'
-                else:
-                    upgrade_command = 'pip install --upgrade git+https://git@github.com/MasonAmerica/mason-cli.git'
-                print('\n==================== NOTICE ====================\n' \
-                      'A newer version \'{}\' of the mason-cli is available.\n' \
-                      'Run:\n' \
-                      '    `{}`\n' \
-                      'to upgrade to the latest version.\n' \
-                      '\n' \
-                      'Release notes: https://github.com/MasonAmerica/mason-cli/releases' \
-                      '\n' \
-                      '==================== NOTICE ====================\n'.format(remote_version,
-                                                                                  upgrade_command))
+    try:
+        r = requests.get('https://raw.githubusercontent.com/MasonAmerica/mason-cli/master/VERSION')
+    except requests.RequestException as e:
+        logger.debug('Failed to fetch latest version: {}'.format(e))
+        return
+
+    if r.status_code == 200 and r.text:
+        current_version = packaging.version.parse(__version__)
+        remote_version = packaging.version.parse(r.text)
+        if remote_version > current_version:
+            if isMasonDocker():
+                upgrade_command = 'docker pull masonamerica/mason-cli:latest'
+            else:
+                upgrade_command = 'pip install --upgrade git+https://git@github.com/MasonAmerica/mason-cli.git'
+
+            logger.info(inspect.cleandoc("""
+            ==================== NOTICE ====================
+            A newer version '{}' of the mason-cli is available.
+            Run:
+              $ {}
+            to upgrade to the latest version.
+
+            Release notes: https://github.com/MasonAmerica/mason-cli/releases
+            ==================== NOTICE ====================
+            """.format(remote_version, upgrade_command)))
+            logger.info('')
+    else:
+        logger.debug('Failed to fetch latest version: {}'.format(r))
 
 
 def isMasonDocker():

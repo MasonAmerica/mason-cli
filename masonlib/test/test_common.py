@@ -8,7 +8,6 @@ class Common(object):
     def create_mock_config():
         mock_config = Mock()
         mock_config._check_version = MagicMock(return_value=None)
-        mock_config.verbose = False
 
     @staticmethod
     def create_mock_apk_file():

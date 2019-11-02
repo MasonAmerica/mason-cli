@@ -32,5 +32,6 @@ class ConfigTest(unittest.TestCase):
 
     @staticmethod
     def _create_test_config():
-        test_config = Common.create_config_file()
-        return OSConfig(test_config)
+        test_config = Common.create_mock_config()
+        test_yaml = Common.create_config_file()
+        return OSConfig(test_config, test_yaml)

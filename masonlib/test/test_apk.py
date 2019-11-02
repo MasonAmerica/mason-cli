@@ -41,7 +41,6 @@ class ApkTest(unittest.TestCase):
 
     def test_apk_v1_signed(self):
         mock_config = MagicMock()
-        mock_config.verbose = False
         apk = Apk.parse(mock_config, "res/v1.apk")
         self.assertIsNotNone(apk)
         self.assertTrue(apk.is_valid(), "APK is invalid!")
@@ -49,33 +48,29 @@ class ApkTest(unittest.TestCase):
     @unittest.skip("V2-only signing is not yet supported")
     def test_apk_v2_signed(self):
         mock_config = MagicMock()
-        mock_config.verbose = False
         apk = Apk.parse(mock_config, "res/v2.apk")
         self.assertIsNotNone(apk)
         self.assertTrue(apk.is_valid(), "APK is invalid!")
 
     def test_apk_v1_and_v2_signed(self):
         mock_config = MagicMock()
-        mock_config.verbose = False
         apk = Apk.parse(mock_config, "res/v1and2.apk")
         self.assertIsNotNone(apk)
         self.assertTrue(apk.is_valid(), "APK is invalid!")
 
     def test_apk_unsigned(self):
         mock_config = MagicMock()
-        mock_config.verbose = False
         apk = Apk.parse(mock_config, "res/unsigned.apk")
         self.assertIsNone(apk)
 
     def test_apk_debug_signed(self):
         mock_config = MagicMock()
-        mock_config.verbose = False
         apk = Apk.parse(mock_config, "res/debug.apk")
         self.assertIsNone(apk)
 
-
     @staticmethod
     def _create_test_apk():
+        config = Common.create_mock_config()
         apkf = Common.create_mock_apk_file()
         cert_finder = Common.create_mock_cert_finder()
-        return Apk(apkf, cert_finder)
+        return Apk(config, apkf, cert_finder)

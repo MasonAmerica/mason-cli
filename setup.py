@@ -20,12 +20,12 @@ setup(
     zip_safe=False,
     packages=find_packages(),
     install_requires=[
-        'click==7.0',
+        'click>=7.0',
+        'click-log',
         'requests',
         'tqdm',
         'pyyaml',
         'six',
-        'colorama',
         'packaging',
         'pyaxmlparser',
         'future'  # Needed for Python 2 compatibility

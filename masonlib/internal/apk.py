@@ -1,14 +1,17 @@
+import inspect
 import os
 import re
+from subprocess import Popen, PIPE
 
 from pyaxmlparser import APK
 from pyaxmlparser.core import FileNotPresent
+
 from masonlib.internal.artifacts import IArtifact
-from subprocess import Popen, PIPE
 
 
 class Apk(IArtifact):
-    def __init__(self, apkf, cert_finder=None):
+    def __init__(self, config, apkf, cert_finder=None):
+        self.config = config
         self.apkf = apkf
         self.cert_finder = cert_finder or CertFinder(apkf)
         self.name = self.apkf.package
@@ -18,26 +21,24 @@ class Apk(IArtifact):
     @staticmethod
     def parse(config, apk):
         if not os.path.isfile(apk):
-            print('No file provided')
+            config.logger.error('No file provided')
             return None
 
         apk_abs = APK(apk)
-        apkf = Apk(apk_abs)
+        apkf = Apk(config, apk_abs)
 
         # Bail on non valid apk
         if not apkf or not apkf.is_valid():
             return None
 
-        print('------------ APK ------------')
-        print('File Name: {}'.format(apk))
-        print('File size: {}'.format(os.path.getsize(apk)))
-        print('Package: {}'.format(apkf.apkf.package))
-        print('Version Name: {}'.format(apkf.apkf.get_androidversion_name()))
-        print('Version Code: {}'.format(apkf.apkf.get_androidversion_code()))
-        if config.verbose:
-            for line in apkf.get_details():
-                print(line)
-        print('-----------------------------')
+        config.logger.info('------------ APK ------------')
+        config.logger.info('File Name: {}'.format(apk))
+        config.logger.info('File size: {}'.format(os.path.getsize(apk)))
+        config.logger.info('Package: {}'.format(apkf.apkf.package))
+        config.logger.info('Version Name: {}'.format(apkf.apkf.get_androidversion_name()))
+        config.logger.info('Version Code: {}'.format(apkf.apkf.get_androidversion_code()))
+        config.logger.debug(apkf.get_details())
+        config.logger.info('-----------------------------')
         return apkf
 
     def is_valid(self):
@@ -46,48 +47,47 @@ class Apk(IArtifact):
             if value > 2147483647:
                 raise ValueError('The apk versionCode cannot be larger than MAX_INT (2147483647)')
         except ValueError as err:
-            print("Error in configuration file: {}".format(err))
+            self.config.logger.error("Error in configuration file: {}".format(err))
             return False
 
         # TODO: Move this entire validation to service side.
         # if not parsed well by apk_parse
         if not self.apkf.is_valid_APK():
-            print("Not a valid APK, only APK's are currently supported")
+            self.config.logger.error("Not a valid APK, only APK's are currently supported")
             return False
 
         # We don't support anything higher than Marshmallow as a min right now
         if int(self.apkf.get_min_sdk_version()) > 23:
-            print('\n----------- ERROR -----------\n' \
-                  "File Name: {}\n" \
-                  "Details:\n" \
-                  "  Mason Platform does not currently support applications with a minimum sdk\n" \
-                  "  greater than 23 (Marshmallow). Please lower the minimum sdk value in your\n" \
-                  "  manifest or gradle file.\n" \
-                  '-----------------------------\n'.format(self.apkf.filename))
+            self.config.logger.error(inspect.cleandoc("""
+                File Name: {}
+
+                Mason Platform does not currently support applications with a minimum sdk greater
+                than 23 (Marshmallow). Please lower the minimum sdk value in your manifest or
+                gradle file.
+                """.format(self.apkf.filename)))
             return False
 
         # Check if the app was signed with v1
         if not self.get_details():
-            print('\n----------- ERROR -----------\n' \
-                  "File Name: {}\n" \
-                  "Details:\n" \
-                  "A v1 signing certificate was not detected.\n" \
-                  "Mason Platform requires your app to be signed with a v1 signing scheme.\n" \
-                  "Please ensure your app is either signed exclusively with v1 or with some\n" \
-                  "combination of v1 and other signing schemes. For more details on app\n" \
-                  "signing, visit https://s.android.com/security/apksigning\n" \
-                  '-----------------------------\n'.format(self.apkf.filename))
+            self.config.logger.error(inspect.cleandoc("""
+                File Name: {}
+
+                A v1 signing certificate was not detected.
+                Mason Platform requires your app to be signed with a v1 signing scheme. Please
+                ensure your app is either signed exclusively with v1 or with some combination
+                of v1 and other signing schemes. For more details on app signing, visit
+                https://s.android.com/security/apksigning
+                """.format(self.apkf.filename)))
             return False
 
         # Check for 'Android Debug' CN for the given artifact, disallow upload
         for line in self.get_details().split('\n'):
             if re.search('Subject:', line) or re.search('Owner:', line):
                 if re.search('Android Debug', line):
-                    print('\n----------- ERROR -----------\n' \
-                          'Not allowing android debug key signed apk. \n' \
-                          'Please sign the APK with your release keys \n' \
-                          'before attempting to upload.               \n' \
-                          '-----------------------------\n')
+                    self.config.logger.error(inspect.cleandoc("""
+                        Apps signed with a debug key are not allowed.
+                        Please sign the APK with your release keys and try again.
+                        """))
                     return False
 
         return True
