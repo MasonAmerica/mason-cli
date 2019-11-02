@@ -20,10 +20,6 @@ class Apk(IArtifact):
 
     @staticmethod
     def parse(config, apk):
-        if not os.path.isfile(apk):
-            config.logger.error('No file provided')
-            return None
-
         apk_abs = APK(apk)
         apkf = Apk(config, apk_abs)
 

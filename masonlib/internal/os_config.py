@@ -20,10 +20,6 @@ class OSConfig(IArtifact):
 
     @staticmethod
     def parse(config, config_yaml):
-        if not os.path.isfile(config_yaml):
-            config.logger.error('No file provided')
-            return
-
         with open(config_yaml) as file:
             try:
                 ecosystem = yaml.load(file, Loader=yaml.SafeLoader)

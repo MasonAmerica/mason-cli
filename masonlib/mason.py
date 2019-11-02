@@ -94,7 +94,7 @@ def register(config, skip_verify):
 
 
 @register.command()
-@click.argument('apks', nargs=-1)
+@click.argument('apks', type=click.Path(exists=True), nargs=-1)
 @pass_config
 def apk(config, apks):
     """
@@ -118,7 +118,7 @@ def apk(config, apks):
 
 
 @register.command()
-@click.argument('configs', nargs=-1)
+@click.argument('configs', type=click.Path(exists=True), nargs=-1)
 @pass_config
 def config(config, configs):
     """
@@ -144,6 +144,7 @@ def config(config, configs):
             config.mason.register(file)
 
 
+# TODO: add types when support for the deprecated param order is removed.
 @register.command()
 @click.argument('name')
 @click.argument('type')
@@ -189,7 +190,7 @@ def media(config, name, type, version, media):
 @click.option('--await', 'block', is_flag=True, default=False,
               help='Wait synchronously for the build to finish before continuing.')
 @click.argument('project')
-@click.argument('version')
+@click.argument('version', type=click.IntRange(min=0))
 @pass_config
 def build(config, block, project, version):
     """
@@ -236,7 +237,7 @@ def deploy(config, skip_verify, push, no_https):
 
 @deploy.command()
 @click.argument('name')
-@click.argument('version')
+@click.argument('version', type=click.IntRange(min=0))
 @click.argument('groups', nargs=-1)
 @pass_config
 def apk(config, name, version, groups):
@@ -272,7 +273,7 @@ def apk(config, name, version, groups):
 
 @deploy.command()
 @click.argument('name')
-@click.argument('version')
+@click.argument('version', type=click.IntRange(min=0))
 @click.argument('groups', nargs=-1)
 @pass_config
 def ota(config, name, version, groups):
@@ -301,7 +302,7 @@ def ota(config, name, version, groups):
 
 @deploy.command()
 @click.argument('name')
-@click.argument('version')
+@click.argument('version', type=click.IntRange(min=0))
 @click.argument('groups', nargs=-1)
 @pass_config
 def config(config, name, version, groups):
@@ -338,7 +339,7 @@ def config(config, name, version, groups):
               help='Don\'t require confirmation.')
 @click.option('--await', 'block', is_flag=True, default=False,
               help='Wait synchronously for the build to finish before continuing.')
-@click.argument('yaml')
+@click.argument('yaml', type=click.Path(exists=True))
 @pass_config
 def stage(config, skip_verify, block, yaml):
     """
