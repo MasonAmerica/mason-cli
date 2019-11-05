@@ -1,6 +1,7 @@
 import hashlib
 
 import click
+import requests
 
 
 def validate_version(config, version, type):
@@ -44,6 +45,16 @@ def hash_file(filename, type_of_hash, as_hex):
     else:
         # return regular digest
         return h.digest()
+
+
+def safe_request(config, type, *args, **kwargs):
+    func = getattr(requests, type)
+    try:
+        return func(*args, **kwargs)
+    except requests.RequestException as e:
+        config.logger.debug('{} request to {} failed: {}'.format(type.upper(), args[0], e))
+        config.logger.error('Network request failed. Check you internet connection.')
+        raise click.Abort()
 
 
 def log_failed_response(config, r, message):

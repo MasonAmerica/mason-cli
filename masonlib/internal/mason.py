@@ -13,7 +13,6 @@ except ImportError:
     # noinspection PyCompatibility,PyUnresolvedReferences
     from urlparse import urlparse
 
-import requests
 from tqdm import tqdm
 
 from masonlib import __version__
@@ -23,7 +22,7 @@ from masonlib.internal.media import Media
 from masonlib.internal.os_config import OSConfig
 from masonlib.internal.persist import Persist
 from masonlib.internal.store import Store
-from masonlib.internal.utils import hash_file, log_failed_response
+from masonlib.internal.utils import hash_file, safe_request, log_failed_response
 
 
 class Mason(IMason):
@@ -44,10 +43,11 @@ class Mason(IMason):
         self.config.logger.debug('Checking for updates')
 
         try:
-            r = requests.get(
+            r = safe_request(
+                self.config, 'get',
                 'https://raw.githubusercontent.com/MasonAmerica/mason-cli/master/VERSION')
-        except requests.RequestException as e:
-            self.config.logger.debug('Failed to check for updates: {}'.format(e))
+        except click.Abort:
+            # Don't fail the command if checking for updates fails.
             return
 
         if r.status_code == 200 and r.text:
@@ -143,7 +143,7 @@ class Mason(IMason):
 
     def _request_user_info(self):
         headers = {'Authorization': 'Bearer {}'.format(self.access_token)}
-        r = requests.get(self.store.user_info_url(), headers=headers)
+        r = safe_request(self.config, 'get', self.store.user_info_url(), headers=headers)
 
         if r.status_code == 200:
             return r.json()
@@ -172,7 +172,7 @@ class Mason(IMason):
         headers = self._get_signed_url_request_headers(md5)
         url = self._get_signed_url_request_endpoint(customer, artifact_data)
 
-        r = requests.get(url, headers=headers)
+        r = safe_request(self.config, 'get', url, headers=headers)
         if r.status_code == 200:
             return r.json()
         else:
@@ -198,7 +198,8 @@ class Mason(IMason):
         artifact_file = open(artifact, 'rb')
         iterable = UploadInChunks(artifact_file.name, chunksize=10)
 
-        r = requests.put(url, data=IterableToFileAdapter(iterable), headers=headers)
+        r = safe_request(self.config, 'put',
+                         url, data=IterableToFileAdapter(iterable), headers=headers)
         if r.status_code == 200:
             self.config.logger.debug('File upload complete.')
         else:
@@ -222,7 +223,7 @@ class Mason(IMason):
             payload.update(artifact_data.get_registry_meta_data())
 
         url = self.store.registry_artifact_url() + '/{0}/'.format(customer)
-        r = requests.post(url, headers=headers, json=payload)
+        r = safe_request(self.config, 'post', url, headers=headers, json=payload)
         if r.status_code == 200:
             self.config.logger.info('Artifact registered.')
         else:
@@ -257,7 +258,7 @@ class Mason(IMason):
         payload = self._get_build_payload(customer, project, version)
         builder_url = self.store.builder_url() + '/{0}/'.format(customer) + 'jobs'
 
-        r = requests.post(builder_url, headers=headers, json=payload)
+        r = safe_request(self.config, 'post', builder_url, headers=headers, json=payload)
         if r.status_code == 200:
             hostname = urlparse(self.store.deploy_url()).hostname
             self.config.logger.info('Build queued.')
@@ -271,7 +272,7 @@ class Mason(IMason):
                 timeout_seconds = 40 * 60
                 time_blocked = 0
                 while time_blocked < timeout_seconds:
-                    r = requests.get(job_url, headers=headers)
+                    r = safe_request(self.config, 'get', job_url, headers=headers)
                     if not r.status_code == 200:
                         self.config.logger.error('Build status check failed')
                         raise click.Abort()
@@ -360,7 +361,8 @@ class Mason(IMason):
         headers = {'Content-Type': 'application/json',
                    'Authorization': 'Bearer {}'.format(self.id_token)}
 
-        r = requests.post(self.store.deploy_url(), headers=headers, json=payload)
+        r = safe_request(self.config, 'post',
+                         self.store.deploy_url(), headers=headers, json=payload)
 
         if r.status_code == 200:
             if r.text:
@@ -391,7 +393,7 @@ class Mason(IMason):
 
     def login(self, user, password):
         payload = self._get_auth_payload(user, password)
-        r = requests.post(self.store.auth_url(), json=payload)
+        r = safe_request(self.config, 'post', self.store.auth_url(), json=payload)
 
         if r.status_code == 200:
             self.persist.write_tokens(r.json())
