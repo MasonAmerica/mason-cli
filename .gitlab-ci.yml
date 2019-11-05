@@ -4,7 +4,21 @@ stages:
   - build
   - deploy
 
-test:
+test_py2:
+  stage: test
+  tags:
+    - mason-deploy
+  image: python:2
+  script:
+    - pip2 install .
+    - pip2 install mock
+    - cd masonlib/test && python2 -m unittest discover .
+  only:
+    - merge_requests
+    - branches
+    - tags
+
+test_py3:
   stage: test
   tags:
     - mason-deploy
@@ -12,7 +26,7 @@ test:
   script:
     - pip3 install .
     - pip3 install mock
-    - cd masonlib/test && python -m unittest discover .
+    - cd masonlib/test && python3 -m unittest discover .
   only:
     - merge_requests
     - branches

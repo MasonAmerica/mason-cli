@@ -34,7 +34,8 @@ class StoreTest(unittest.TestCase):
             'deploy_url': self.DEPLOY_URL
         }
 
-        os.makedirs(os.path.dirname(self.store.file), exist_ok=True)
+        if not os.path.exists(os.path.dirname(self.store.file)):
+            os.makedirs(os.path.dirname(self.store.file))
         with open(self.store.file, 'w') as outfile:
             yaml.dump(test_data, outfile)
 

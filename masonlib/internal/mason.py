@@ -47,10 +47,10 @@ class Mason(IMason):
         })
 
     def check_for_updates(self):
-        current_time = time.time_ns()
+        current_time = int(time.time())
         cache = Store('version-check-cache', {'timestamp': 0})
 
-        if current_time - cache['timestamp'] < 8.64e+13:  # 1 day
+        if current_time - cache['timestamp'] < 86400:  # 1 day
             self.config.logger.debug('Skipped version check')
             return
         cache['timestamp'] = current_time
