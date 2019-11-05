@@ -1,12 +1,8 @@
-import inspect
 import logging
 import os
-import time
 
 import click
 import click_log
-import packaging.version
-import requests
 
 from masonlib import __version__
 from masonlib.imason import IMason
@@ -62,8 +58,6 @@ def cli(config, debug, verbose, id_token, access_token, no_color):
     Platform.
     """
 
-    _check_version()
-
     platform = Platform(config)
     config.mason = platform.get(IMason)
     config.mason.set_id_token(id_token)
@@ -82,6 +76,8 @@ def cli(config, debug, verbose, id_token, access_token, no_color):
                        'instead.')
         logger.setLevel('DEBUG')
 
+    config.mason.check_for_updates()
+
 
 @cli.group()
 @click.option('--assume-yes', '--yes', '-y', is_flag=True, default=False,
@@ -96,30 +92,6 @@ def register(config, assume_yes, skip_verify):
         logger.warning('--skip-verify is deprecated. Use --assume-yes instead.')
 
     config.skip_verify = assume_yes or skip_verify
-
-
-@register.command()
-@click.argument('apks', type=click.Path(exists=True), nargs=-1, required=True)
-@pass_config
-def apk(config, apks):
-    """
-    Register APK artifacts.
-
-      APK(S) to be registered to the Mason Platform.
-
-    \b
-    For example, register a single APK:
-      $ mason register apk test.apk
-
-    \b
-    Or all in a subdirectory:
-      $ mason register apk apks/*.apk
-    """
-
-    for app in apks:
-        logger.debug('Registering {}...'.format(app))
-        config.mason.validate_apk(app)
-        config.mason.register(app)
 
 
 @register.command()
@@ -145,8 +117,30 @@ def config(config, configs):
 
     for file in configs:
         logger.debug('Registering {}...'.format(file))
-        config.mason.validate_os_config(file)
-        config.mason.register(file)
+        config.mason.register_os_config(file)
+
+
+@register.command()
+@click.argument('apks', type=click.Path(exists=True), nargs=-1, required=True)
+@pass_config
+def apk(config, apks):
+    """
+    Register APK artifacts.
+
+      APK(S) to be registered to the Mason Platform.
+
+    \b
+    For example, register a single APK:
+      $ mason register apk test.apk
+
+    \b
+    Or all in a subdirectory:
+      $ mason register apk apks/*.apk
+    """
+
+    for app in apks:
+        logger.debug('Registering {}...'.format(app))
+        config.mason.register_apk(app)
 
 
 # TODO: add types when support for the deprecated param order is removed.
@@ -187,8 +181,7 @@ def media(config, name, type, version, media):
         media = old_media
 
     logger.debug('Registering {}...'.format(media))
-    config.mason.validate_media(name, type, version, media)
-    config.mason.register(media)
+    config.mason.register_media(name, type, version, media)
 
 
 @cli.command()
@@ -223,6 +216,45 @@ def build(config, block, project, version):
     config.mason.build(project, version, block)
 
 
+@cli.command()
+@click.option('--assume-yes', '--yes', '-y', is_flag=True, default=False,
+              help='Don\'t require confirmation.')
+@click.option('--await', 'block', is_flag=True, default=False,
+              help='Wait synchronously for the build to finish before continuing.')
+@click.option('--skip-verify', '-s', is_flag=True, default=False, hidden=True,
+              help='Don\'t require confirmation.')
+@click.argument('configs', type=click.Path(exists=True), nargs=-1, required=True)
+@pass_config
+def stage(config, assume_yes, block, skip_verify, configs):
+    """
+    Register and build (aka stage) a project.
+
+      CONFIG(S) describing a configuration to be registered to the Mason Platform and then
+    subsequently built.
+
+    \b
+    For example, register and build a single config:
+      $ mason stage test.yml
+
+    For more information on configs, view the full documentation here:
+    https://docs.bymason.com/project-config/
+
+    \b
+    The stage command is equivalent to running:
+      $ mason register config ...
+      $ mason build ...
+    """
+
+    if skip_verify:
+        logger.warning('--skip-verify is deprecated. Use --assume-yes instead.')
+
+    config.skip_verify = assume_yes or skip_verify
+
+    for file in configs:
+        logger.debug('Staging {}...'.format(file))
+        config.mason.stage(file, block)
+
+
 @cli.group()
 @click.option('--assume-yes', '--yes', '-y', is_flag=True, default=False,
               help='Don\'t require confirmation.')
@@ -242,6 +274,39 @@ def deploy(config, assume_yes, push, no_https, skip_verify):
     config.skip_verify = assume_yes or skip_verify
     config.push = push
     config.no_https = no_https
+
+
+@deploy.command()
+@click.argument('name')
+@click.argument('version', type=click.IntRange(min=0))
+@click.argument('groups', nargs=-1, required=True)
+@pass_config
+def config(config, name, version, groups):
+    """
+    Deploy config artifacts.
+
+      NAME of the configuration to be deployed.
+      VERSION of the configuration to be deployed.
+      GROUP(S) to deploy the configuration to.
+
+    \b
+    For example, this registered configuration:
+      os:
+        name: mason-test
+        version: 1
+
+    \b
+    can be deployed to the "development" group with:
+      $ mason deploy config mason-test 1 development
+
+    \b
+    or deployed to multiple groups:
+      $ mason deploy config mason-test 1 group1 group2 group3
+    """
+
+    for group in groups:
+        logger.debug('Deploying {}:{}...'.format(name, version))
+        config.mason.deploy('config', name, version, group, config.push, config.no_https)
 
 
 @deploy.command()
@@ -307,79 +372,6 @@ def ota(config, name, version, groups):
         config.mason.deploy('ota', name, version, group, config.push, config.no_https)
 
 
-@deploy.command()
-@click.argument('name')
-@click.argument('version', type=click.IntRange(min=0))
-@click.argument('groups', nargs=-1, required=True)
-@pass_config
-def config(config, name, version, groups):
-    """
-    Deploy config artifacts.
-
-      NAME of the configuration to be deployed.
-      VERSION of the configuration to be deployed.
-      GROUP(S) to deploy the configuration to.
-
-    \b
-    For example, this registered configuration:
-      os:
-        name: mason-test
-        version: 1
-
-    \b
-    can be deployed to the "development" group with:
-      $ mason deploy config mason-test 1 development
-
-    \b
-    or deployed to multiple groups:
-      $ mason deploy config mason-test 1 group1 group2 group3
-    """
-
-    for group in groups:
-        logger.debug('Deploying {}:{}...'.format(name, version))
-        config.mason.deploy('config', name, version, group, config.push, config.no_https)
-
-
-@cli.command()
-@click.option('--assume-yes', '--yes', '-y', is_flag=True, default=False,
-              help='Don\'t require confirmation.')
-@click.option('--await', 'block', is_flag=True, default=False,
-              help='Wait synchronously for the build to finish before continuing.')
-@click.option('--skip-verify', '-s', is_flag=True, default=False, hidden=True,
-              help='Don\'t require confirmation.')
-@click.argument('configs', type=click.Path(exists=True), nargs=-1, required=True)
-@pass_config
-def stage(config, assume_yes, block, skip_verify, configs):
-    """
-    Register and build (aka stage) a project.
-
-      CONFIG(S) describing a configuration to be registered to the Mason Platform and then
-    subsequently built.
-
-    \b
-    For example, register and build a single config:
-      $ mason stage test.yml
-
-    For more information on configs, view the full documentation here:
-    https://docs.bymason.com/project-config/
-
-    \b
-    The stage command is equivalent to running:
-      $ mason register config ...
-      $ mason build ...
-    """
-
-    if skip_verify:
-        logger.warning('--skip-verify is deprecated. Use --assume-yes instead.')
-
-    config.skip_verify = assume_yes or skip_verify
-
-    for file in configs:
-        logger.debug('Staging {}...'.format(file))
-        config.mason.validate_os_config(file)
-        config.mason.stage(file, block)
-
-
 @cli.command()
 @click.option('--username', '--user', '-u', prompt=True,
               help='Your Mason Platform username.')
@@ -390,7 +382,7 @@ def login(config, username, password):
     """Authenticate via username and password."""
 
     logger.debug('Authenticating ' + username)
-    config.mason.authenticate(username, password)
+    config.mason.login(username, password)
     logger.info('Successfully logged in.')
 
 
@@ -414,55 +406,6 @@ def _show_version_info():
     logger.info('Mason CLI v{}'.format(__version__))
     logger.info('Copyright (C) 2019 Mason America (https://bymason.com)')
     logger.info('License Apache 2.0 <https://www.apache.org/licenses/LICENSE-2.0>')
-
-
-def _check_version():
-    app_dir = click.get_app_dir('Mason CLI')
-    cache = os.path.join(app_dir, 'version-check-cache')
-    current_time = time.time_ns()
-    if os.path.isfile(cache):
-        with open(cache, 'r') as f:
-            last_check = int(f.read().strip())
-            if current_time - last_check < 8.64e+13:  # 1 day
-                logger.debug('Skipped version check')
-                return
-    if not os.path.exists(app_dir):
-        os.mkdir(app_dir)
-    with open(cache, 'w') as f:
-        f.write(str(current_time))
-
-    try:
-        r = requests.get('https://raw.githubusercontent.com/MasonAmerica/mason-cli/master/VERSION')
-    except requests.RequestException as e:
-        logger.debug('Failed to fetch latest version: {}'.format(e))
-        return
-
-    if r.status_code == 200 and r.text:
-        current_version = packaging.version.parse(__version__)
-        remote_version = packaging.version.parse(r.text)
-        if remote_version > current_version:
-            if isMasonDocker():
-                upgrade_command = 'docker pull masonamerica/mason-cli:latest'
-            else:
-                upgrade_command = 'pip install --upgrade git+https://git@github.com/MasonAmerica/mason-cli.git'
-
-            logger.info(inspect.cleandoc("""
-            ==================== NOTICE ====================
-            A newer version '{}' of the mason-cli is available.
-            Run:
-              $ {}
-            to upgrade to the latest version.
-
-            Release notes: https://github.com/MasonAmerica/mason-cli/releases
-            ==================== NOTICE ====================
-            """.format(remote_version, upgrade_command)))
-            logger.info('')
-    else:
-        logger.debug('Failed to fetch latest version: {}'.format(r))
-
-
-def isMasonDocker():
-    return bool(os.environ.get('MASON_CLI_DOCKER', False))
 
 
 if __name__ == '__main__':

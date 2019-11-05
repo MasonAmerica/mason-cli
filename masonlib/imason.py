@@ -12,6 +12,10 @@ class IMason:
     """
 
     @abstractmethod
+    def check_for_updates(self):
+        pass
+
+    @abstractmethod
     def set_id_token(self, id_token):
         """
         Public set method for id token.
@@ -32,9 +36,38 @@ class IMason:
         pass
 
     @abstractmethod
-    def validate_apk(self, apk):
+    def login(self, user, password):
         """
-        Public apk parse method, returns true if supported artifact, false otherwise.
+        Public authentication method, returns true if authed, false otherwise.
+
+        :param user: specify a user as string
+        :param password: specify a password as string
+        """
+
+        pass
+
+    @abstractmethod
+    def logout(self):
+        """
+        Public logout method, returns true if successfully logged out.
+        """
+
+        pass
+
+    @abstractmethod
+    def register_os_config(self, config):
+        """
+        Registers an OS config to the Mason Platform.
+
+        :param config: specify the path of the os configuration yaml file
+        """
+
+        pass
+
+    @abstractmethod
+    def register_apk(self, apk):
+        """
+        Registers an APK to the Mason Platform.
 
         :param apk: specify the path of the apk file
         """
@@ -42,35 +75,14 @@ class IMason:
         pass
 
     @abstractmethod
-    def validate_media(self, name, type, version, binary):
+    def register_media(self, name, type, version, media):
         """
-        Public media parse method, returns true if supported artifact, false otherwise.
+        Registers a media artifact to the Mason Platform.
 
         :param name: specify the name of the media artifact
         :param type: specify the type of the media artifact
         :param version: specify the unique version of the media artifact
-        :param binary: specify the path of the media binary file
-        """
-
-        pass
-
-    @abstractmethod
-    def validate_os_config(self, config_yaml):
-        """
-        Public os parse method, returns true if supported artifact, false otherwise.
-
-        :param config_yaml: specify the path of the os configuration yaml file
-        """
-
-        pass
-
-    @abstractmethod
-    def register(self, binary):
-        """
-        Register a given binary. Need to call one of the parse commands prior to invoking register
-        to validate a given artifact and decorate it with the necessary metadata for service upload.
-
-        :param binary: specify the path of the artifact file
+        :param media: specify the path of the media binary file
         """
 
         pass
@@ -88,21 +100,6 @@ class IMason:
         pass
 
     @abstractmethod
-    def deploy(self, item_type, name, version, group, push, no_https):
-        """
-        Public deploy method, returns true if item is deployed, false otherwise.
-
-        :param item_type: specify the item type to be deployed
-        :param name: specify the name of the item to be deployed
-        :param version: specify the version of the item to be deployed
-        :param group: specify the group to deploy the item to
-        :param push: whether to push the deploy to the devices in the group
-        :param no_https: whether deployments should be delivered to devices insecurely
-        """
-
-        pass
-
-    @abstractmethod
     def stage(self, yaml, block):
         """
         Public stage method, returns true if the configuration was staged, false otherwise.
@@ -115,20 +112,16 @@ class IMason:
         pass
 
     @abstractmethod
-    def authenticate(self, user, password):
+    def deploy(self, item_type, name, version, group, push, no_https):
         """
-        Public authentication method, returns true if authed, false otherwise.
+        Public deploy method, returns true if item is deployed, false otherwise.
 
-        :param user: specify a user as string
-        :param password: specify a password as string
-        """
-
-        pass
-
-    @abstractmethod
-    def logout(self):
-        """
-        Public logout method, returns true if successfully logged out.
+        :param item_type: specify the item type to be deployed
+        :param name: specify the name of the item to be deployed
+        :param version: specify the version of the item to be deployed
+        :param group: specify the group to deploy the item to
+        :param push: whether to push the deploy to the devices in the group
+        :param no_https: whether deployments should be delivered to devices insecurely
         """
 
         pass

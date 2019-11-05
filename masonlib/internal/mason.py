@@ -1,8 +1,10 @@
 import base64
+import inspect
 import os.path
 import time
 
 import click
+import packaging.version
 
 try:
     # noinspection PyCompatibility
@@ -14,6 +16,7 @@ except ImportError:
 import requests
 from tqdm import tqdm
 
+from masonlib import __version__
 from masonlib.imason import IMason
 from masonlib.internal.apk import Apk
 from masonlib.internal.media import Media
@@ -34,6 +37,60 @@ class Mason(IMason):
         self.persist = Persist('.masonrc')
         self.store = Store(os.path.join(os.path.expanduser('~'), '.mason.yml'))
 
+    def check_for_updates(self):
+        if not self._should_check_for_updates():
+            self.config.logger.debug('Skipped version check')
+            return
+        self.config.logger.debug('Checking for updates')
+
+        try:
+            r = requests.get(
+                'https://raw.githubusercontent.com/MasonAmerica/mason-cli/master/VERSION')
+        except requests.RequestException as e:
+            self.config.logger.debug('Failed to check for updates: {}'.format(e))
+            return
+
+        if r.status_code == 200 and r.text:
+            current_version = packaging.version.parse(__version__)
+            remote_version = packaging.version.parse(r.text)
+            if remote_version > current_version:
+                if bool(os.environ.get('MASON_CLI_DOCKER', False)):
+                    upgrade_command = 'docker pull masonamerica/mason-cli:latest'
+                else:
+                    upgrade_command = 'pip install --upgrade git+https://git@github.com/MasonAmerica/mason-cli.git'
+
+                self.config.logger.info(inspect.cleandoc("""
+                ==================== NOTICE ====================
+                A newer version '{}' of the mason-cli is available.
+                Run:
+                  $ {}
+                to upgrade to the latest version.
+    
+                Release notes: https://github.com/MasonAmerica/mason-cli/releases
+                ==================== NOTICE ====================
+                """.format(remote_version, upgrade_command)))
+                self.config.logger.info('')
+        else:
+            self.config.logger.debug('Failed to check for updates: {}'.format(r))
+
+    @staticmethod
+    def _should_check_for_updates():
+        app_dir = click.get_app_dir('Mason CLI')
+        cache = os.path.join(app_dir, 'version-check-cache')
+        current_time = time.time_ns()
+
+        if os.path.isfile(cache):
+            with open(cache, 'r') as f:
+                last_check = int(f.read().strip())
+                if current_time - last_check < 8.64e+13:  # 1 day
+                    return False
+        if not os.path.exists(app_dir):
+            os.mkdir(app_dir)
+        with open(cache, 'w') as f:
+            f.write(str(current_time))
+
+        return True
+
     def set_access_token(self, access_token):
         self.access_token = access_token
 
@@ -48,23 +105,23 @@ class Mason(IMason):
             self.config.logger.error('Not authenticated. Run \'mason login\' to sign in.')
             raise click.Abort()
 
-    def validate_apk(self, apk):
+    def register_os_config(self, config):
+        self.artifact = OSConfig.parse(self.config, config)
+        self._register_artifact(config)
+
+    def register_apk(self, apk):
         self.artifact = Apk.parse(self.config, apk)
+        self._register_artifact(apk)
 
-    def validate_media(self, name, type, version, binary):
-        self.artifact = Media.parse(self.config, name, type, version, binary)
+    def register_media(self, name, type, version, media):
+        self.artifact = Media.parse(self.config, name, type, version, media)
+        self._register_artifact(media)
 
-    def validate_os_config(self, config_yaml):
-        self.artifact = OSConfig.parse(self.config, config_yaml)
-
-    def register(self, binary):
+    def _register_artifact(self, binary):
         self._validate_credentials()
         if not self.config.skip_verify:
             click.confirm('Continue register?', default=True, abort=True)
 
-        self._register_artifact(binary)
-
-    def _register_artifact(self, binary):
         sha1 = hash_file(binary, 'sha1', True)
         md5 = hash_file(binary, 'md5', False)
         self.config.logger.debug('File SHA1: {}'.format(sha1))
@@ -329,10 +386,10 @@ class Mason(IMason):
         return payload
 
     def stage(self, yaml, block):
-        self.register(yaml)
-        self._build_project(self.artifact.get_name(), self.artifact.get_version(), block)
+        self.register_os_config(yaml)
+        self.build(self.artifact.get_name(), self.artifact.get_version(), block)
 
-    def authenticate(self, user, password):
+    def login(self, user, password):
         payload = self._get_auth_payload(user, password)
         r = requests.post(self.store.auth_url(), json=payload)
 
