@@ -60,8 +60,10 @@ def cli(config, debug, verbose, id_token, access_token, no_color):
 
     platform = Platform(config)
     config.mason = platform.get(IMason)
-    config.mason.set_id_token(id_token)
-    config.mason.set_access_token(access_token)
+    if id_token:
+        config.mason.set_id_token(id_token)
+    if access_token:
+        config.mason.set_access_token(access_token)
 
     if no_color:
         click_log.ColorFormatter.colors = {

@@ -20,7 +20,6 @@ from masonlib.imason import IMason
 from masonlib.internal.apk import Apk
 from masonlib.internal.media import Media
 from masonlib.internal.os_config import OSConfig
-from masonlib.internal.persist import Persist
 from masonlib.internal.store import Store
 from masonlib.internal.utils import hash_file, safe_request, log_failed_response
 
@@ -30,18 +29,34 @@ class Mason(IMason):
 
     def __init__(self, config):
         self.config = config
-        self.id_token = None
-        self.access_token = None
         self.artifact = None
-        self.persist = Persist('.masonrc')
-        self.store = Store(os.path.join(os.path.expanduser('~'), '.mason.yml'))
+
+        self.auth = Store('auth', {
+            'id_token': None,
+            'access_token': None
+        })
+        self.endpoints = Store('endpoints', {
+            'client_id': 'QLWpUwYOOcLlAJsmyQhQMXyeWn6RZpoc',
+            'auth_url': 'https://bymason.auth0.com/oauth/ro',
+            'user_info_url': 'https://bymason.auth0.com/userinfo',
+            'registry_artifact_url': 'https://platform.bymason.com/api/registry/artifacts',
+            'registry_signed_url': 'https://platform.bymason.com/api/registry/signedurl',
+            'builder_url': 'https://platform.bymason.com/api/tracker/builder',
+            'deploy_url': 'https://platform.bymason.com/api/deploy',
+            'config_version': 1
+        })
 
     def check_for_updates(self):
-        if not self._should_check_for_updates():
+        current_time = time.time_ns()
+        cache = Store('version-check-cache', {'timestamp': 0})
+
+        if current_time - cache['timestamp'] < 8.64e+13:  # 1 day
             self.config.logger.debug('Skipped version check')
             return
-        self.config.logger.debug('Checking for updates')
+        cache['timestamp'] = current_time
+        cache.save()
 
+        self.config.logger.debug('Checking for updates')
         try:
             r = safe_request(
                 self.config, 'get',
@@ -73,35 +88,14 @@ class Mason(IMason):
         else:
             self.config.logger.debug('Failed to check for updates: {}'.format(r))
 
-    @staticmethod
-    def _should_check_for_updates():
-        app_dir = click.get_app_dir('Mason CLI')
-        cache = os.path.join(app_dir, 'version-check-cache')
-        current_time = time.time_ns()
-
-        if os.path.isfile(cache):
-            with open(cache, 'r') as f:
-                last_check = int(f.read().strip())
-                if current_time - last_check < 8.64e+13:  # 1 day
-                    return False
-        if not os.path.exists(app_dir):
-            os.mkdir(app_dir)
-        with open(cache, 'w') as f:
-            f.write(str(current_time))
-
-        return True
-
     def set_access_token(self, access_token):
-        self.access_token = access_token
+        self.auth['access_token'] = access_token
 
     def set_id_token(self, id_token):
-        self.id_token = id_token
+        self.auth['id_token'] = id_token
 
     def _validate_credentials(self):
-        self.id_token = self.persist.retrieve_id_token()
-        self.access_token = self.persist.retrieve_access_token()
-
-        if not self.id_token or not self.access_token:
+        if not self.auth['id_token'] or not self.auth['access_token']:
             self.config.logger.error('Not authenticated. Run \'mason login\' to sign in.')
             raise click.Abort()
 
@@ -142,8 +136,8 @@ class Mason(IMason):
         self._register_to_mason(customer, download_url, sha1, self.artifact)
 
     def _request_user_info(self):
-        headers = {'Authorization': 'Bearer {}'.format(self.access_token)}
-        r = safe_request(self.config, 'get', self.store.user_info_url(), headers=headers)
+        headers = {'Authorization': 'Bearer {}'.format(self.auth['access_token'])}
+        r = safe_request(self.config, 'get', self.endpoints['user_info_url'], headers=headers)
 
         if r.status_code == 200:
             return r.json()
@@ -183,10 +177,10 @@ class Mason(IMason):
         base64encodedmd5 = base64.b64encode(md5).decode('utf-8')
         return {'Content-Type': 'application/json',
                 'Content-MD5': base64encodedmd5,
-                'Authorization': 'Bearer {}'.format(self.id_token)}
+                'Authorization': 'Bearer {}'.format(self.auth['id_token'])}
 
     def _get_signed_url_request_endpoint(self, customer, artifact_data):
-        return self.store.registry_signer_url() \
+        return self.endpoints['registry_signed_url'] \
                + '/{0}/{1}/{2}?type={3}'.format(customer, artifact_data.get_name(),
                                                 artifact_data.get_version(),
                                                 artifact_data.get_type())
@@ -216,13 +210,13 @@ class Mason(IMason):
         self.config.logger.debug('Registering to mason services...')
 
         headers = {'Content-Type': 'application/json',
-                   'Authorization': 'Bearer {}'.format(self.id_token)}
+                   'Authorization': 'Bearer {}'.format(self.auth['id_token'])}
         payload = self._get_registry_payload(customer, download_url, sha1, artifact_data)
 
         if artifact_data.get_registry_meta_data():
             payload.update(artifact_data.get_registry_meta_data())
 
-        url = self.store.registry_artifact_url() + '/{0}/'.format(customer)
+        url = self.endpoints['registry_artifact_url'] + '/{0}/'.format(customer)
         r = safe_request(self.config, 'post', url, headers=headers, json=payload)
         if r.status_code == 200:
             self.config.logger.info('Artifact registered.')
@@ -250,17 +244,17 @@ class Mason(IMason):
         self._validate_credentials()
 
         headers = {'Content-Type': 'application/json',
-                   'Authorization': 'Bearer {}'.format(self.id_token)}
+                   'Authorization': 'Bearer {}'.format(self.auth['id_token'])}
 
         customer = self._get_validated_customer()
         self.config.logger.debug('Queueing build...')
 
         payload = self._get_build_payload(customer, project, version)
-        builder_url = self.store.builder_url() + '/{0}/'.format(customer) + 'jobs'
+        builder_url = self.endpoints['builder_url'] + '/{0}/'.format(customer) + 'jobs'
 
         r = safe_request(self.config, 'post', builder_url, headers=headers, json=payload)
         if r.status_code == 200:
-            hostname = urlparse(self.store.deploy_url()).hostname
+            hostname = urlparse(self.endpoints['deploy_url']).hostname
             self.config.logger.info('Build queued.')
             self.config.logger.info('You can see the status of your build at '
                                     'https://{}/controller/projects/{}'.format(hostname, project))
@@ -359,10 +353,10 @@ class Mason(IMason):
             click.confirm('Continue deploy?', default=True, abort=True)
 
         headers = {'Content-Type': 'application/json',
-                   'Authorization': 'Bearer {}'.format(self.id_token)}
+                   'Authorization': 'Bearer {}'.format(self.auth['id_token'])}
 
         r = safe_request(self.config, 'post',
-                         self.store.deploy_url(), headers=headers, json=payload)
+                         self.endpoints['deploy_url'], headers=headers, json=payload)
 
         if r.status_code == 200:
             if r.text:
@@ -393,20 +387,22 @@ class Mason(IMason):
 
     def login(self, user, password):
         payload = self._get_auth_payload(user, password)
-        r = safe_request(self.config, 'post', self.store.auth_url(), json=payload)
+        r = safe_request(self.config, 'post', self.endpoints['auth_url'], json=payload)
 
         if r.status_code == 200:
-            self.persist.write_tokens(r.json())
+            self.auth['id_token'] = r.json().get('id_token')
+            self.auth['access_token'] = r.json().get('access_token')
+            self.auth.save()
         else:
             self.config.logger.error('Failed to authenticate.')
             raise click.Abort()
 
     def _get_auth_payload(self, user, password):
         return {
-            'client_id': self.store.client_id(),
+            'client_id': self.endpoints['client_id'],
             'username': user,
             'password': password,
-            'id_token': str(self.id_token),
+            'id_token': str(self.auth['id_token']),
             'connection': 'Username-Password-Authentication',
             'grant_type': 'password',
             'scope': 'openid',
@@ -414,7 +410,8 @@ class Mason(IMason):
         }
 
     def logout(self):
-        self.persist.delete_tokens()
+        self.auth.clear()
+        self.auth.save()
 
 
 class UploadInChunks(object):

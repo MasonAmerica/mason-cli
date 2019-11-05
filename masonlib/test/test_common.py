@@ -55,18 +55,26 @@ class Common(object):
     def create_config_file():
         test_ecosystem_definition = {
             'os': {
-                'name' : 'test',
-                'version' : 1
+                'name': 'test',
+                'version': 1
             }
         }
         return test_ecosystem_definition
 
     @staticmethod
     def create_mock_store():
+        store = {
+            'client_id': 'S(DF*SD($#hjLKA',
+            'registry_signed_url': 'https://sign.security.sec'
+        }
+
+        def get(name):
+            return store[name]
+
+        def set(name, value):
+            store[name] = value
+
         mock_store = Mock()
-        mock_store.client_id = MagicMock(return_value='S(DF*SD($#hjLKA')
-        mock_store.auth_url = MagicMock(return_value='https://secure.security.sec')
-        mock_store.user_info_url = MagicMock(return_value='https://user.security.sec')
-        mock_store.registry_signer_url = MagicMock(return_value='https://sign.security.sec')
-        mock_store.registry_artifact_url = MagicMock(return_value='https://register.security.sec')
+        mock_store.__getitem__ = MagicMock(side_effect=get)
+        mock_store.__setitem__ = MagicMock(side_effect=set)
         return mock_store

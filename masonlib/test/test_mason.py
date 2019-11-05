@@ -1,10 +1,11 @@
 # COPYRIGHT MASONAMERICA
 import unittest
 
+from test_common import Common
+
 from masonlib.imason import IMason
 from masonlib.internal.apk import Apk
 from masonlib.platform import Platform
-from test_common import Common
 
 
 class MasonTest(unittest.TestCase):
@@ -19,20 +20,22 @@ class MasonTest(unittest.TestCase):
         test_password = 'bar'
 
         store = Common.create_mock_store()
+        self.mason.endpoints = store
         self.mason.set_id_token('09ads09a8dsfa0re')
         self.mason.set_access_token('oads098fa9830924qdf09asfd')
-        self.mason.store = store
 
-        expected_payload = {'client_id': store.client_id(),
-                   'username': test_user,
-                   'password': test_password,
-                   'id_token': '09ads09a8dsfa0re',
-                   'connection': 'Username-Password-Authentication',
-                   'grant_type': 'password',
-                   'scope': 'openid',
-                   'device': ''}
+        expected_payload = {
+            'client_id': store['client_id'],
+            'username': test_user,
+            'password': test_password,
+            'id_token': '09ads09a8dsfa0re',
+            'connection': 'Username-Password-Authentication',
+            'grant_type': 'password',
+            'scope': 'openid',
+            'device': ''
+        }
 
-        assert(expected_payload == self.mason._get_auth_payload(test_user, test_password))
+        assert (expected_payload == self.mason._get_auth_payload(test_user, test_password))
 
     def test__request_signed_url(self):
         config = Common.create_mock_config()
@@ -43,21 +46,23 @@ class MasonTest(unittest.TestCase):
         test_customer = 'mason'
         test_apk = Apk(config, apkf)
 
+        self.mason.endpoints = store
         self.mason.set_id_token('09ads09a8dsfa0re')
         self.mason.set_access_token('oads098fa9830924qdf09asfd')
-        self.mason.store = store
 
-        expected_headers = {'Content-Type': 'application/json', 'Authorization': 'Bearer 09ads09a8dsfa0re',
+        expected_headers = {'Content-Type': 'application/json',
+                            'Authorization': 'Bearer 09ads09a8dsfa0re',
                             'Content-MD5': 'bDMyazQzaDJsaDUzMmszMmprZm9kczlhZHMzNDhhaXNkZml1YW9lcjAzNGY3czkzNDd1MTIz'}
 
         # test getting the signed url request headers
-        assert(expected_headers == self.mason._get_signed_url_request_headers(test_md5))
-        expected_url = store.registry_signer_url() \
-              + '/{0}/{1}/{2}'.format(test_customer, test_apk.get_name(), test_apk.get_version()) \
-              + '?type=' + test_apk.get_type()
+        assert (expected_headers == self.mason._get_signed_url_request_headers(test_md5))
+        expected_url = \
+            store['registry_signed_url'] \
+            + '/{0}/{1}/{2}'.format(test_customer, test_apk.get_name(), test_apk.get_version()) \
+            + '?type=' + test_apk.get_type()
         # test getting the signed url endpoint
         actual_url = self.mason._get_signed_url_request_endpoint(test_customer, test_apk)
-        assert(expected_url == actual_url)
+        assert (expected_url == actual_url)
 
     def test__upload_to_signed_url(self):
         config = Common.create_mock_config()
