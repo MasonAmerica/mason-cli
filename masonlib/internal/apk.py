@@ -46,13 +46,13 @@ class Apk(IArtifact):
             self.config.logger.error('Not a valid APK.')
             raise click.Abort()
 
-        # We don't support anything higher than Marshmallow as a min right now
-        if int(self.apkf.get_min_sdk_version()) > 23:
+        # We don't support anything higher right now
+        if int(self.apkf.get_min_sdk_version()) > 25:
             self.config.logger.error(inspect.cleandoc("""
                 File Name: {}
 
                 Mason Platform does not currently support applications with a minimum sdk greater
-                than 23 (Marshmallow). Please lower the minimum sdk value in your manifest or
+                than API 25. Please lower the minimum sdk value in your manifest or
                 gradle file.
                 """.format(self.apkf.filename)))
             raise click.Abort()
