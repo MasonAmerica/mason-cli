@@ -237,10 +237,10 @@ class Mason(IMason):
             }
         }
 
-    def build(self, project, version, block):
-        return self._build_project(project, version, block)
+    def build(self, project, version, block, fast_build):
+        return self._build_project(project, version, block, fast_build)
 
-    def _build_project(self, project, version, block):
+    def _build_project(self, project, version, block, fast_build):
         self._validate_credentials()
 
         headers = {'Content-Type': 'application/json',
@@ -249,7 +249,7 @@ class Mason(IMason):
         customer = self._get_validated_customer()
         self.config.logger.debug('Queueing build...')
 
-        payload = self._get_build_payload(customer, project, version)
+        payload = self._get_build_payload(customer, project, version, fast_build)
         builder_url = self.endpoints['builder_url'] + '/{0}/'.format(customer) + 'jobs'
 
         r = safe_request(self.config, 'post', builder_url, headers=headers, json=payload)
@@ -276,8 +276,9 @@ class Mason(IMason):
                         return
 
                     self.config.logger.info('Waiting for build to complete...')
-                    time.sleep(20)
-                    time_blocked += 20
+                    wait_time = 10 if fast_build else 30
+                    time.sleep(wait_time)
+                    time_blocked += wait_time
 
                 self.config.logger.error('Timed out waiting for build to complete.')
                 raise click.Abort()
@@ -286,12 +287,15 @@ class Mason(IMason):
             raise click.Abort()
 
     @staticmethod
-    def _get_build_payload(customer, project, version):
-        return {
+    def _get_build_payload(customer, project, version, fast_build):
+        payload = {
             'customer': customer,
             'project': project,
             'version': str(version)
         }
+        if fast_build:
+            payload['fastBuild'] = fast_build
+        return payload
 
     def deploy(self, item_type, name, version, group, push, no_https):
         if item_type == 'apk':
@@ -381,9 +385,9 @@ class Mason(IMason):
             payload['deployInsecure'] = no_https
         return payload
 
-    def stage(self, yaml, block):
+    def stage(self, yaml, block, fast_build):
         self.register_os_config(yaml)
-        self.build(self.artifact.get_name(), self.artifact.get_version(), block)
+        self.build(self.artifact.get_name(), self.artifact.get_version(), block, fast_build)
 
     def login(self, user, password):
         payload = self._get_auth_payload(user, password)

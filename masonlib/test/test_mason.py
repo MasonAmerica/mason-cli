@@ -130,12 +130,26 @@ class MasonTest(unittest.TestCase):
         test_customer = 'mason-test'
         test_project = 'TestProjectName'
         test_version = '1.3.2.5.2.13.6'
+        test_fast_build = False
 
         expected_payload = {'customer': test_customer,
                 'project': test_project,
                 'version': test_version}
 
-        assert(expected_payload == self.mason._get_build_payload(test_customer, test_project, test_version))
+        assert(expected_payload == self.mason._get_build_payload(test_customer, test_project, test_version, test_fast_build))
+
+    def test__build_project_fast_build(self):
+        test_customer = 'mason-test'
+        test_project = 'TestProjectName'
+        test_version = '1.3.2.5.2.13.6'
+        test_fast_build = True
+
+        expected_payload = {'customer': test_customer,
+                'project': test_project,
+                'version': test_version,
+                'fastBuild': test_fast_build}
+
+        assert(expected_payload == self.mason._get_build_payload(test_customer, test_project, test_version, test_fast_build))
 
     def test__deploy_item(self):
         test_customer = 'mason-test'
