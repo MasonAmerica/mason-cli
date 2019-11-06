@@ -341,7 +341,7 @@ class Mason(IMason):
         self.config.logger.debug('Customer: {}'.format(payload['customer']))
 
         if payload.get('deployInsecure', False):
-            self.config.logger.info()
+            self.config.logger.info('')
             self.config.logger.info('***WARNING***')
             self.config.logger.info('--no-https enabled: this deployment will be delivered to '
                                     'devices over HTTP.')
