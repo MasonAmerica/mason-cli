@@ -189,7 +189,7 @@ def media(config, type, name, version, media):
 @cli.command()
 @click.option('--await', 'block', is_flag=True, default=False,
               help='Wait synchronously for the build to finish before continuing.')
-@click.option('--turbo', is_flag=True, default=False,
+@click.option('--turbo', is_flag=True, default=False, hidden=True,
               help='Enable fast Mason config builds (beta).')
 @click.argument('project')
 @click.argument('version', type=click.IntRange(min=0))
@@ -225,7 +225,7 @@ def build(config, block, turbo, project, version):
               help='Don\'t require confirmation.')
 @click.option('--await', 'block', is_flag=True, default=False,
               help='Wait synchronously for the build to finish before continuing.')
-@click.option('--turbo', is_flag=True, default=False,
+@click.option('--turbo', is_flag=True, default=False, hidden=True,
               help='Enable fast Mason config builds (beta).')
 @click.option('--skip-verify', '-s', is_flag=True, default=False, hidden=True,
               help='Don\'t require confirmation.')
