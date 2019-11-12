@@ -21,7 +21,8 @@ from masonlib.internal.apk import Apk
 from masonlib.internal.media import Media
 from masonlib.internal.os_config import OSConfig
 from masonlib.internal.store import Store
-from masonlib.internal.utils import hash_file, safe_request, log_failed_response
+from masonlib.internal.utils import AUTH, ENDPOINTS, hash_file, safe_request, \
+    handle_failed_response, validate_credentials
 
 
 class Mason(IMason):
@@ -30,21 +31,6 @@ class Mason(IMason):
     def __init__(self, config):
         self.config = config
         self.artifact = None
-
-        self.auth = Store('auth', {
-            'id_token': None,
-            'access_token': None
-        })
-        self.endpoints = Store('endpoints', {
-            'client_id': 'QLWpUwYOOcLlAJsmyQhQMXyeWn6RZpoc',
-            'auth_url': 'https://bymason.auth0.com/oauth/ro',
-            'user_info_url': 'https://bymason.auth0.com/userinfo',
-            'registry_artifact_url': 'https://platform.bymason.com/api/registry/artifacts',
-            'registry_signed_url': 'https://platform.bymason.com/api/registry/signedurl',
-            'builder_url': 'https://platform.bymason.com/api/tracker/builder',
-            'deploy_url': 'https://platform.bymason.com/api/deploy',
-            'config_version': 1
-        })
 
     def check_for_updates(self):
         current_time = int(time.time())
@@ -89,15 +75,10 @@ class Mason(IMason):
             self.config.logger.debug('Failed to check for updates: {}'.format(r))
 
     def set_access_token(self, access_token):
-        self.auth['access_token'] = access_token
+        AUTH['access_token'] = access_token
 
     def set_id_token(self, id_token):
-        self.auth['id_token'] = id_token
-
-    def _validate_credentials(self):
-        if not self.auth['id_token'] or not self.auth['access_token']:
-            self.config.logger.error('Not authenticated. Run \'mason login\' to sign in.')
-            raise click.Abort()
+        AUTH['id_token'] = id_token
 
     def register_os_config(self, config):
         self.artifact = OSConfig.parse(self.config, config)
@@ -112,7 +93,7 @@ class Mason(IMason):
         self._register_artifact(media)
 
     def _register_artifact(self, binary):
-        self._validate_credentials()
+        validate_credentials(self.config)
         if not self.config.skip_verify:
             click.confirm('Continue register?', default=True, abort=True)
 
@@ -136,14 +117,13 @@ class Mason(IMason):
         self._register_to_mason(customer, download_url, sha1, self.artifact)
 
     def _request_user_info(self):
-        headers = {'Authorization': 'Bearer {}'.format(self.auth['access_token'])}
-        r = safe_request(self.config, 'get', self.endpoints['user_info_url'], headers=headers)
+        headers = {'Authorization': 'Bearer {}'.format(AUTH['access_token'])}
+        r = safe_request(self.config, 'get', ENDPOINTS['user_info_url'], headers=headers)
 
         if r.status_code == 200:
             return r.json()
         else:
-            log_failed_response(self.config, r, 'Unable to get user info')
-            raise click.Abort()
+            handle_failed_response(self.config, r, 'Unable to get user info')
 
     def _get_validated_customer(self):
         # Get the user info
@@ -170,17 +150,16 @@ class Mason(IMason):
         if r.status_code == 200:
             return r.json()
         else:
-            log_failed_response(self.config, r, 'Unable to get signed url')
-            raise click.Abort()
+            handle_failed_response(self.config, r, 'Unable to get signed url')
 
     def _get_signed_url_request_headers(self, md5):
         base64encodedmd5 = base64.b64encode(md5).decode('utf-8')
         return {'Content-Type': 'application/json',
                 'Content-MD5': base64encodedmd5,
-                'Authorization': 'Bearer {}'.format(self.auth['id_token'])}
+                'Authorization': 'Bearer {}'.format(AUTH['id_token'])}
 
     def _get_signed_url_request_endpoint(self, customer, artifact_data):
-        return self.endpoints['registry_signed_url'] \
+        return ENDPOINTS['registry_signed_url'] \
                + '/{0}/{1}/{2}?type={3}'.format(customer, artifact_data.get_name(),
                                                 artifact_data.get_version(),
                                                 artifact_data.get_type())
@@ -197,8 +176,7 @@ class Mason(IMason):
         if r.status_code == 200:
             self.config.logger.debug('File upload complete.')
         else:
-            log_failed_response(self.config, r, 'Unable to upload to signed url')
-            raise click.Abort()
+            handle_failed_response(self.config, r, 'Unable to upload to signed url')
 
     @staticmethod
     def _get_signed_url_post_headers(artifact_data, md5):
@@ -210,19 +188,18 @@ class Mason(IMason):
         self.config.logger.debug('Registering to mason services...')
 
         headers = {'Content-Type': 'application/json',
-                   'Authorization': 'Bearer {}'.format(self.auth['id_token'])}
+                   'Authorization': 'Bearer {}'.format(AUTH['id_token'])}
         payload = self._get_registry_payload(customer, download_url, sha1, artifact_data)
 
         if artifact_data.get_registry_meta_data():
             payload.update(artifact_data.get_registry_meta_data())
 
-        url = self.endpoints['registry_artifact_url'] + '/{0}/'.format(customer)
+        url = ENDPOINTS['registry_artifact_url'] + '/{0}/'.format(customer)
         r = safe_request(self.config, 'post', url, headers=headers, json=payload)
         if r.status_code == 200:
             self.config.logger.info('Artifact registered.')
         else:
-            log_failed_response(self.config, r, 'Unable to register artifact')
-            raise click.Abort()
+            handle_failed_response(self.config, r, 'Unable to register artifact')
 
     @staticmethod
     def _get_registry_payload(customer, download_url, sha1, artifact_data):
@@ -241,20 +218,20 @@ class Mason(IMason):
         return self._build_project(project, version, block, fast_build)
 
     def _build_project(self, project, version, block, fast_build):
-        self._validate_credentials()
+        validate_credentials(self.config)
 
         headers = {'Content-Type': 'application/json',
-                   'Authorization': 'Bearer {}'.format(self.auth['id_token'])}
+                   'Authorization': 'Bearer {}'.format(AUTH['id_token'])}
 
         customer = self._get_validated_customer()
         self.config.logger.debug('Queueing build...')
 
         payload = self._get_build_payload(customer, project, version, fast_build)
-        builder_url = self.endpoints['builder_url'] + '/{0}/'.format(customer) + 'jobs'
+        builder_url = ENDPOINTS['builder_url'] + '/{0}/'.format(customer) + 'jobs'
 
         r = safe_request(self.config, 'post', builder_url, headers=headers, json=payload)
         if r.status_code == 200:
-            hostname = urlparse(self.endpoints['deploy_url']).hostname
+            hostname = urlparse(ENDPOINTS['deploy_url']).hostname
             self.config.logger.info('Build queued.')
             self.config.logger.info('You can see the status of your build at '
                                     'https://{}/controller/projects/{}'.format(hostname, project))
@@ -283,8 +260,7 @@ class Mason(IMason):
                 self.config.logger.error('Timed out waiting for build to complete.')
                 raise click.Abort()
         else:
-            log_failed_response(self.config, r, 'Unable to enqueue build')
-            raise click.Abort()
+            handle_failed_response(self.config, r, 'Unable to enqueue build')
 
     @staticmethod
     def _get_build_payload(customer, project, version, fast_build):
@@ -309,21 +285,21 @@ class Mason(IMason):
             raise click.Abort()
 
     def _deploy_apk(self, name, version, group, push, no_https):
-        self._validate_credentials()
+        validate_credentials(self.config)
         customer = self._get_validated_customer()
 
         payload = self._get_deploy_payload(customer, group, name, version, 'apk', push, no_https)
         self._deploy_payload(payload, 'apk')
 
     def _deploy_config(self, name, version, group, push, no_https):
-        self._validate_credentials()
+        validate_credentials(self.config)
         customer = self._get_validated_customer()
 
         payload = self._get_deploy_payload(customer, group, name, version, 'config', push, no_https)
         self._deploy_payload(payload, 'config')
 
     def _deploy_ota(self, name, version, group, push, no_https):
-        self._validate_credentials()
+        validate_credentials(self.config)
         customer = self._get_validated_customer()
 
         if name is not 'mason-os':
@@ -357,10 +333,10 @@ class Mason(IMason):
             click.confirm('Continue deploy?', default=True, abort=True)
 
         headers = {'Content-Type': 'application/json',
-                   'Authorization': 'Bearer {}'.format(self.auth['id_token'])}
+                   'Authorization': 'Bearer {}'.format(AUTH['id_token'])}
 
         r = safe_request(self.config, 'post',
-                         self.endpoints['deploy_url'], headers=headers, json=payload)
+                         ENDPOINTS['deploy_url'], headers=headers, json=payload)
 
         if r.status_code == 200:
             if r.text:
@@ -368,8 +344,7 @@ class Mason(IMason):
             self.config.logger.info('{}:{} was successfully deployed to {}'.format(
                 payload['name'], payload['version'], payload['group']))
         else:
-            log_failed_response(self.config, r, 'Unable to deploy {}'.format(type))
-            raise click.Abort()
+            handle_failed_response(self.config, r, 'Unable to deploy {}'.format(type))
 
     @staticmethod
     def _get_deploy_payload(customer, group, name, version, item_type, push, no_https):
@@ -391,22 +366,22 @@ class Mason(IMason):
 
     def login(self, user, password):
         payload = self._get_auth_payload(user, password)
-        r = safe_request(self.config, 'post', self.endpoints['auth_url'], json=payload)
+        r = safe_request(self.config, 'post', ENDPOINTS['auth_url'], json=payload)
 
         if r.status_code == 200:
-            self.auth['id_token'] = r.json().get('id_token')
-            self.auth['access_token'] = r.json().get('access_token')
-            self.auth.save()
+            AUTH['id_token'] = r.json().get('id_token')
+            AUTH['access_token'] = r.json().get('access_token')
+            AUTH.save()
         else:
             self.config.logger.error('Failed to authenticate.')
             raise click.Abort()
 
     def _get_auth_payload(self, user, password):
         return {
-            'client_id': self.endpoints['client_id'],
+            'client_id': ENDPOINTS['client_id'],
             'username': user,
             'password': password,
-            'id_token': str(self.auth['id_token']),
+            'id_token': str(AUTH['id_token']),
             'connection': 'Username-Password-Authentication',
             'grant_type': 'password',
             'scope': 'openid',
@@ -414,8 +389,8 @@ class Mason(IMason):
         }
 
     def logout(self):
-        self.auth.clear()
-        self.auth.save()
+        AUTH.clear()
+        AUTH.save()
 
 
 class UploadInChunks(object):

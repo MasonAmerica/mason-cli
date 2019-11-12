@@ -60,21 +60,3 @@ class Common(object):
             }
         }
         return test_ecosystem_definition
-
-    @staticmethod
-    def create_mock_store():
-        store = {
-            'client_id': 'S(DF*SD($#hjLKA',
-            'registry_signed_url': 'https://sign.security.sec'
-        }
-
-        def get(name):
-            return store[name]
-
-        def set(name, value):
-            store[name] = value
-
-        mock_store = Mock()
-        mock_store.__getitem__ = MagicMock(side_effect=get)
-        mock_store.__setitem__ = MagicMock(side_effect=set)
-        return mock_store

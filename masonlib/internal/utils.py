@@ -3,6 +3,29 @@ import hashlib
 import click
 import requests
 
+from masonlib.internal.store import Store
+
+AUTH = Store('auth', {
+    'id_token': None,
+    'access_token': None
+})
+ENDPOINTS = Store('endpoints', {
+    'client_id': 'QLWpUwYOOcLlAJsmyQhQMXyeWn6RZpoc',
+    'auth_url': 'https://bymason.auth0.com/oauth/ro',
+    'user_info_url': 'https://bymason.auth0.com/userinfo',
+    'registry_artifact_url': 'https://platform.bymason.com/api/registry/artifacts',
+    'registry_signed_url': 'https://platform.bymason.com/api/registry/signedurl',
+    'builder_url': 'https://platform.bymason.com/api/tracker/builder',
+    'deploy_url': 'https://platform.bymason.com/api/deploy',
+    'config_version': 1
+})
+
+
+def validate_credentials(config):
+    if not AUTH['id_token'] or not AUTH['access_token']:
+        config.logger.error('Not authenticated. Run \'mason login\' to sign in.')
+        raise click.Abort()
+
 
 def validate_version(config, version, type):
     try:
@@ -57,23 +80,25 @@ def safe_request(config, type, *args, **kwargs):
         raise click.Abort()
 
 
-def log_failed_response(config, r, message):
+def handle_failed_response(config, r, message):
     config.logger.debug('{}: {}'.format(message, r.status_code))
     _handle_status(config, r.status_code)
 
     if r.text:
-        if _format_errors_new_type(config, r):
-            return
-        if _format_errors_old_type(config, r):
-            return
+        _handle_errors_new_type(config, r)
+        _handle_errors_old_type(config, r)
         config.logger.error(r.text)
+
+    raise click.Abort()
 
 
 def _handle_status(config, status_code):
     if status_code == 400:
         config.logger.debug('Client made a bad request, failed.')
     elif status_code == 401:
-        config.logger.error('User token is expired or user is unauthorized.')
+        config.logger.error("Unauthorized: session expired or access denied. Run 'mason login' to "
+                            "start a new session.")
+        raise click.Abort()
     elif status_code == 403:
         config.logger.error('Access to domain is forbidden. Please contact support.')
     elif status_code == 404:
@@ -82,7 +107,7 @@ def _handle_status(config, status_code):
         config.logger.debug('Mason service or resource is currently unavailable.')
 
 
-def _format_errors_new_type(config, r):
+def _handle_errors_new_type(config, r):
     """
     Makes an effort to parse body of the `response` object as JSON, and if so, looks for the
     following standard field schema:
@@ -110,25 +135,34 @@ def _format_errors_new_type(config, r):
         err_result = r.json()
         config.logger.debug(err_result)
 
+        if 'itemized' in err_result:
+            for item in err_result['itemized']:
+                if item['code'] == '8f92ccpl':
+                    config.logger.error(item['message'])
+                    config.logger.info(
+                        'Create a new project: https://platform.bymason.com/controller/projects')
+                    raise click.Abort()
+                else:
+                    config.logger.error("{} (code: '{}')".format(item['message'], item['code']))
+
         details = err_result['details']
         if type(details) is list:
             details = [detail['message'] for detail in details]
         config.logger.error('{}: {}'.format(err_result['error'], details))
-
-        if 'itemized' in err_result:
-            for item in err_result['itemized']:
-                config.logger.error("{} (code: '{}')".format(item['message'], item['code']))
     except (KeyError, ValueError):
-        return False
+        return
 
-    return True
+    raise click.Abort()
 
 
-def _format_errors_old_type(config, r):
+def _handle_errors_old_type(config, r):
     try:
         details = r.json()['error']['details']
         config.logger.error(details)
     except (KeyError, ValueError):
-        return False
+        try:
+            config.logger.error(r.json()['message'])
+        except (KeyError, ValueError):
+            return
 
-    return True
+    raise click.Abort()
