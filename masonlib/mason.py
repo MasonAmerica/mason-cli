@@ -147,38 +147,38 @@ def apk(config, apks):
 
 # TODO: add types when support for the deprecated param order is removed.
 @register.command()
-@click.argument('name')
 @click.argument('type')
+@click.argument('name')
 @click.argument('version')
 @click.argument('media')
 @pass_config
-def media(config, name, type, version, media):
+def media(config, type, name, version, media):
     """
     Register media artifacts.
 
     \b
-      NAME of the media artifact.
       TYPE of the media artifact. One of:
         - bootanimation
+      NAME of the media artifact.
       VERSION of the media artifact.
       MEDIA file to be uploaded.
 
     \b
     For example, register a boot animation:
-      $ mason register media mason-test bootanimation 1 bootanimation.zip
+      $ mason register media bootanimation mason-test 1 bootanimation.zip
     """
 
-    if os.path.isfile(name):
+    if os.path.isfile(type):
         logger.warning('This command order is deprecated and will be removed. Use --help to see '
                        'up-to-date argument order.')
 
         # Media used to be the first argument
-        old_media = name
-        old_name = type
+        old_media = type
+        old_name = name
         old_type = version
         old_version = media
-        name = old_name
         type = old_type
+        name = old_name
         version = old_version
         media = old_media
 
