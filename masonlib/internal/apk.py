@@ -1,4 +1,5 @@
 import inspect
+import logging
 import os
 import re
 from subprocess import Popen, PIPE
@@ -9,6 +10,9 @@ from pyaxmlparser.core import FileNotPresent
 
 from masonlib.internal.artifacts import IArtifact
 from masonlib.internal.utils import validate_version
+
+# Disable pyaxmlparser logs since it spits out unnecessary warnings
+logging.getLogger("pyaxmlparser.core").setLevel("ERROR")
 
 
 class Apk(IArtifact):
