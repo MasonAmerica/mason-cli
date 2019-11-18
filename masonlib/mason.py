@@ -56,6 +56,8 @@ def cli(config, debug, verbose, id_token, access_token, no_color):
     """
     The Mason CLI provides command line tools to help you manage your configurations in the Mason
     Platform.
+
+    Full docs: https://docs.bymason.com/
     """
 
     platform = Platform(config)
@@ -88,7 +90,11 @@ def cli(config, debug, verbose, id_token, access_token, no_color):
               help='Don\'t require confirmation.')
 @pass_config
 def register(config, assume_yes, skip_verify):
-    """Register artifacts to the Mason Platform."""
+    """
+    Register artifacts to the Mason Platform.
+
+    Full docs: https://docs.bymason.com/mason-cli/#mason-register
+    """
 
     if skip_verify:
         logger.warning('--skip-verify is deprecated. Use --assume-yes instead.')
@@ -113,8 +119,7 @@ def config(config, configs):
     Or all in a subdirectory:
       $ mason register config configs/*.yml
 
-    For more information on configs, view the full documentation here:
-    https://docs.bymason.com/project-config/
+    Full docs: https://docs.bymason.com/mason-cli/#mason-register-config
     """
 
     for file in configs:
@@ -138,6 +143,8 @@ def apk(config, apks):
     \b
     Or all in a subdirectory:
       $ mason register apk apks/*.apk
+
+    Full docs: https://docs.bymason.com/mason-cli/#mason-register-apk
     """
 
     for app in apks:
@@ -166,6 +173,8 @@ def media(config, type, name, version, media):
     \b
     For example, register a boot animation:
       $ mason register media bootanimation mason-test 1 bootanimation.zip
+
+    Full docs: https://docs.bymason.com/mason-cli/#mason-register-media
     """
 
     if os.path.isfile(type):
@@ -214,6 +223,8 @@ def build(config, block, turbo, project, version):
     \b
     can be built with:
       $ mason build mason-test 5
+
+    Full docs: https://docs.bymason.com/mason-cli/#mason-build
     """
 
     logger.debug('Starting build for {}:{}...'.format(project, version))
@@ -249,6 +260,8 @@ def stage(config, assume_yes, block, turbo, skip_verify, configs):
     The stage command is equivalent to running:
       $ mason register config ...
       $ mason build ...
+
+    Full docs: https://docs.bymason.com/mason-cli/#mason-stage
     """
 
     if skip_verify:
@@ -272,7 +285,11 @@ def stage(config, assume_yes, block, turbo, skip_verify, configs):
               help='Don\'t require confirmation.')
 @pass_config
 def deploy(config, assume_yes, push, no_https, skip_verify):
-    """Deploy artifacts to groups."""
+    """
+    Deploy artifacts to groups.
+
+    Full docs: https://docs.bymason.com/mason-cli/#mason-deploy
+    """
 
     if skip_verify:
         logger.warning('--skip-verify is deprecated. Use --assume-yes instead.')
@@ -308,6 +325,8 @@ def config(config, name, version, groups):
     \b
     or deployed to multiple groups:
       $ mason deploy config mason-test 1 group1 group2 group3
+
+    Full docs: https://docs.bymason.com/mason-cli/#mason-deploy-config
     """
 
     for group in groups:
@@ -343,6 +362,8 @@ def apk(config, name, version, groups):
     \b
     or deployed to multiple groups:
       $ mason deploy apk com.test.app 1 group1 group2 group3
+
+    Full docs: https://docs.bymason.com/mason-cli/#mason-deploy-apk
     """
 
     for group in groups:
@@ -371,6 +392,8 @@ def ota(config, name, version, groups):
     \b
     or to multiple groups:
       $ mason deploy ota mason-os 2.0.0 group1 group2 group3
+
+    Full docs: https://docs.bymason.com/mason-cli/#mason-deploy-ota
     """
 
     for group in groups:
@@ -385,7 +408,11 @@ def ota(config, name, version, groups):
               help='Your Mason Platform password.')
 @pass_config
 def login(config, username, password):
-    """Authenticate via username and password."""
+    """
+    Authenticate via username and password.
+
+    Full docs: https://docs.bymason.com/mason-cli/#mason-login
+    """
 
     logger.debug('Authenticating ' + username)
     config.mason.login(username, password)
@@ -395,7 +422,11 @@ def login(config, username, password):
 @cli.command()
 @pass_config
 def logout(config):
-    """Log out of the Mason CLI."""
+    """
+    Log out of the Mason CLI.
+
+    Full docs: https://docs.bymason.com/mason-cli/#mason-logout
+    """
 
     config.mason.logout()
     logger.info('Successfully logged out.')
