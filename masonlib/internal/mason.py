@@ -55,21 +55,17 @@ class Mason(IMason):
             current_version = packaging.version.parse(__version__)
             remote_version = packaging.version.parse(r.text)
             if remote_version > current_version:
-                if bool(os.environ.get('MASON_CLI_DOCKER', False)):
-                    upgrade_command = 'docker pull masonamerica/mason-cli:latest'
-                else:
-                    upgrade_command = 'pip install --upgrade git+https://git@github.com/MasonAmerica/mason-cli.git'
-
                 self.config.logger.info(inspect.cleandoc("""
                 ==================== NOTICE ====================
-                A newer version '{}' of the mason-cli is available.
-                Run:
-                  $ {}
-                to upgrade to the latest version.
+                A newer version (v{}) of the Mason CLI is available.
     
-                Release notes: https://github.com/MasonAmerica/mason-cli/releases
+                Download the latest version:
+                https://github.com/MasonAmerica/mason-cli/releases/latest
+                
+                And check out our installation guide:
+                http://docs.bymason.com/mason-cli/#install
                 ==================== NOTICE ====================
-                """.format(remote_version, upgrade_command)))
+                """.format(remote_version)))
                 self.config.logger.info('')
         else:
             self.config.logger.debug('Failed to check for updates: {}'.format(r))
