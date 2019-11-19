@@ -298,7 +298,7 @@ class Mason(IMason):
         validate_credentials(self.config)
         customer = self._get_validated_customer()
 
-        if name is not 'mason-os':
+        if name != 'mason-os':
             self.config.logger.warning("Unknown name '{0}' for 'ota' deployments. "
                                        "Forcing it to 'mason-os'".format(name))
             name = 'mason-os'
