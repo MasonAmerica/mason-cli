@@ -161,8 +161,11 @@ def _handle_errors_old_type(config, r):
         config.logger.error(details)
     except (KeyError, ValueError):
         try:
-            config.logger.error(r.json()['message'])
+            config.logger.error(r.json()['data'])
         except (KeyError, ValueError):
-            return
+            try:
+                config.logger.error(r.json()['message'])
+            except (KeyError, ValueError):
+                return
 
     raise click.Abort()
