@@ -308,6 +308,7 @@ def config(config, name, version, groups):
     """
     Deploy config artifacts.
 
+    \b
       NAME of the configuration to be deployed.
       VERSION of the configuration to be deployed.
       GROUP(S) to deploy the configuration to.
