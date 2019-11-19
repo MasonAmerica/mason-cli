@@ -373,7 +373,7 @@ def apk(config, name, version, groups):
 
 @deploy.command()
 @click.argument('name')
-@click.argument('version', type=click.IntRange(min=0))
+@click.argument('version')
 @click.argument('groups', nargs=-1, required=True)
 @pass_config
 def ota(config, name, version, groups):
