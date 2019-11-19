@@ -16,12 +16,12 @@ class Store(object):
         if not os.path.exists(os.path.dirname(self.file)):
             os.makedirs(os.path.dirname(self.file))
         with open(self.file, 'w') as f:
-            f.write(yaml.dump(self.fields))
+            f.write(yaml.safe_dump(self.fields))
 
     def restore(self):
         if os.path.exists(self.file):
             with open(self.file, 'r') as f:
-                yml = yaml.load(f, Loader=yaml.SafeLoader)
+                yml = yaml.safe_load(f)
                 for (k, v) in yml.items():
                     self.fields[k] = v
 
