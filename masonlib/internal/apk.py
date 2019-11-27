@@ -2,11 +2,11 @@ import inspect
 import logging
 import os
 import re
-from subprocess import Popen, PIPE
+from subprocess import PIPE
+from subprocess import Popen
 
 import click
 from pyaxmlparser import APK
-from pyaxmlparser.core import FileNotPresent
 
 from masonlib.internal.artifacts import IArtifact
 from masonlib.internal.utils import validate_version
@@ -120,9 +120,13 @@ class CertFinder:
         self.apkf = apkf
 
     def find(self):
-        try:
-            cert = self.apkf.get_file("META-INF/CERT.RSA")
-        except FileNotPresent:
+        cert = None
+        for file in self.apkf.files:
+            # Cert files are NOT necessarily named 'CERT.RSA'
+            if file.endswith('.RSA'):
+                cert = self.apkf.get_file(file)
+                break
+        if not cert:
             return
 
         try:
