@@ -40,10 +40,12 @@ def _version_callback(ctx, param, value):
 @click.option('--version', '-V', is_flag=True, is_eager=True, expose_value=False,
               callback=_version_callback,
               help='Show the version and exit.')
-@click.option('--access-token',
+@click.option('--api-key', '--token',
               help='Supply an access token for this command.')
+@click.option('--access-token',
+              help='Supply an access token for this command.', hidden=True)
 @click.option('--id-token',
-              help='Supply an ID token for this command.')
+              help='Supply an ID token for this command.', hidden=True)
 @click.option('--no-color', is_flag=True, default=False,
               help='Disable rich console output.')
 @click.option('--debug', '-d', is_flag=True, default=False, hidden=True,
@@ -52,7 +54,7 @@ def _version_callback(ctx, param, value):
               help='Log verbose artifact and command details.')
 @click_log.simple_verbosity_option(logger)
 @pass_config
-def cli(config, debug, verbose, id_token, access_token, no_color):
+def cli(config, debug, verbose, api_key, id_token, access_token, no_color):
     """
     The Mason CLI provides command line tools to help you manage your configurations in the Mason
     Platform.
@@ -66,6 +68,11 @@ def cli(config, debug, verbose, id_token, access_token, no_color):
         config.mason.set_id_token(id_token)
     if access_token:
         config.mason.set_access_token(access_token)
+    if id_token or access_token:
+        logger.warning('The --id-token and --access-token options are deprecated. Please use '
+                       '--api-key instead.')
+    if api_key:
+        config.mason.set_api_key(api_key)
 
     if no_color:
         click_log.ColorFormatter.colors = {
@@ -403,18 +410,22 @@ def ota(config, name, version, groups):
 
 
 @cli.command()
+@click.option('--api-key', '--token', '-t',
+              help='Your Mason Platform API Key.')
 @click.option('--username', '--user', '-u', prompt=True,
               help='Your Mason Platform username.')
 @click.option('--password', '--pass', '-p', prompt=True, hide_input=True,
               help='Your Mason Platform password.')
 @pass_config
-def login(config, username, password):
+def login(config, api_key, username, password):
     """
-    Authenticate via username and password.
+    Authenticate via username and password or with an API Key.
 
     Full docs: https://docs.bymason.com/mason-cli/#mason-login
     """
 
+    if api_key:
+        config.mason.set_api_key(api_key)
     logger.debug('Authenticating ' + username)
     config.mason.login(username, password)
     logger.info('Successfully logged in.')

@@ -6,6 +6,7 @@ import requests
 from masonlib.internal.store import Store
 
 AUTH = Store('auth', {
+    'api_key': None,
     'id_token': None,
     'access_token': None
 })

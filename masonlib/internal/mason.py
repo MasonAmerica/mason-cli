@@ -76,6 +76,9 @@ class Mason(IMason):
     def set_id_token(self, id_token):
         AUTH['id_token'] = id_token
 
+    def set_api_key(self, api_key):
+        AUTH['api_key'] = api_key
+
     def register_os_config(self, config):
         self.artifact = OSConfig.parse(self.config, config)
         self._register_artifact(config)
@@ -360,13 +363,17 @@ class Mason(IMason):
         self.register_os_config(yaml)
         self.build(self.artifact.get_name(), self.artifact.get_version(), block, fast_build)
 
+    def login_token(self, api_key):
+        self.set_api_key(api_key)
+        AUTH.save()
+
     def login(self, user, password):
         payload = self._get_auth_payload(user, password)
         r = safe_request(self.config, 'post', ENDPOINTS['auth_url'], json=payload)
 
         if r.status_code == 200:
-            AUTH['id_token'] = r.json().get('id_token')
-            AUTH['access_token'] = r.json().get('access_token')
+            self.set_id_token(r.json().get('id_token'))
+            self.set_access_token(r.json().get('access_token'))
             AUTH.save()
         else:
             self.config.logger.error('Failed to authenticate.')

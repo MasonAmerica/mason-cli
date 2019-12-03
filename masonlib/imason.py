@@ -36,6 +36,26 @@ class IMason:
         pass
 
     @abstractmethod
+    def set_api_key(self, api_key):
+        """
+        Public set method for api key.
+
+        :param api_key: the api key to be utilized for authentication
+        """
+
+        pass
+
+    @abstractmethod
+    def login_token(self, api_key):
+        """
+        Public authentication method for use with API Keys.
+
+        :param api_key: the Mason Platform API Key
+        """
+
+        pass
+
+    @abstractmethod
     def login(self, user, password):
         """
         Public authentication method, returns true if authed, false otherwise.
