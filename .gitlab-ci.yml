@@ -72,10 +72,10 @@ build_macos:
   script:
     - pip3 install pyinstaller
     - ./scripts/gen_mac_bin.sh
-    - mv dist/mason dist/mason-macos
+    - tar czf dist/mason-macos.tar.gz -C dist mason
   artifacts:
     paths:
-      - dist
+      - dist/mason-macos.tar.gz
     expire_in: 90 days
   only:
     - merge_requests
@@ -98,7 +98,7 @@ deploy:
       curl -u $GITHUB_USERNAME:$GITHUB_TOKEN -d @release-request.json -H "Content-Type: application/json" -X POST https://api.github.com/repos/MasonAmerica/mason-cli/releases > release.json
       curl -u $GITHUB_USERNAME:$GITHUB_TOKEN --data-binary @dist/mason-linux -X POST -H "Content-Type: application/octet-stream" "https://uploads.github.com/repos/MasonAmerica/mason-cli/releases/$(jq '.id' release.json)/assets?name=mason-linux&label=Mason%20CLI%20for%20Linux" > linux-asset.json
       curl -u $GITHUB_USERNAME:$GITHUB_TOKEN --data-binary @dist/mason.exe -X POST -H "Content-Type: application/vnd.microsoft.portable-executable" "https://uploads.github.com/repos/MasonAmerica/mason-cli/releases/$(jq '.id' release.json)/assets?name=mason.exe&label=Mason%20CLI%20for%20Windows" > windows-asset.json
-      curl -u $GITHUB_USERNAME:$GITHUB_TOKEN --data-binary @dist/mason-macos -X POST -H "Content-Type: application/octet-stream" "https://uploads.github.com/repos/MasonAmerica/mason-cli/releases/$(jq '.id' release.json)/assets?name=mason-macos&label=Mason%20CLI%20for%20macOS" > macos-asset.json
+      curl -u $GITHUB_USERNAME:$GITHUB_TOKEN --data-binary @dist/mason-macos.tar.gz -X POST -H "Content-Type: application/octet-stream" "https://uploads.github.com/repos/MasonAmerica/mason-cli/releases/$(jq '.id' release.json)/assets?name=mason-macos.tar.gz&label=Mason%20CLI%20for%20macOS" > macos-asset.json
   artifacts:
     paths:
       - release-request.json
