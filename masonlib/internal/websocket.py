@@ -87,6 +87,7 @@ class XRayWebSocketFactory(WebSocketClientFactory):
 
 
 class XRayWebSocketFactoryFIFO(XRayWebSocketFactory):
+
     protocol = XRayWebSocketProtocolFIFO
 
     def __init__(self, *args, **kwargs):
@@ -218,9 +219,10 @@ class WsHandle(XRayBaseClient):
         self._timeout_ms = float(timeout_ms) if timeout_ms else None
         self._serial_number = '%s:%s' % (self.host, self.port)
         self._wst = None
+        self._on_running = None
 
     def run(self, callback):
-        self.ws_factory.d.addCallback(functools.partial(reactor.callInThread, callback))
+        self._on_running = callback
         reactor.run()
 
     def get_factory(self, url, headers):
@@ -230,6 +232,7 @@ class WsHandle(XRayBaseClient):
 
     def _on_device_ready(self, reason):
         self.ws_factory.ws_proto.sendMessage(MSG_CLIENT_OK)
+        reactor.callInThread(self._on_running)
 
     def _on_close(self, reason):
         self.ws_factory.event.clear()

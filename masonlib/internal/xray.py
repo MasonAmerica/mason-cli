@@ -38,7 +38,7 @@ class XRay(object):
     def _run_in_reactor(self, func, *args, **kwargs):
         handle = self._connect_adb()
 
-        def on_running(result):
+        def on_running():
             try:
                 device = self._adb.ConnectDevice(handle=handle)
                 if device is not None:
