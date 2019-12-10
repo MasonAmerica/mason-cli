@@ -27,8 +27,14 @@ setup(
         'pyyaml',
         'six',
         'packaging',
-        'pyaxmlparser',
-        'future'  # Needed for Python 2 compatibility
+        'pyaxmlparser>=0.3.22',
+        'future',  # Needed for Python 2 compatibility
+        'adb @ https://github.com/MasonAmerica/python-adb/tarball/master#egg=adb-1.3.0.5',
+        'twisted>=19.10.0',
+        'autobahn>=19.11.1',
+        'service_identity',
+        'pyopenssl>=19.1.0',
+        'pyasn1>=0.4.7'
     ],
     entry_points={
         'console_scripts': [

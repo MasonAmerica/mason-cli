@@ -18,6 +18,7 @@ ENDPOINTS = Store('endpoints', {
     'registry_signed_url': 'https://platform.bymason.com/api/registry/signedurl',
     'builder_url': 'https://platform.bymason.com/api/tracker/builder',
     'deploy_url': 'https://platform.bymason.com/api/deploy',
+    'xray_url': 'wss://api.staging.masonamerica.net/v1/global/xray',
     'config_version': 1
 })
 

@@ -3,3 +3,6 @@ build
 dist
 *.egg-info
 *.spec
+.eggs
+__pycache__
+version.py

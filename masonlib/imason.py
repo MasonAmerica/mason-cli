@@ -147,3 +147,18 @@ class IMason:
         """
 
         pass
+
+    @abstractmethod
+    def xray(self, device, service, command, local=None, remote=None, args=None):
+        """
+        Public XRay method, returns stream handles if successful
+
+        :param device: the device to connect to (uuid)
+        :param service: the service to connect to (adb/vnc)
+        :param command: the command to be executed
+        :param local:
+        :param remote:
+        :param args: service-specific arguments
+        """
+
+        pass

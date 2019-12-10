@@ -23,6 +23,7 @@ from masonlib.internal.os_config import OSConfig
 from masonlib.internal.store import Store
 from masonlib.internal.utils import AUTH, ENDPOINTS, hash_file, safe_request, \
     handle_failed_response, validate_credentials
+from masonlib.internal.xray import XRay
 
 
 class Mason(IMason):
@@ -58,10 +59,10 @@ class Mason(IMason):
                 self.config.logger.info(inspect.cleandoc("""
                 ==================== NOTICE ====================
                 A newer version (v{}) of the Mason CLI is available.
-    
+
                 Download the latest version:
                 https://github.com/MasonAmerica/mason-cli/releases/latest
-                
+
                 And check out our installation guide:
                 http://docs.bymason.com/mason-cli/#install
                 ==================== NOTICE ====================
@@ -394,6 +395,48 @@ class Mason(IMason):
     def logout(self):
         AUTH.clear()
         AUTH.save()
+
+    def xray(self, device, service, command, local=None, remote=None, args=None):
+        key = AUTH['api_key']
+        if not key:
+            self.config.logger.error('Please set an API key with \'mason login --api-key\' to use X-Ray.')
+            raise click.Abort()
+
+        if args is None:
+            args = []
+        else:
+            args = list(args)
+
+        try:
+            xray = XRay(device, self.config.logger)
+
+            if service == "adb":
+                if command == "logcat":
+                    xray.logcat(args)
+                elif command == "shell":
+                    xray.shell(args)
+                elif command == "push":
+                    xray.push(local, remote)
+                elif command == "pull":
+                    xray.pull(remote, dest_file=local)
+                elif command == "install":
+                    xray.install(local, args)
+                elif command == "uninstall":
+                    xray.uninstall(remote, args)
+                else:
+                    raise click.UsageError("Unknown adb command %s" % command)
+
+            elif service == "vnc":
+                if command == "desktop":
+                    xray.desktop(local)
+                else:
+                    raise click.UsageError("Unknown vnc command %s" % command)
+
+            else:
+                raise click.UsageError("Unknown service %s" % service)
+
+        except Exception as exc:
+            raise click.Abort(exc)
 
 
 class UploadInChunks(object):

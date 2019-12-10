@@ -409,6 +409,144 @@ def ota(config, name, version, groups):
         config.mason.deploy('ota', name, version, group, config.push, config.no_https)
 
 
+@cli.group()
+@click.argument('device')
+@pass_config
+def xray(config, device):
+    """
+    Use XRay to connect with services on the device.
+
+    \b
+      DEVICE to connect with (full device identifier).
+
+    Full docs: https://docs.bymason.com/mason-cli/#mason-xray
+    """
+
+    config.device = device
+
+
+@xray.command(context_settings=dict(
+    ignore_unknown_options=True,
+))
+@click.argument('args', nargs=-1, type=click.UNPROCESSED)
+@pass_config
+def logcat(config, args):
+    """
+    View streaming logs from the device.
+
+    \b
+      DEVICE to connect with (full device identifier).
+      ARGS supplied to logcat (optional, see https://d.android.com/studio/command-line/logcat).
+
+    Full docs: https://docs.bymason.com/mason-cli/#mason-xray-logcat
+    """
+
+    config.mason.xray(config.device, 'adb', 'logcat', args=args)
+
+
+@xray.command(context_settings=dict(
+    ignore_unknown_options=True,
+))
+@click.argument('command', nargs=-1, type=click.UNPROCESSED)
+@pass_config
+def shell(config, command):
+    """
+    Open a shell and run commands on the device.
+
+    \b
+      DEVICE to connect with (full device identifier).
+      COMMAND to run (optional, if empty an interactive shell is opened).
+
+    Full docs: https://docs.bymason.com/mason-cli/#mason-xray-shell
+    """
+
+    config.mason.xray(config.device, 'adb', 'shell', args=command)
+
+
+@xray.command()
+@click.argument('local', type=click.Path(exists=True, file_okay=True, readable=True))
+@click.argument('remote', required=False)
+@pass_config
+def push(config, local, remote):
+    """
+    Push files to the device.
+
+    \b
+      DEVICE to connect with (full device identifier).
+      LOCAL path of the file to be pushed.
+      REMOTE path of the destination file.
+
+    Full docs: https://docs.bymason.com/mason-cli/#mason-xray-push
+    """
+
+    config.mason.xray(config.device, 'adb', 'push', local=local, remote=remote)
+
+
+@xray.command()
+@click.argument('remote')
+@click.argument('local', type=click.Path(dir_okay=True), required=False)
+@pass_config
+def pull(config, remote, local):
+    """
+    Pull files from the device.
+
+    \b
+      DEVICE to connect with (full device identifier).
+      REMOTE path of the file on-device to pull.
+      LOCAL directory in which to store the file (optional, defaults to the current directory).
+
+    Full docs: https://docs.bymason.com/mason-cli/#mason-xray-pull
+    """
+
+    config.mason.xray(config.device, 'adb', 'pull', remote=remote, local=local)
+
+
+@xray.command()
+@click.argument('apk', type=click.Path(exists=True, file_okay=True, readable=True))
+@pass_config
+def install(config, apk):
+    """
+    Install an APK to the device.
+
+    \b
+      DEVICE to connect with (full device identifier).
+      APK to install.
+
+    Full docs: https://docs.bymason.com/mason-cli/#mason-xray-install
+    """
+
+    config.mason.xray(config.device, 'adb', 'install', local=apk)
+
+
+@xray.command()
+@click.argument('package')
+@pass_config
+def uninstall(config, package):
+    """
+    Uninstall an app from the device.
+
+    \b
+      DEVICE to connect with (full device identifier).
+      PACKAGE name to uninstall.
+
+    Full docs: https://docs.bymason.com/mason-cli/#mason-xray-uninstall
+    """
+    config.mason.xray(config.device, 'adb', 'uninstall', remote=package)
+
+
+@xray.command()
+@click.option('--port', '-p', help='local port for VNC clients')
+@pass_config
+def desktop(config, port):
+    """
+    Open a VNC connection to the device.
+
+    Full docs: https://docs.bymason.com/mason-cli/#mason-xray-desktop
+    """
+
+    config.mason.xray(config.device, 'vnc', 'desktop', local=port)
+
+
 @cli.command()
 @click.option('--api-key', '--token', '-t',
               help='Your Mason Platform API Key.')
