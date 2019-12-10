@@ -7,6 +7,7 @@ import click_log
 from masonlib import __version__
 from masonlib.imason import IMason
 from masonlib.platform import Platform
+from masonlib.internal.utils import LOG_PROTOCOL_TRACE
 
 logger = logging.getLogger(__name__)
 logger.setLevel(os.environ.get('LOGLEVEL', 'INFO').upper())
@@ -52,9 +53,11 @@ def _version_callback(ctx, param, value):
               help='Log diagnostic data.')
 @click.option('--verbose', is_flag=True, hidden=True,
               help='Log verbose artifact and command details.')
+@click.option('--trace', is_flag=True, hidden=True,
+              help='Enable network tracing.')
 @click_log.simple_verbosity_option(logger)
 @pass_config
-def cli(config, debug, verbose, api_key, id_token, access_token, no_color):
+def cli(config, debug, verbose, trace, api_key, id_token, access_token, no_color):
     """
     The Mason CLI provides command line tools to help you manage your configurations in the Mason
     Platform.
@@ -86,6 +89,9 @@ def cli(config, debug, verbose, api_key, id_token, access_token, no_color):
         logger.warning('--debug and --verbose options are deprecated. Please use --verbosity debug '
                        'instead.')
         logger.setLevel('DEBUG')
+
+    if trace:
+        logger.setLevel(LOG_PROTOCOL_TRACE)
 
     config.mason.check_for_updates()
 

@@ -1,10 +1,10 @@
-import functools
+import logging
 import os
-import sys
 import threading
 import time as time_
 
 from abc import abstractmethod
+from binascii import hexlify
 
 try:
     # noinspection PyCompatibility
@@ -15,14 +15,18 @@ except ImportError:
 
 from twisted.internet import defer, reactor, protocol, ssl, threads
 from twisted.internet.defer import setDebugging
-from twisted.logger import Logger
-from twisted.logger import globalLogPublisher, textFileLogObserver, FilteringLogObserver, \
-    LogLevelFilterPredicate, LogLevel
+from twisted.logger import globalLogPublisher, STDLibLogObserver, FilteringLogObserver, LogLevelFilterPredicate, \
+    LogLevel
+
+import txaio
 
 from autobahn.twisted.websocket import WebSocketClientProtocol, WebSocketClientFactory, connectWS
 from adb import usb_exceptions
 
+from masonlib.internal.utils import LOG_PROTOCOL_TRACE
 from .io import BytesFIFO
+
+txaio.use_twisted()
 
 MSG_DEVICE_OK = b'device:ok'
 MSG_DEVICE_FAIL = b'device:fail'
@@ -36,6 +40,12 @@ class XRayWebSocketProtocol(WebSocketClientProtocol):
         self.factory.local_proto.transport.write(payload)
 
     def onMessage(self, payload, isBinary):
+        if self.logger.isEnabledFor(LOG_PROTOCOL_TRACE):
+            if isBinary:
+                self.logger.debug("[B>>>] %s", hexlify(payload))
+            else:
+                self.logger.debug("[T>>>] %s", payload)
+
         if isBinary:
             self.forward_message(payload)
         else:
@@ -43,6 +53,18 @@ class XRayWebSocketProtocol(WebSocketClientProtocol):
                 payload = payload.encode()
             if payload == MSG_DEVICE_OK:
                 self.factory.d.callback(MSG_DEVICE_OK)
+
+    def onClose(self, wasClean, code, reason):
+        super(XRayWebSocketProtocol, self).onClose(wasClean, code, reason)
+        self.logger.info("Connection closed: [%d] %s", code, reason)
+
+    def sendMessage(self, payload, isBinary=False):
+        if self.logger.isEnabledFor(LOG_PROTOCOL_TRACE):
+            if isBinary:
+                self.logger.debug("[B<<<] %s", hexlify(payload))
+            else:
+                self.logger.debug("[T<<<] %s", payload)
+        super(XRayWebSocketProtocol, self).sendMessage(payload, isBinary)
 
 
 class XRayWebSocketProtocolFIFO(XRayWebSocketProtocol):
@@ -56,6 +78,7 @@ class XRayWebSocketProtocolFIFO(XRayWebSocketProtocol):
         self.factory.event.set()
 
     def onClose(self, wasClean, code, reason):
+        super(XRayWebSocketProtocolFIFO, self).onClose(wasClean, code, reason)
         self.factory.running = False
         self.factory.event.set()
 
@@ -63,9 +86,10 @@ class XRayWebSocketProtocolFIFO(XRayWebSocketProtocol):
 class XRayWebSocketFactory(WebSocketClientFactory):
     protocol = XRayWebSocketProtocol
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, logger, *args, **kwargs):
         super(XRayWebSocketFactory, self).__init__(*args, **kwargs)
 
+        self._logger = logger
         self.ws_proto = None
         self.local_proto = None
         self.d = defer.Deferred()
@@ -73,16 +97,17 @@ class XRayWebSocketFactory(WebSocketClientFactory):
     def buildProtocol(self, addr):
         proto = WebSocketClientFactory.buildProtocol(self, addr)
         proto.factory = self
+        proto.logger = self._logger
         self.ws_proto = proto
         return proto
 
     def clientConnectionFailed(self, connector, reason):
-        print('Connection failed: %s' % reason)
+        self._logger.error('Connection failed: %s', reason)
         self.d.errback(reason)
 
     def clientConnectionLost(self, connector, reason):
         if not self.d.called:
-            print('Connection lost: %s' % reason)
+            self._logger.debug('Connection lost: %s', reason)
             self.d.errback(reason)
 
 
@@ -90,8 +115,8 @@ class XRayWebSocketFactoryFIFO(XRayWebSocketFactory):
 
     protocol = XRayWebSocketProtocolFIFO
 
-    def __init__(self, *args, **kwargs):
-        super(XRayWebSocketFactoryFIFO, self).__init__(*args, **kwargs)
+    def __init__(self, logger, *args, **kwargs):
+        super(XRayWebSocketFactoryFIFO, self).__init__(logger, *args, **kwargs)
         self.running = False
         self.fifo = BytesFIFO(1024 * 512)
         self.event = threading.Event()
@@ -126,7 +151,7 @@ class XRayLocalServerFactory(protocol.Factory, object):
 
 class XRayBaseClient(object):
 
-    def __init__(self, url, header=None, **kwargs):
+    def __init__(self, logger, url, header=None, **kwargs):
         """X-Ray WebSocket client base class
         Arguments:
           url: The URI of the endpoint where the device is connected
@@ -145,19 +170,27 @@ class XRayBaseClient(object):
                 self.port = 443
 
         self.ws_factory = None
+        self._logger = logger
 
-        self.log = Logger()
+        traceenv = os.environ.get("MASON_XRAY_TRACE", False) in ('True', 'true', '1')
 
-        level = LogLevel.error
-        traceenv = os.environ.get("MASON_XRAY_TRACE", False)
-        if traceenv in ('True', 'true', '1'):
-            setDebugging(True)
-            level = LogLevel.debug
+        predicate = LogLevelFilterPredicate(LogLevel.error)
 
-        predicate = LogLevelFilterPredicate(defaultLogLevel=level)
-        observer = FilteringLogObserver(textFileLogObserver(sys.stdout), [predicate])
-        observer._encoding = "utf-8"
-        globalLogPublisher.addObserver(observer)
+        try:
+            if traceenv or logger.isEnabledFor(logging.DEBUG):
+                setDebugging(True)
+                predicate = LogLevelFilterPredicate(LogLevel.debug)
+                if logger.isEnabledFor(LOG_PROTOCOL_TRACE):
+                    txaio.set_global_log_level('trace')
+                else:
+                    txaio.set_global_log_level('debug')
+            else:
+                txaio.set_global_log_level('info')
+        except Exception as exc:
+            logger.error(exc)
+
+        globalLogPublisher.addObserver(
+            FilteringLogObserver(STDLibLogObserver(name=logger.name), predicates=[predicate]))
 
         self.ws_factory = self.get_factory(url, header)
         self.ws_factory.d.addErrback(self.close)
@@ -184,16 +217,17 @@ class XRayBaseClient(object):
 
 class XRayProxyServer(XRayBaseClient):
 
-    def __init__(self, url, local_port, **kwargs):
+    def __init__(self, logger, url, local_port, **kwargs):
         self.local_port = local_port
         self.local_factory = None
-        super(XRayProxyServer, self).__init__(url, **kwargs)
+
+        super(XRayProxyServer, self).__init__(logger, url, **kwargs)
 
     def run(self):
         reactor.run()
 
     def get_factory(self, url, headers):
-        f = XRayWebSocketFactory(url=url, headers=headers)
+        f = XRayWebSocketFactory(self._logger, url=url, headers=headers)
         f.d.addCallback(self._on_device_ready)
         return f
 
@@ -208,13 +242,13 @@ class WsHandle(XRayBaseClient):
        We do ugly things to provide a synchronous interface to these Twisted
        components for python-adb. This provides same interface as UsbHandle. """
 
-    def __init__(self, url, timeout_ms=10000, on_connect=None, **kwargs):
+    def __init__(self, logger, url, timeout_ms=10000, on_connect=None, **kwargs):
         """Initialize the WebSocket Handle.
         Arguments:
           url: The URI of the endpoint where the device is connected
 
         """
-        super(WsHandle, self).__init__(url, **kwargs)
+        super(WsHandle, self).__init__(logger, url, **kwargs)
 
         self._timeout_ms = float(timeout_ms) if timeout_ms else None
         self._serial_number = '%s:%s' % (self.host, self.port)
@@ -226,7 +260,7 @@ class WsHandle(XRayBaseClient):
         reactor.run()
 
     def get_factory(self, url, headers):
-        f = XRayWebSocketFactoryFIFO(url=url, headers=headers)
+        f = XRayWebSocketFactoryFIFO(self._logger, url=url, headers=headers)
         f.d.addCallback(self._on_device_ready)
         return f
 

@@ -9,7 +9,6 @@ from masonlib.internal.utils import ENDPOINTS
 from masonlib.internal.websocket import WsHandle
 from masonlib.internal.websocket import XRayProxyServer
 
-
 class XRay(object):
 
     def __init__(self, device, logger):
@@ -26,14 +25,14 @@ class XRay(object):
 
     def _connect_adb(self):
         auth = {'Authorization': 'Basic {}'.format(self._apikey)}
-        return WsHandle(self._get_url('adb'), timeout_ms=5000, header=auth)
+        return WsHandle(self._logger, self._get_url('adb'), timeout_ms=5000, header=auth)
 
     def desktop(self, port=None):
         if port is None:
             port = 5558
 
         auth = {'Authorization': 'Basic {}'.format(self._apikey)}
-        XRayProxyServer(self._get_url('vnc'), port, timeout_ms=5000, header=auth).run()
+        XRayProxyServer(self._logger, self._get_url('vnc'), port, timeout_ms=5000, header=auth).run()
 
     def _run_in_reactor(self, func, *args, **kwargs):
         handle = self._connect_adb()
@@ -48,6 +47,7 @@ class XRay(object):
                         pass
                     device.Close()
             except Exception as exc:
+                self._logger.error("error: %s" % exc)
                 raise click.Abort(exc)
 
         return handle.run(on_running)
