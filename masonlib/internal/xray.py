@@ -104,8 +104,7 @@ class XRay(object):
                 self._cur_bytes = bytes_written
 
             output = func(progress_callback=callback, *args, **kwargs)
-            for line in output:
-                self._logger.info(line)
+            self._logger.info("".join(output))
 
     def push(self, local, remote):
         self._run_in_reactor(self._push, local, remote)
