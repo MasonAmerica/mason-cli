@@ -3,6 +3,8 @@ import sys
 
 import click
 from adb.adb_commands import AdbCommands
+from adb.android_pubkey import keygen
+from adb import sign_cryptography
 
 from masonlib.internal.utils import AUTH
 from masonlib.internal.utils import ENDPOINTS
@@ -19,11 +21,21 @@ class XRay(object):
         self._cur_bytes = 0
         self._url = ENDPOINTS['xray_url'] + "/{}/{}"
         self._logger = logger
+        self._adbkey = os.path.join(click.get_app_dir('Mason CLI'), 'adbkey')
 
     def _get_url(self, service):
         return self._url.format(self._device, service)
 
+    def _keygen(self):
+        try:
+            keygen(self._adbkey)
+        except Exception as exc:
+            self._logger.error(exc)
+
     def _connect_adb(self):
+        if not os.path.isfile(self._adbkey):
+            self._keygen()
+
         auth = {'Authorization': 'Basic {}'.format(self._apikey)}
         return WsHandle(self._logger, self._get_url('adb'), timeout_ms=5000, header=auth)
 
@@ -39,7 +51,9 @@ class XRay(object):
 
         def on_running():
             try:
-                device = self._adb.ConnectDevice(handle=handle)
+                signer = sign_cryptography.CryptographySigner(self._adbkey)
+
+                device = self._adb.ConnectDevice(handle=handle, rsa_keys=[signer])
                 if device is not None:
                     try:
                         func(device, *args, **kwargs)
