@@ -233,6 +233,7 @@ class XRayProxyServer(XRayBaseClient):
 
     def _on_device_ready(self, result):
         self.local_factory = XRayLocalServerFactory(self.ws_factory.ws_proto)
+        self._logger.info("X-Ray is connected. Connect a client to localhost:%s", self.local_port)
         reactor.listenTCP(self.local_port, self.local_factory)
 
 
