@@ -56,7 +56,8 @@ class XRayWebSocketProtocol(WebSocketClientProtocol):
 
     def onClose(self, wasClean, code, reason):
         super(XRayWebSocketProtocol, self).onClose(wasClean, code, reason)
-        self.logger.info("Connection closed: [%d] %s", code, reason)
+        if code != 1006:
+            self.logger.info("Connection closed: [%d] %s", code, reason)
 
     def sendMessage(self, payload, isBinary=False):
         if self.logger.isEnabledFor(LOG_PROTOCOL_TRACE):
