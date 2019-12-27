@@ -20,8 +20,10 @@ from twisted.logger import globalLogPublisher, STDLibLogObserver, FilteringLogOb
 import txaio
 
 from autobahn.twisted.websocket import WebSocketClientProtocol, WebSocketClientFactory, connectWS
-from adb import usb_exceptions
+from adb_shell.handle.base_handle import BaseHandle
+from adb_shell.exceptions import AdbCommandFailureException, TcpTimeoutException
 
+import cli.internal.commands.xray
 from cli.internal.utils.constants import LOG_PROTOCOL_TRACE
 
 txaio.use_twisted()
@@ -53,6 +55,7 @@ class XRayWebSocketProtocol(WebSocketClientProtocol):
                 self.factory.d.callback(MSG_DEVICE_OK)
 
     def onClose(self, wasClean, code, reason):
+        self.factory.running = False
         super(XRayWebSocketProtocol, self).onClose(wasClean, code, reason)
         if code != 1006:
             self.logger.info("Connection closed: [%d] %s", code, reason)
@@ -81,6 +84,7 @@ class XRayWebSocketFactory(WebSocketClientFactory):
         self.ws_proto = None
         self.local_proto = None
         self.d = defer.Deferred()
+        self.running = False
 
     def buildProtocol(self, addr):
         proto = WebSocketClientFactory.buildProtocol(self, addr)
@@ -89,11 +93,16 @@ class XRayWebSocketFactory(WebSocketClientFactory):
         self.ws_proto = proto
         return proto
 
+    def startedConnecting(self, connector):
+        self.running = True
+
     def clientConnectionFailed(self, connector, reason):
+        self.running = False
         self._logger.error('Connection failed: %s', reason)
         self.d.errback(reason)
 
     def clientConnectionLost(self, connector, reason):
+        self.running = False
         if not self.d.called:
             self._logger.debug('Connection lost: %s', reason)
             self.d.errback(reason)
@@ -112,6 +121,7 @@ class XRayWebSocketFactoryFIFO(XRayWebSocketFactory):
         self.rsock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 8192)
 
     def clientConnectionLost(self, connector, reason):
+        self.running = False
         self.rsock.shutdown(socket.SHUT_RD)
         self.ssock.shutdown(socket.SHUT_WR)
         if not self.d.called:
@@ -187,7 +197,7 @@ class XRayBaseClient(object):
             FilteringLogObserver(STDLibLogObserver(name=logger.name), predicates=[predicate]))
 
         self.ws_factory = self.get_factory(url, header)
-        self.ws_factory.d.addErrback(self.close)
+        self.ws_factory.d.addErrback(self._eb)
 
         if self.ws_factory.isSecure:
             contextFactory = ssl.ClientContextFactory()
@@ -205,8 +215,12 @@ class XRayBaseClient(object):
     def get_factory(self, url, headers):
         pass
 
-    def close(self, reason):
-        reactor.callWhenRunning(reactor.stop)
+    def _eb(self, reason):
+        self.close(reason)
+
+    def shutdown(self, reason):
+        if reactor.running:
+            reactor.callFromThread(reactor.stop)
 
 
 class XRayProxyServer(XRayBaseClient):
@@ -231,13 +245,17 @@ class XRayProxyServer(XRayBaseClient):
         reactor.listenTCP(self.local_port, self.local_factory)
 
 
-class WsHandle(XRayBaseClient):
+class WSHandleShutdown(Exception):
+    pass
+
+
+class WsHandle(XRayBaseClient, BaseHandle):
     """WebSocket connection handle object for python-adb
 
        We do ugly things to provide a synchronous interface to these Twisted
        components for python-adb. This provides same interface as UsbHandle. """
 
-    def __init__(self, logger, url, timeout_ms=10000, on_connect=None, **kwargs):
+    def __init__(self, logger, url, default_timeout_s=None, on_connect=None, **kwargs):
         """Initialize the WebSocket Handle.
         Arguments:
           url: The URI of the endpoint where the device is connected
@@ -245,10 +263,11 @@ class WsHandle(XRayBaseClient):
         """
         super(WsHandle, self).__init__(logger, url, **kwargs)
 
-        self._timeout_ms = float(timeout_ms) if timeout_ms else None
+        self._default_timeout_s = default_timeout_s
         self._serial_number = '%s:%s' % (self.host, self.port)
         self._wst = None
         self._on_running = None
+        self._opened = False
 
     def run(self, callback):
         self._on_running = callback
@@ -265,38 +284,42 @@ class WsHandle(XRayBaseClient):
 
     def _on_close(self, reason):
         if reason is not None:
-            raise usb_exceptions.AdbCommandFailureException(reason)
-
-    def _timeout_seconds(self, timeout_ms):
-        timeout = self.Timeout(timeout_ms)
-        return timeout / 1000.0 if timeout is not None else timeout
+            raise AdbCommandFailureException(reason)
 
     @property
     def serial_number(self):
         return self._serial_number
 
-    def BulkWrite(self, data, timeout=None):
+    def connect(self, timeout_s=None):
+        self._opened = True
+
+    def bulk_write(self, data, timeout_s=None):
         reactor.callFromThread(self.ws_factory.ws_proto.sendMessage, bytes(data), isBinary=True)
 
-    def BulkRead(self, numbytes, timeout=None):
-        t = self._timeout_seconds(timeout)
+    def bulk_read(self, numbytes, timeout_s=None):
+        timeout = self._default_timeout_s if timeout_s is None else timeout_s
         buffer = bytearray(numbytes)
         view = memoryview(buffer)
         pos = 0
         while pos < numbytes:
-            readable, _, _ = select.select([self.ws_factory.rsock], [], [], t)
+            readable, _, _ = select.select([self.ws_factory.rsock], [], [], timeout)
             if readable:
                 read = self.ws_factory.rsock.recv_into(view[pos:], numbytes - pos, 0)
                 if not read:
-                    raise usb_exceptions.TcpTimeoutException("Incomplete read!")
+                    if not self.ws_factory.running:
+                        # Exceptions as flow control is a bad pattern, but in this case
+                        # we do it so it's propagated up to run_in_reactor
+                        raise WSHandleShutdown()
+
+                    raise TcpTimeoutException("Incomplete read!")
                 pos += read
             else:
-                msg = 'Reading from {} timed out (Timeout {}s)'.format(self._serial_number, t)
-                raise usb_exceptions.TcpTimeoutException(msg)
+                msg = 'Reading from {} timed out (Timeout {}s)'.format(self._serial_number, timeout)
+                raise TcpTimeoutException(msg)
         return bytes(buffer)
 
-    def Timeout(self, timeout_ms):
-        return float(timeout_ms) if timeout_ms is not None else self._timeout_ms
-
-    def Close(self, reason=None):
-        self.close(reason)
+    def close(self, reason=None):
+        if self._opened:
+            self._logger.debug("close")
+            self._opened = False
+            self.shutdown(reason)

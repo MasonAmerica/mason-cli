@@ -3,28 +3,36 @@ import os
 import posixpath
 
 import click
+import re
 import six
 import sys
+import traceback
+
+from io import BytesIO
+
 from adb.adb_commands import AdbCommands
 from adb.android_pubkey import keygen
 
+from adb_shell.adb_device import AdbDevice, _AdbTransactionInfo
+from adb_shell.auth.keygen import keygen
+from adb_shell import constants
+
 from cli.internal.commands.command import Command
 from cli.internal.utils.validation import validate_api_key
-from cli.internal.utils.websocket import WsHandle
-from cli.internal.utils.websocket import XRayProxyServer
+from cli.internal.utils.websocket import WsHandle, WSHandleShutdown, XRayProxyServer
 
 try:
-    from adb import sign_cryptography
+    from adb_shell.auth import sign_cryptography
 
     rsa_signer = sign_cryptography.CryptographySigner
 except ImportError:
     try:
-        from adb import sign_pythonrsa
+        from adb_shell.auth import sign_pythonrsa
 
         rsa_signer = sign_pythonrsa.PythonRSASigner.FromRSAKeyPath
     except ImportError:
         try:
-            from adb import sign_pycryptodome
+            from adb_shell import sign_pycryptodome
 
             rsa_signer = sign_pycryptodome.PycryptodomeAuthSigner
         except ImportError:
@@ -143,12 +151,27 @@ class XRay(object):
     def __init__(self, device, config):
         self._device = device
         self._apikey = config.auth_store['api_key']
-        self._adb = AdbCommands()
         self._progress = None
         self._cur_bytes = 0
         self._url = config.endpoints_store['xray_url'] + "/{}/{}"
         self._logger = config.logger
         self._adbkey = os.path.join(click.get_app_dir('Mason CLI'), 'adbkey')
+
+    def _find_backspace_runs(self, stdout_bytes, start_pos):
+        first_backspace_pos = stdout_bytes[start_pos:].find(b'\x08')
+        if first_backspace_pos == -1:
+            return -1, 0
+
+        end_backspace_pos = (start_pos + first_backspace_pos) + 1
+        while True:
+            if chr(stdout_bytes[end_backspace_pos]) == '\b':
+                end_backspace_pos += 1
+            else:
+                break
+
+        num_backspaces = end_backspace_pos - (start_pos + first_backspace_pos)
+
+        return (start_pos + first_backspace_pos), num_backspaces
 
     def _get_url(self, service):
         return self._url.format(self._device, service)
@@ -176,63 +199,134 @@ class XRay(object):
 
     def _run_in_reactor(self, func, *args, **kwargs):
         handle = self._connect_adb()
+        adb = AdbDevice(handle)
 
         def on_running():
             try:
                 signer = rsa_signer(self._adbkey)
-                device = self._adb.ConnectDevice(handle=handle, rsa_keys=[signer],
-                                                 auth_timeout_ms=30000)
-                if device is not None:
-                    try:
-                        func(device, *args, **kwargs)
-                    except Exception:
-                        pass
-                    device.Close()
+                if adb.connect(rsa_keys=[signer], auth_timeout_s=30, timeout_s=10):
+                    func(adb, *args, **kwargs)
+                    adb.close()
+            except WSHandleShutdown:
+                return
+
             except Exception as exc:
-                self._logger.error("error: %s" % exc)
+                self._logger.error("error bleh: %s" % exc)
+                traceback.print_exc()
                 raise click.Abort(exc)
 
         return handle.run(on_running)
 
-    def logcat(self, options=None):
-        self._run_in_reactor(self._logcat, options=options)
-
-    def _logcat(self, device, options=None):
-        if options is None:
-            options = []
-
-        output = device.Logcat(' '.join(options))
-        for line in output:
-            sys.stdout.write(line)
 
     def shell(self, command):
         self._run_in_reactor(self._shell, command)
 
+    def _interactive_shell(self, device, adb_info, cmd=None, delim=None, strip_cmd=True, strip_delim=True):
+        """Retrieves stdout of the current InteractiveShell and sends a shell command if provided
+
+        Args:
+          conn: Instance of AdbConnection
+          cmd: Optional. Command to run on the target.
+          delim: Optional. Delimiter to look for in the output to know when to stop expecting more output
+          (usually the shell prompt)
+        Returns:
+          The stdout from the shell command.
+        """
+
+        if delim is not None and not isinstance(delim, bytes):
+            delim = delim.encode('utf-8')
+
+        # Delimiter may be shell@hammerhead:/ $
+        # The user or directory could change, making the delimiter somthing like root@hammerhead:/data/local/tmp $
+        # Handle a partial delimiter to search on and clean up
+        if delim:
+            user_pos = delim.find(b'@')
+            dir_pos = delim.rfind(b':/')
+            if user_pos != -1 and dir_pos != -1:
+                partial_delim = delim[user_pos:dir_pos + 1]  # e.g. @hammerhead:
+            else:
+                partial_delim = delim
+
+            partial_delim = partial_delim[:-2]
+
+        else:
+            partial_delim = None
+
+        original_cmd = ''
+
+        try:
+            if cmd:
+                original_cmd = str(cmd)
+                cmd += '\r'  # Required. Send a carriage return right after the cmd
+                cmd = cmd.encode('utf8')
+
+                # Send the cmd raw
+                device._write(cmd, adb_info)
+
+                if delim:
+                    # Expect multiple WRTE cmds until the delim (usually terminal prompt) is detected
+
+                    cmd, data = device._read_until([constants.WRTE], adb_info)
+                    if type(data) == bytes:
+                        yield data
+
+                    while partial_delim not in data:
+                        cmd, data = device._read_until([constants.WRTE], adb_info)
+                        yield data
+
+                else:
+                    # Otherwise, expect only a single WRTE
+                    cmd, data = device._read_until([constants.WRTE], adb_info)
+
+                    # WRTE cmd from device will follow with stdout data
+                    yield data
+
+            else:
+
+                # No cmd provided means we should just expect a single line from the terminal. Use this sparingly
+                cmd, data = device._read_until([constants.WRTE, constants.CLSE], adb_info)
+
+                if cmd == b'WRTE':
+                    # WRTE cmd from device will follow with stdout data
+                    yield data
+                else:
+                    self._logger.error("Unhandled cmd: {}".format(cmd))
+
+        except Exception as e:
+            self._logger.error("InteractiveShell exception (most likely timeout): {}".format(e))
+            traceback.print_exc()
+
+
     def _shell(self, device, command):
+        adb_info = _AdbTransactionInfo(None, None, 10, 20)
         if command:
-            output = device.StreamingShell(' '.join(command))
+            if type(command) == list:
+                command = ' '.join(command)
+            output = device._streaming_command(b'shell', command.encode('utf8'), adb_info)
             for line in output:
-                sys.stdout.write(line)
+                sys.stdout.write(line.decode('utf-8'))
+
         else:
             # Retrieve the initial terminal prompt to use as a delimiter for future reads
-            terminal_prompt = device.InteractiveShell()
+            device._open(b'shell:', adb_info)
+            terminal_prompt = next(self._interactive_shell(device, adb_info))
             sys.stdout.write(terminal_prompt.decode('utf-8'))
 
             # Accept user input in a loop and write that into the interactive shells stdin,
             # then print output
-            while True:
-                cmd = input(' ')
-                if not cmd:
-                    continue
-                elif cmd == 'exit':
-                    break
-                else:
-                    stdout = device.InteractiveShell(
-                        cmd, strip_cmd=True, delim=terminal_prompt, strip_delim=False)
-                    if stdout:
-                        if isinstance(stdout, bytes):
-                            stdout = stdout.decode('utf-8')
-                            sys.stdout.write(stdout)
+            try:
+                while True:
+                    cmd = input(' ')
+                    if not cmd:
+                        continue
+                    elif cmd == 'exit':
+                        break
+                    else:
+                        output = self._interactive_shell(device, adb_info, cmd, delim=terminal_prompt)
+                        for line in output:
+                            sys.stdout.write(line.decode('utf-8'))
+            except EOFError:
+                pass
 
     def _with_progressbar(self, label, func, *args, **kwargs):
         with click.progressbar(length=0, label=label) as progress:
@@ -246,22 +340,34 @@ class XRay(object):
                 self._cur_bytes = bytes_written
 
             output = func(progress_callback=callback, *args, **kwargs)
-            self._logger.info("".join(output))
+            self._logger.info(output)
+
+    def logcat(self, options=None):
+        try:
+            self._run_in_reactor(self._logcat, options=options)
+        except Exception as exc:
+            self._logger.error("logcat error: %s" % exc)
+
+    def _logcat(self, device, options=None):
+        if options is None:
+            options = []
+
+        self._shell(device, 'logcat %s' % ' '.join(options))
 
     def push(self, local, remote):
         self._run_in_reactor(self._push, local, remote)
 
     def _push(self, device, local, remote):
-        self._with_progressbar(remote, device.Push, local, remote)
+        self._with_progressbar(remote, device.push, local, remote)
 
     def pull(self, remote, dest_file=None):
-        return self._run_in_reactor(self._pull, remote, dest_file=dest_file)
+        self._run_in_reactor(self._pull, remote, dest_file=dest_file)
 
     def _pull(self, device, remote, dest_file=None):
         if dest_file is None:
             dest_file = os.path.basename(remote)
 
-        return self._with_progressbar(remote, device.Pull, remote, dest_file=str(dest_file))
+        return self._with_progressbar(remote, device.pull, remote, dest_file=str(dest_file))
 
     def install(self, local_path, replace_existing=True, grant_permissions=False, args=None):
         return self._run_in_reactor(self._install, local_path, args)
