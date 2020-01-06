@@ -4,12 +4,29 @@ import sys
 import click
 from adb.adb_commands import AdbCommands
 from adb.android_pubkey import keygen
-from adb import sign_cryptography
 
 from masonlib.internal.utils import AUTH
 from masonlib.internal.utils import ENDPOINTS
 from masonlib.internal.websocket import WsHandle
 from masonlib.internal.websocket import XRayProxyServer
+
+try:
+    from adb import sign_cryptography
+
+    rsa_signer = sign_cryptography.CryptographySigner
+except ImportError:
+    try:
+        from adb import sign_pythonrsa
+
+        rsa_signer = sign_pythonrsa.PythonRSASigner.FromRSAKeyPath
+    except ImportError:
+        try:
+            from adb import sign_pycryptodome
+
+            rsa_signer = sign_pycryptodome.PycryptodomeAuthSigner
+        except ImportError:
+            rsa_signer = None
+
 
 class XRay(object):
 
@@ -51,9 +68,8 @@ class XRay(object):
 
         def on_running():
             try:
-                signer = sign_cryptography.CryptographySigner(self._adbkey)
-
-                device = self._adb.ConnectDevice(handle=handle, rsa_keys=[signer])
+                signer = rsa_signer(self._adbkey)
+                device = self._adb.ConnectDevice(handle=handle, rsa_keys=[signer], default_timeout_ms=10000)
                 if device is not None:
                     try:
                         func(device, *args, **kwargs)
