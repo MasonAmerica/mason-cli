@@ -2,6 +2,7 @@ import os
 import sys
 
 import click
+
 from adb.adb_commands import AdbCommands
 from adb.android_pubkey import keygen
 
@@ -69,7 +70,7 @@ class XRay(object):
         def on_running():
             try:
                 signer = rsa_signer(self._adbkey)
-                device = self._adb.ConnectDevice(handle=handle, rsa_keys=[signer], default_timeout_ms=10000)
+                device = self._adb.ConnectDevice(handle=handle, rsa_keys=[signer], auth_timeout_ms=30000)
                 if device is not None:
                     try:
                         func(device, *args, **kwargs)
