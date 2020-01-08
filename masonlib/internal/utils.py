@@ -5,6 +5,8 @@ import requests
 
 from masonlib.internal.store import Store
 
+LOG_PROTOCOL_TRACE = 4
+
 AUTH = Store('auth', {
     'api_key': None,
     'id_token': None,
@@ -22,7 +24,6 @@ ENDPOINTS = Store('endpoints', {
     'config_version': 1
 })
 
-LOG_PROTOCOL_TRACE = 4
 
 def validate_credentials(config):
     if not AUTH['id_token'] or not AUTH['access_token']:

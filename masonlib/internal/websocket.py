@@ -1,11 +1,8 @@
 import logging
-import os
 import select
-
+import socket
 from abc import abstractmethod
 from binascii import hexlify
-import socket
-
 
 try:
     # noinspection PyCompatibility
@@ -14,7 +11,7 @@ except ImportError:
     # noinspection PyCompatibility,PyUnresolvedReferences
     from urlparse import urlparse
 
-from twisted.internet import defer, reactor, protocol, ssl, threads
+from twisted.internet import defer, reactor, protocol, ssl
 from twisted.internet.defer import setDebugging
 from twisted.logger import globalLogPublisher, STDLibLogObserver, FilteringLogObserver, LogLevelFilterPredicate, \
     LogLevel
@@ -171,12 +168,10 @@ class XRayBaseClient(object):
         self.ws_factory = None
         self._logger = logger
 
-        traceenv = os.environ.get("MASON_XRAY_TRACE", False) in ('True', 'true', '1')
-
         predicate = LogLevelFilterPredicate(LogLevel.error)
 
         try:
-            if traceenv or logger.isEnabledFor(logging.DEBUG):
+            if logger.isEnabledFor(logging.DEBUG):
                 setDebugging(True)
                 predicate = LogLevelFilterPredicate(LogLevel.debug)
                 if logger.isEnabledFor(LOG_PROTOCOL_TRACE):
