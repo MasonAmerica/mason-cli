@@ -3,18 +3,16 @@ import unittest
 
 from test_common import Common
 
-from masonlib.imason import IMason
 from masonlib.internal import utils
 from masonlib.internal.apk import Apk
-from masonlib.platform import Platform
+from masonlib.internal.mason import Mason
 
 
 class MasonTest(unittest.TestCase):
 
     def setUp(self):
         config = Common.create_mock_config()
-        platform = Platform(config)
-        self.mason = platform.get(IMason)
+        self.mason = Mason(config)
 
     def test_authenticate(self):
         test_user = 'foo'

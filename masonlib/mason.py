@@ -5,9 +5,8 @@ import click
 import click_log
 
 from masonlib import __version__
-from masonlib.imason import IMason
+from masonlib.internal.mason import Mason
 from masonlib.internal.utils import LOG_PROTOCOL_TRACE
-from masonlib.platform import Platform
 
 logger = logging.getLogger(__name__)
 
@@ -89,8 +88,7 @@ def cli(config, debug, verbose, api_key, id_token, access_token, no_color):
     Full docs: https://docs.bymason.com/
     """
 
-    platform = Platform(config)
-    config.mason = platform.get(IMason)
+    config.mason = Mason(config)
     if id_token:
         config.mason.set_id_token(id_token)
     if access_token:

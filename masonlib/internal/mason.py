@@ -16,7 +16,6 @@ except ImportError:
 from tqdm import tqdm
 
 from masonlib import __version__
-from masonlib.imason import IMason
 from masonlib.internal.apk import Apk
 from masonlib.internal.media import Media
 from masonlib.internal.os_config import OSConfig
@@ -26,7 +25,7 @@ from masonlib.internal.utils import AUTH, ENDPOINTS, hash_file, safe_request, \
 from masonlib.internal.xray import XRay
 
 
-class Mason(IMason):
+class Mason:
     """ Base implementation of IMason interface."""
 
     def __init__(self, config):
