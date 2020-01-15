@@ -2,9 +2,9 @@
 import unittest
 
 from mock import MagicMock
-from test_common import Common
 
 from cli.internal.masoncli import MasonCli
+from tests.common import Common
 
 
 class MasonTest(unittest.TestCase):
@@ -22,7 +22,7 @@ class MasonTest(unittest.TestCase):
         self.mason.set_access_token("foo")
         self.mason.set_id_token("bar")
 
-        apkf = "res/v1.apk"
+        apkf = "tests/res/v1.apk"
         self.mason.register_apk(apkf)
 
         self.api_mock.upload_artifact.assert_called_with(apkf, self.mason.artifact)

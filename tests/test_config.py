@@ -1,8 +1,7 @@
 import unittest
 
-from test_common import Common
-
 from cli.internal.models.os_config import OSConfig
+from tests.common import Common
 
 
 class ConfigTest(unittest.TestCase):
@@ -14,22 +13,22 @@ class ConfigTest(unittest.TestCase):
         self.test_config.validate()
 
     def test_config_content_type(self):
-        assert(self.test_config.get_content_type() == 'text/x-yaml')
+        assert (self.test_config.get_content_type() == 'text/x-yaml')
 
     def test_config_type(self):
-        assert(self.test_config.get_type() == 'config')
+        assert (self.test_config.get_type() == 'config')
 
     def test_config_sub_type(self):
-        assert(self.test_config.get_sub_type() is None)
+        assert (self.test_config.get_sub_type() is None)
 
     def test_config_name(self):
-        assert(self.test_config.get_name() == str(self.test_config.ecosystem['os']['name']))
+        assert (self.test_config.get_name() == str(self.test_config.ecosystem['os']['name']))
 
     def test_config_version(self):
-        assert(self.test_config.get_version() == str(self.test_config.ecosystem['os']['version']))
+        assert (self.test_config.get_version() == str(self.test_config.ecosystem['os']['version']))
 
     def test_config_meta_data(self):
-        assert(self.test_config.get_registry_meta_data() is None)
+        assert (self.test_config.get_registry_meta_data() is None)
 
     @staticmethod
     def _create_test_config():

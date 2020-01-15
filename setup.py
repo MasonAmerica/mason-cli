@@ -13,7 +13,6 @@ with open(os.path.join(root, "VERSION"), "r") as f:
 with open(os.path.join(root, "cli/version.py"), "w") as f:
     f.write("__version__ = '{}'".format(version))
 
-
 setup(
     name='mason-cli',
     version=version,
@@ -42,4 +41,5 @@ setup(
         ]
     },
     include_package_data=True,
+    test_suite="tests",
 )

@@ -16,4 +16,4 @@ the CLI for your platform under "Assets".
 
 1. Clone this repo: `git clone https://github.com/MasonAmerica/mason-cli.git && cd mason-cli`
 1. Build the CLI: `pip3 install mock .`
-1. Run the tests: `cd cli/test && python3 -m unittest discover .`
+1. Run the tests: `pip3 install -e . && python3 setup.py test`

@@ -2,9 +2,9 @@ import unittest
 
 import click
 from mock import MagicMock
-from test_common import Common
 
 from cli.internal.models.apk import Apk
+from tests.common import Common
 
 
 class ApkTest(unittest.TestCase):
@@ -16,19 +16,19 @@ class ApkTest(unittest.TestCase):
         self.test_apk.validate()
 
     def test_apk_content_type(self):
-        assert(self.test_apk.get_content_type() == 'application/vnd.android.package-archive')
+        assert (self.test_apk.get_content_type() == 'application/vnd.android.package-archive')
 
     def test_apk_type(self):
-        assert(self.test_apk.get_type() == 'apk')
+        assert (self.test_apk.get_type() == 'apk')
 
     def test_apk_sub_type(self):
-        assert(self.test_apk.get_sub_type() is None)
+        assert (self.test_apk.get_sub_type() is None)
 
     def test_apk_name(self):
-        assert(self.test_apk.get_name() == self.test_apk.apkf.package)
+        assert (self.test_apk.get_name() == self.test_apk.apkf.package)
 
     def test_apk_version(self):
-        assert(self.test_apk.get_version() == self.test_apk.apkf.get_androidversion_code())
+        assert (self.test_apk.get_version() == self.test_apk.apkf.get_androidversion_code())
 
     def test_apk_meta_data(self):
         meta_data = {
@@ -38,34 +38,34 @@ class ApkTest(unittest.TestCase):
                 'packageName': self.test_apk.apkf.package
             },
         }
-        assert(self.test_apk.get_registry_meta_data() == meta_data)
+        assert (self.test_apk.get_registry_meta_data() == meta_data)
 
     def test_apk_v1_signed(self):
         mock_config = MagicMock()
-        apk = Apk.parse(mock_config, "res/v1.apk")
+        apk = Apk.parse(mock_config, "tests/res/v1.apk")
         self.assertIsNotNone(apk)
         apk.validate()
 
     @unittest.skip("V2-only signing is not yet supported")
     def test_apk_v2_signed(self):
         mock_config = MagicMock()
-        apk = Apk.parse(mock_config, "res/v2.apk")
+        apk = Apk.parse(mock_config, "tests/res/v2.apk")
         self.assertIsNotNone(apk)
         self.assertTrue(apk.validate(), "APK is invalid!")
 
     def test_apk_v1_and_v2_signed(self):
         mock_config = MagicMock()
-        apk = Apk.parse(mock_config, "res/v1and2.apk")
+        apk = Apk.parse(mock_config, "tests/res/v1and2.apk")
         self.assertIsNotNone(apk)
         apk.validate()
 
     def test_apk_unsigned(self):
         mock_config = MagicMock()
-        self.assertRaises(click.Abort, Apk.parse, mock_config, "res/unsigned.apk")
+        self.assertRaises(click.Abort, Apk.parse, mock_config, "tests/res/unsigned.apk")
 
     def test_apk_debug_signed(self):
         mock_config = MagicMock()
-        self.assertRaises(click.Abort, Apk.parse, mock_config, "res/debug.apk")
+        self.assertRaises(click.Abort, Apk.parse, mock_config, "tests/res/debug.apk")
 
     @staticmethod
     def _create_test_apk():
