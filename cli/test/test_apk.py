@@ -4,7 +4,7 @@ import click
 from mock import MagicMock
 from test_common import Common
 
-from cli.internal.apk import Apk
+from cli.internal.models.apk import Apk
 
 
 class ApkTest(unittest.TestCase):

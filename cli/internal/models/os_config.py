@@ -3,8 +3,8 @@ import os
 import click
 import yaml
 
-from cli.internal.artifacts import IArtifact
-from cli.internal.utils import validate_version
+from cli.internal.models.artifacts import IArtifact
+from cli.internal.utils.validation import validate_version
 
 
 class OSConfig(IArtifact):

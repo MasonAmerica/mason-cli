@@ -13,7 +13,8 @@ except ImportError:
 
 from twisted.internet import defer, reactor, protocol, ssl
 from twisted.internet.defer import setDebugging
-from twisted.logger import globalLogPublisher, STDLibLogObserver, FilteringLogObserver, LogLevelFilterPredicate, \
+from twisted.logger import globalLogPublisher, STDLibLogObserver, FilteringLogObserver, \
+    LogLevelFilterPredicate, \
     LogLevel
 
 import txaio
@@ -21,7 +22,7 @@ import txaio
 from autobahn.twisted.websocket import WebSocketClientProtocol, WebSocketClientFactory, connectWS
 from adb import usb_exceptions
 
-from cli.internal.utils import LOG_PROTOCOL_TRACE
+from cli.internal.utils.constants import LOG_PROTOCOL_TRACE
 
 txaio.use_twisted()
 
@@ -99,7 +100,6 @@ class XRayWebSocketFactory(WebSocketClientFactory):
 
 
 class XRayWebSocketFactoryFIFO(XRayWebSocketFactory):
-
     protocol = XRayWebSocketProtocolFIFO
 
     def __init__(self, logger, *args, **kwargs):

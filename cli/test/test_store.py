@@ -3,7 +3,7 @@ import unittest
 
 import yaml
 
-from cli.internal.store import Store
+from cli.internal.utils.store import Store
 
 
 class StoreTest(unittest.TestCase):

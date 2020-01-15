@@ -5,10 +5,10 @@ import click
 from adb.adb_commands import AdbCommands
 from adb.android_pubkey import keygen
 
-from cli.internal.utils import AUTH
-from cli.internal.utils import ENDPOINTS
-from cli.internal.websocket import WsHandle
-from cli.internal.websocket import XRayProxyServer
+from cli.internal.utils.constants import AUTH
+from cli.internal.utils.constants import ENDPOINTS
+from cli.internal.utils.websocket import WsHandle
+from cli.internal.utils.websocket import XRayProxyServer
 
 try:
     from adb import sign_cryptography
@@ -61,7 +61,8 @@ class XRay(object):
             port = 5558
 
         auth = {'Authorization': 'Basic {}'.format(self._apikey)}
-        XRayProxyServer(self._logger, self._get_url('vnc'), port, timeout_ms=5000, header=auth).run()
+        XRayProxyServer(self._logger, self._get_url('vnc'), port, timeout_ms=5000,
+                        header=auth).run()
 
     def _run_in_reactor(self, func, *args, **kwargs):
         handle = self._connect_adb()
@@ -69,7 +70,8 @@ class XRay(object):
         def on_running():
             try:
                 signer = rsa_signer(self._adbkey)
-                device = self._adb.ConnectDevice(handle=handle, rsa_keys=[signer], auth_timeout_ms=30000)
+                device = self._adb.ConnectDevice(handle=handle, rsa_keys=[signer],
+                                                 auth_timeout_ms=30000)
                 if device is not None:
                     try:
                         func(device, *args, **kwargs)

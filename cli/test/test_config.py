@@ -2,7 +2,7 @@ import unittest
 
 from test_common import Common
 
-from cli.internal.os_config import OSConfig
+from cli.internal.models.os_config import OSConfig
 
 
 class ConfigTest(unittest.TestCase):

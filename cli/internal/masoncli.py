@@ -6,6 +6,11 @@ import time
 import click
 import packaging.version
 
+from cli.internal.utils.hashing import hash_file
+from cli.internal.utils.remote import handle_failed_response
+from cli.internal.utils.remote import safe_request
+from cli.internal.utils.validation import validate_credentials
+
 try:
     # noinspection PyCompatibility
     from urllib.parse import urlparse
@@ -16,18 +21,15 @@ except ImportError:
 from tqdm import tqdm
 
 from cli import __version__
-from cli.internal.apk import Apk
-from cli.internal.media import Media
-from cli.internal.os_config import OSConfig
-from cli.internal.store import Store
-from cli.internal.utils import AUTH, ENDPOINTS, hash_file, safe_request, \
-    handle_failed_response, validate_credentials
+from cli.internal.models.apk import Apk
+from cli.internal.models.media import Media
+from cli.internal.models.os_config import OSConfig
+from cli.internal.utils.store import Store
+from cli.internal.utils.constants import AUTH, ENDPOINTS
 from cli.internal.xray import XRay
 
 
-class Mason:
-    """ Base implementation of IMason interface."""
-
+class MasonCli:
     def __init__(self, config):
         self.config = config
         self.artifact = None
@@ -398,7 +400,8 @@ class Mason:
     def xray(self, device, service, command, local=None, remote=None, args=None):
         key = AUTH['api_key']
         if not key:
-            self.config.logger.error('Please set an API key with \'mason login --api-key\' to use X-Ray.')
+            self.config.logger.error(
+                'Please set an API key with \'mason login --api-key\' to use X-Ray.')
             raise click.Abort()
 
         if args is None:

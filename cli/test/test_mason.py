@@ -3,16 +3,16 @@ import unittest
 
 from test_common import Common
 
-from cli.internal import utils
-from cli.internal.apk import Apk
-from cli.internal.mason import Mason
+from cli.internal.masoncli import MasonCli
+from cli.internal.models.apk import Apk
+from cli.internal.utils.constants import ENDPOINTS
 
 
 class MasonTest(unittest.TestCase):
 
     def setUp(self):
         config = Common.create_mock_config()
-        self.mason = Mason(config)
+        self.mason = MasonCli(config)
 
     def test_authenticate(self):
         test_user = 'foo'
@@ -22,7 +22,7 @@ class MasonTest(unittest.TestCase):
         self.mason.set_access_token('oads098fa9830924qdf09asfd')
 
         expected_payload = {
-            'client_id': utils.ENDPOINTS['client_id'],
+            'client_id': ENDPOINTS['client_id'],
             'username': test_user,
             'password': test_password,
             'id_token': '09ads09a8dsfa0re',
@@ -52,7 +52,7 @@ class MasonTest(unittest.TestCase):
         # test getting the signed url request headers
         assert (expected_headers == self.mason._get_signed_url_request_headers(test_md5))
         expected_url = \
-            utils.ENDPOINTS['registry_signed_url'] \
+            ENDPOINTS['registry_signed_url'] \
             + '/{0}/{1}/{2}'.format(test_customer, test_apk.get_name(), test_apk.get_version()) \
             + '?type=' + test_apk.get_type()
         # test getting the signed url endpoint
