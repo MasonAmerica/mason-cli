@@ -3,8 +3,8 @@ import os
 import click
 import yaml
 
-from masonlib.internal.artifacts import IArtifact
-from masonlib.internal.utils import validate_version
+from cli.internal.artifacts import IArtifact
+from cli.internal.utils import validate_version
 
 
 class OSConfig(IArtifact):

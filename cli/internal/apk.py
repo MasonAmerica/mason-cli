@@ -8,8 +8,8 @@ from subprocess import Popen
 import click
 from pyaxmlparser import APK
 
-from masonlib.internal.artifacts import IArtifact
-from masonlib.internal.utils import validate_version
+from cli.internal.artifacts import IArtifact
+from cli.internal.utils import validate_version
 
 # Disable pyaxmlparser logs since it spits out unnecessary warnings
 logging.getLogger("pyaxmlparser.core").setLevel("ERROR")

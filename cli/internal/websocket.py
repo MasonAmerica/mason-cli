@@ -21,7 +21,7 @@ import txaio
 from autobahn.twisted.websocket import WebSocketClientProtocol, WebSocketClientFactory, connectWS
 from adb import usb_exceptions
 
-from masonlib.internal.utils import LOG_PROTOCOL_TRACE
+from cli.internal.utils import LOG_PROTOCOL_TRACE
 
 txaio.use_twisted()
 

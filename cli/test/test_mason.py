@@ -3,9 +3,9 @@ import unittest
 
 from test_common import Common
 
-from masonlib.internal import utils
-from masonlib.internal.apk import Apk
-from masonlib.internal.mason import Mason
+from cli.internal import utils
+from cli.internal.apk import Apk
+from cli.internal.mason import Mason
 
 
 class MasonTest(unittest.TestCase):

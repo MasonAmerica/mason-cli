@@ -1,7 +1,7 @@
-from setuptools import setup, find_packages
-
 import os
 
+from setuptools import find_packages
+from setuptools import setup
 
 root = os.path.dirname(os.path.realpath(__file__))
 
@@ -10,7 +10,7 @@ with open(os.path.join(root, "VERSION"), "r") as f:
     version = f.read().strip()
 
 # Write version.py
-with open(os.path.join(root, "masonlib/version.py"), "w") as f:
+with open(os.path.join(root, "cli/version.py"), "w") as f:
     f.write("__version__ = '{}'".format(version))
 
 
@@ -38,7 +38,7 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'mason = masonlib.mason:cli'
+            'mason = cli.mason:cli'
         ]
     },
     include_package_data=True,

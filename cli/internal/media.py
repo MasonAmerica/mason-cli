@@ -3,7 +3,7 @@ import zipfile
 
 import click
 
-from masonlib.internal.artifacts import IArtifact
+from cli.internal.artifacts import IArtifact
 
 
 class Media(IArtifact):

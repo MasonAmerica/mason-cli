@@ -4,9 +4,9 @@ import os
 import click
 import click_log
 
-from masonlib import __version__
-from masonlib.internal.mason import Mason
-from masonlib.internal.utils import LOG_PROTOCOL_TRACE
+from cli import __version__
+from cli.internal.mason import Mason
+from cli.internal.utils import LOG_PROTOCOL_TRACE
 
 logger = logging.getLogger(__name__)
 

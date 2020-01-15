@@ -12,7 +12,7 @@ test_py2:
   script:
     - pip2 install .
     - pip2 install mock
-    - cd masonlib/test && python2 -m unittest discover .
+    - cd cli/test && python2 -m unittest discover .
   only:
     - merge_requests
     - branches
@@ -26,7 +26,7 @@ test_py3:
   script:
     - pip3 install .
     - pip3 install mock
-    - cd masonlib/test && python3 -m unittest discover .
+    - cd cli/test && python3 -m unittest discover .
   only:
     - merge_requests
     - branches

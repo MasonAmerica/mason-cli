@@ -3,7 +3,7 @@ import hashlib
 import click
 import requests
 
-from masonlib.internal.store import Store
+from cli.internal.store import Store
 
 LOG_PROTOCOL_TRACE = 4
 

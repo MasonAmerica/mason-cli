@@ -2,14 +2,13 @@ import os
 import sys
 
 import click
-
 from adb.adb_commands import AdbCommands
 from adb.android_pubkey import keygen
 
-from masonlib.internal.utils import AUTH
-from masonlib.internal.utils import ENDPOINTS
-from masonlib.internal.websocket import WsHandle
-from masonlib.internal.websocket import XRayProxyServer
+from cli.internal.utils import AUTH
+from cli.internal.utils import ENDPOINTS
+from cli.internal.websocket import WsHandle
+from cli.internal.websocket import XRayProxyServer
 
 try:
     from adb import sign_cryptography

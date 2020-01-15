@@ -15,14 +15,14 @@ except ImportError:
 
 from tqdm import tqdm
 
-from masonlib import __version__
-from masonlib.internal.apk import Apk
-from masonlib.internal.media import Media
-from masonlib.internal.os_config import OSConfig
-from masonlib.internal.store import Store
-from masonlib.internal.utils import AUTH, ENDPOINTS, hash_file, safe_request, \
+from cli import __version__
+from cli.internal.apk import Apk
+from cli.internal.media import Media
+from cli.internal.os_config import OSConfig
+from cli.internal.store import Store
+from cli.internal.utils import AUTH, ENDPOINTS, hash_file, safe_request, \
     handle_failed_response, validate_credentials
-from masonlib.internal.xray import XRay
+from cli.internal.xray import XRay
 
 
 class Mason:
