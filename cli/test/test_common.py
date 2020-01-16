@@ -7,6 +7,7 @@ class Common(object):
     @staticmethod
     def create_mock_config():
         mock_config = Mock()
+        return mock_config
 
     @staticmethod
     def create_mock_apk_file():

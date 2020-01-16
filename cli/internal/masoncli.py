@@ -1,12 +1,13 @@
-import base64
 import inspect
-import os.path
 import time
 
 import click
 import packaging.version
 
+from cli.internal.apis.mason import MasonApi
 from cli.internal.utils.hashing import hash_file
+from cli.internal.utils.remote import ApiError
+from cli.internal.utils.remote import RequestHandler
 from cli.internal.utils.remote import handle_failed_response
 from cli.internal.utils.remote import safe_request
 from cli.internal.utils.validation import validate_credentials
@@ -17,8 +18,6 @@ try:
 except ImportError:
     # noinspection PyCompatibility,PyUnresolvedReferences
     from urlparse import urlparse
-
-from tqdm import tqdm
 
 from cli import __version__
 from cli.internal.models.apk import Apk
@@ -32,6 +31,7 @@ from cli.internal.xray import XRay
 class MasonCli:
     def __init__(self, config):
         self.config = config
+        self.api = MasonApi(RequestHandler(config), AUTH, ENDPOINTS)
         self.artifact = None
 
     def check_for_updates(self):
@@ -98,24 +98,16 @@ class MasonCli:
         if not self.config.skip_verify:
             click.confirm('Continue register?', default=True, abort=True)
 
-        sha1 = hash_file(binary, 'sha1', True)
-        md5 = hash_file(binary, 'md5', False)
-        self.config.logger.debug('File SHA1: {}'.format(sha1))
+        self.config.logger.debug('File SHA1: {}'.format(hash_file(binary, 'sha1', True)))
         self.config.logger.debug('File MD5: {}'.format(hash_file(binary, 'md5', True)))
 
-        customer = self._get_validated_customer()
-
-        # Get the signed url data for the user and artifact
-        signed_url_data = self._request_signed_url(customer, self.artifact, md5)
-        # Get the signed request url from the response
-        signed_request_url = signed_url_data['signed_request']
-        # Store the download url for mason registry
-        download_url = signed_url_data['url']
-
-        # Upload the artifact to the signed url
-        self._upload_to_signed_url(signed_request_url, binary, self.artifact, md5)
-        # Publish to mason services
-        self._register_to_mason(customer, download_url, sha1, self.artifact)
+        try:
+            self.api.upload_artifact(binary, self.artifact)
+            self.config.logger.info('Artifact registered.')
+        except ApiError as e:
+            if e.message:
+                self.config.logger.error(e.message)
+            raise click.Abort()
 
     def _request_user_info(self):
         headers = {'Authorization': 'Bearer {}'.format(AUTH['access_token'])}
@@ -140,80 +132,6 @@ class MasonCli:
             raise click.Abort()
 
         return customer
-
-    def _request_signed_url(self, customer, artifact_data, md5):
-        self.config.logger.debug('Connecting to server...')
-
-        headers = self._get_signed_url_request_headers(md5)
-        url = self._get_signed_url_request_endpoint(customer, artifact_data)
-
-        r = safe_request(self.config, 'get', url, headers=headers)
-        if r.status_code == 200:
-            return r.json()
-        else:
-            handle_failed_response(self.config, r, 'Unable to get signed url')
-
-    def _get_signed_url_request_headers(self, md5):
-        base64encodedmd5 = base64.b64encode(md5).decode('utf-8')
-        return {'Content-Type': 'application/json',
-                'Content-MD5': base64encodedmd5,
-                'Authorization': 'Bearer {}'.format(AUTH['id_token'])}
-
-    def _get_signed_url_request_endpoint(self, customer, artifact_data):
-        return ENDPOINTS['registry_signed_url'] \
-               + '/{0}/{1}/{2}?type={3}'.format(customer, artifact_data.get_name(),
-                                                artifact_data.get_version(),
-                                                artifact_data.get_type())
-
-    def _upload_to_signed_url(self, url, artifact, artifact_data, md5):
-        self.config.logger.debug('Uploading artifact...')
-
-        headers = self._get_signed_url_post_headers(artifact_data, md5)
-        artifact_file = open(artifact, 'rb')
-        iterable = UploadInChunks(artifact_file.name, chunksize=10)
-
-        r = safe_request(self.config, 'put',
-                         url, data=IterableToFileAdapter(iterable), headers=headers)
-        if r.status_code == 200:
-            self.config.logger.debug('File upload complete.')
-        else:
-            handle_failed_response(self.config, r, 'Unable to upload to signed url')
-
-    @staticmethod
-    def _get_signed_url_post_headers(artifact_data, md5):
-        base64encodedmd5 = base64.b64encode(md5).decode('utf-8')
-        return {'Content-Type': artifact_data.get_content_type(),
-                'Content-MD5': base64encodedmd5}
-
-    def _register_to_mason(self, customer, download_url, sha1, artifact_data):
-        self.config.logger.debug('Registering to mason services...')
-
-        headers = {'Content-Type': 'application/json',
-                   'Authorization': 'Bearer {}'.format(AUTH['id_token'])}
-        payload = self._get_registry_payload(customer, download_url, sha1, artifact_data)
-
-        if artifact_data.get_registry_meta_data():
-            payload.update(artifact_data.get_registry_meta_data())
-
-        url = ENDPOINTS['registry_artifact_url'] + '/{0}/'.format(customer)
-        r = safe_request(self.config, 'post', url, headers=headers, json=payload)
-        if r.status_code == 200:
-            self.config.logger.info('Artifact registered.')
-        else:
-            handle_failed_response(self.config, r, 'Unable to register artifact')
-
-    @staticmethod
-    def _get_registry_payload(customer, download_url, sha1, artifact_data):
-        return {
-            'name': artifact_data.get_name(),
-            'version': artifact_data.get_version(),
-            'customer': customer,
-            'url': download_url,
-            'type': artifact_data.get_type(),
-            'checksum': {
-                'sha1': sha1
-            }
-        }
 
     def build(self, project, version, block, fast_build):
         return self._build_project(project, version, block, fast_build)
@@ -439,38 +357,3 @@ class MasonCli:
 
         except Exception as exc:
             raise click.Abort(exc)
-
-
-class UploadInChunks(object):
-
-    def __init__(self, filename, chunksize=1 << 13):
-        self.filename = filename
-        self.chunksize = int(chunksize)
-        self.totalsize = os.stat(filename).st_size
-        self.pbar = tqdm(total=self.totalsize, ncols=100, unit='kb', dynamic_ncols=True)
-
-    def __iter__(self):
-        with open(self.filename, 'rb') as file_to_upload:
-            while True:
-                data = file_to_upload.read(self.chunksize)
-                if not data:
-                    self.pbar.close()
-                    break
-                self.pbar.update(len(data))
-                yield data
-
-    def __len__(self):
-        return self.totalsize
-
-
-class IterableToFileAdapter(object):
-
-    def __init__(self, iterable):
-        self.iterator = iter(iterable)
-        self.length = len(iterable)
-
-    def read(self, size=-1):
-        return next(self.iterator, b'')
-
-    def __len__(self):
-        return self.length
