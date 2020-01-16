@@ -34,11 +34,12 @@ class MasonTest(unittest.TestCase):
         test_project = 'TestProjectName'
         test_version = '1.3.2.5.2.13.6'
         test_fast_build = False
+        test_mason_version = None
 
-        self.mason.build(test_project, test_version, False, test_fast_build)
+        self.mason.build(test_project, test_version, False, test_fast_build, test_mason_version)
 
         self.api_mock.start_build.assert_called_with(
-            test_project, test_version, test_fast_build)
+            test_project, test_version, test_fast_build, test_mason_version)
 
     def test_deploy_apk(self):
         self.mason.set_access_token("foo")

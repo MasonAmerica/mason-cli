@@ -25,9 +25,9 @@ class MasonApi:
         customer = self._get_validated_customer()
         self._deploy_artifact(customer, type, name, version, group, push, no_https)
 
-    def start_build(self, project, version, fast_build):
+    def start_build(self, project, version, fast_build, mason_version):
         customer = self._get_validated_customer()
-        return self._start_build(customer, project, version, fast_build)
+        return self._start_build(customer, project, version, fast_build, mason_version)
 
     def get_build(self, id):
         customer = self._get_validated_customer()
@@ -99,7 +99,7 @@ class MasonApi:
         url = self.endpoints_store['deploy_url']
         self.handler.post(url, headers=headers, json=payload)
 
-    def _start_build(self, customer, project, version, fast_build):
+    def _start_build(self, customer, project, version, fast_build, mason_version):
         headers = {
             'Content-Type': 'application/json',
             'Authorization': 'Bearer {}'.format(self.auth_store['id_token'])
@@ -111,6 +111,8 @@ class MasonApi:
         }
         if fast_build:
             payload['fastBuild'] = fast_build
+        if mason_version:
+            payload['masonVersion'] = mason_version
 
         url = self.endpoints_store['builder_url'] + '/{0}/jobs'.format(customer)
         return self.handler.post(url, headers=headers, json=payload)

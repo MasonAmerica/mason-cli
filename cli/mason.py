@@ -232,10 +232,11 @@ def media(config, type, name, version, media):
               help='Wait synchronously for the build to finish before continuing.')
 @click.option('--turbo/--no-turbo', is_flag=True, default=True,
               help='Enable fast Mason config builds (beta).')
+@click.option('--mason-version', hidden=True, help='Pick a specific Mason OS version.')
 @click.argument('project')
 @click.argument('version', type=click.IntRange(min=0))
 @pass_config
-def build(config, block, turbo, project, version):
+def build(config, block, turbo, mason_version, project, version):
     """
     Build a registered project. Use the "register" command to upload artifacts for a project.
 
@@ -260,7 +261,7 @@ def build(config, block, turbo, project, version):
     """
 
     logger.debug('Starting build for {}:{}...'.format(project, version))
-    config.mason.build(project, version, block, turbo)
+    config.mason.build(project, version, block, turbo, mason_version)
 
 
 @cli.command()
@@ -270,11 +271,12 @@ def build(config, block, turbo, project, version):
               help='Wait synchronously for the build to finish before continuing.')
 @click.option('--turbo/--no-turbo', is_flag=True, default=True,
               help='Enable fast Mason config builds (beta).')
+@click.option('--mason-version', hidden=True, help='Pick a specific Mason OS version.')
 @click.option('--skip-verify', '-s', is_flag=True, default=False, hidden=True,
               help='Don\'t require confirmation.')
 @click.argument('configs', type=click.Path(exists=True), nargs=-1, required=True)
 @pass_config
-def stage(config, assume_yes, block, turbo, skip_verify, configs):
+def stage(config, assume_yes, block, turbo, mason_version, skip_verify, configs):
     """
     Register and build (aka stage) a project.
 
@@ -303,7 +305,7 @@ def stage(config, assume_yes, block, turbo, skip_verify, configs):
 
     for file in configs:
         logger.debug('Staging {}...'.format(file))
-        config.mason.stage(file, block, turbo)
+        config.mason.stage(file, block, turbo, mason_version)
 
 
 @cli.group()

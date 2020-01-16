@@ -95,12 +95,17 @@ class MasonCli:
         self.artifact = Media.parse(self.config, name, type, version, media)
         self._register_artifact(media)
 
-    def build(self, project, version, block, fast_build):
-        return self._build_project(project, version, block, fast_build)
+    def build(self, project, version, block, fast_build, mason_version):
+        return self._build_project(project, version, block, fast_build, mason_version)
 
-    def stage(self, yaml, block, fast_build):
+    def stage(self, yaml, block, fast_build, mason_version):
         self.register_os_config(yaml)
-        self.build(self.artifact.get_name(), self.artifact.get_version(), block, fast_build)
+        self.build(
+            self.artifact.get_name(),
+            self.artifact.get_version(),
+            block,
+            fast_build,
+            mason_version)
 
     def deploy(self, item_type, name, version, group, push, no_https):
         validate_credentials(self.config)
@@ -208,11 +213,11 @@ class MasonCli:
             self._handle_api_error(e)
             return
 
-    def _build_project(self, project, version, block, fast_build):
+    def _build_project(self, project, version, block, fast_build, mason_version):
         validate_credentials(self.config)
 
         try:
-            build = self.api.start_build(project, version, fast_build)
+            build = self.api.start_build(project, version, fast_build, mason_version)
         except ApiError as e:
             self._handle_api_error(e)
             return
