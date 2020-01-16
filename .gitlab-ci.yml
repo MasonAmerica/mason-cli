@@ -70,8 +70,10 @@ build_macos:
   tags:
     - mason-build-apple
   script:
-    - pip3 install pyinstaller
-    - ./scripts/gen_mac_bin.sh
+    - rm -rf ~/Library/Caches/pip
+    - python3 -m venv env
+    - source env/bin/activate && pip3 install pyinstaller
+    - source env/bin/activate && ./scripts/gen_mac_bin.sh
     - tar czf dist/mason-macos.tar.gz -C dist mason
   artifacts:
     paths:
