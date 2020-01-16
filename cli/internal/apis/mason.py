@@ -33,6 +33,9 @@ class MasonApi:
         customer = self._get_validated_customer()
         return self._get_build(customer, id)
 
+    def login(self, username, password):
+        return self._login(password, username)
+
     def _get_signed_url(self, customer, binary, artifact):
         md5 = hash_file(binary, 'md5', False)
         headers = {
@@ -120,6 +123,20 @@ class MasonApi:
 
         url = self.endpoints_store['builder_url'] + '/{}/jobs/{}'.format(customer, id)
         return self.handler.get(url, headers=headers)
+
+    def _login(self, password, username):
+        payload = {
+            'client_id': self.endpoints_store['client_id'],
+            'username': username,
+            'password': password,
+            'id_token': str(self.auth_store['id_token']),
+            'connection': 'Username-Password-Authentication',
+            'grant_type': 'password',
+            'scope': 'openid',
+            'device': ''
+        }
+        url = self.endpoints_store['auth_url']
+        return self.handler.post(url, json=payload)
 
     def _get_validated_customer(self):
         if self._customer:

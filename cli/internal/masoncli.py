@@ -4,12 +4,20 @@ import time
 import click
 import packaging.version
 
+from cli import __version__
 from cli.internal.apis.mason import MasonApi
+from cli.internal.models.apk import Apk
+from cli.internal.models.media import Media
+from cli.internal.models.os_config import OSConfig
+from cli.internal.utils.constants import AUTH
+from cli.internal.utils.constants import ENDPOINTS
 from cli.internal.utils.hashing import hash_file
 from cli.internal.utils.remote import ApiError
 from cli.internal.utils.remote import RequestHandler
 from cli.internal.utils.remote import safe_request
+from cli.internal.utils.store import Store
 from cli.internal.utils.validation import validate_credentials
+from cli.internal.xray import XRay
 
 try:
     # noinspection PyCompatibility
@@ -17,14 +25,6 @@ try:
 except ImportError:
     # noinspection PyCompatibility,PyUnresolvedReferences
     from urlparse import urlparse
-
-from cli import __version__
-from cli.internal.models.apk import Apk
-from cli.internal.models.media import Media
-from cli.internal.models.os_config import OSConfig
-from cli.internal.utils.store import Store
-from cli.internal.utils.constants import AUTH, ENDPOINTS
-from cli.internal.xray import XRay
 
 
 class MasonCli:
@@ -118,29 +118,16 @@ class MasonCli:
         self.set_api_key(api_key)
         AUTH.save()
 
-    def login(self, user, password):
-        payload = self._get_auth_payload(user, password)
-        r = safe_request(self.config, 'post', ENDPOINTS['auth_url'], json=payload)
+    def login(self, username, password):
+        try:
+            user = self.api.login(username, password)
+        except ApiError as e:
+            self._handle_api_error(e)
+            return
 
-        if r.status_code == 200:
-            self.set_id_token(r.json().get('id_token'))
-            self.set_access_token(r.json().get('access_token'))
-            AUTH.save()
-        else:
-            self.config.logger.error('Failed to authenticate.')
-            raise click.Abort()
-
-    def _get_auth_payload(self, user, password):
-        return {
-            'client_id': ENDPOINTS['client_id'],
-            'username': user,
-            'password': password,
-            'id_token': str(AUTH['id_token']),
-            'connection': 'Username-Password-Authentication',
-            'grant_type': 'password',
-            'scope': 'openid',
-            'device': ''
-        }
+        self.set_id_token(user.get('id_token'))
+        self.set_access_token(user.get('access_token'))
+        AUTH.save()
 
     @staticmethod
     def logout():
@@ -160,33 +147,7 @@ class MasonCli:
             args = list(args)
 
         try:
-            xray = XRay(device, self.config.logger)
-
-            if service == "adb":
-                if command == "logcat":
-                    xray.logcat(args)
-                elif command == "shell":
-                    xray.shell(args)
-                elif command == "push":
-                    xray.push(local, remote)
-                elif command == "pull":
-                    xray.pull(remote, dest_file=local)
-                elif command == "install":
-                    xray.install(local, args)
-                elif command == "uninstall":
-                    xray.uninstall(remote, args)
-                else:
-                    raise click.UsageError("Unknown adb command %s" % command)
-
-            elif service == "vnc":
-                if command == "desktop":
-                    xray.desktop(local)
-                else:
-                    raise click.UsageError("Unknown vnc command %s" % command)
-
-            else:
-                raise click.UsageError("Unknown service %s" % service)
-
+            self._xray(args, command, device, local, remote, service)
         except Exception as exc:
             raise click.Abort(exc)
 
@@ -285,6 +246,32 @@ class MasonCli:
 
             self.config.logger.error('Timed out waiting for build to complete.')
             raise click.Abort()
+
+    def _xray(self, args, command, device, local, remote, service):
+        xray = XRay(device, self.config.logger)
+
+        if service == "adb":
+            if command == "logcat":
+                xray.logcat(args)
+            elif command == "shell":
+                xray.shell(args)
+            elif command == "push":
+                xray.push(local, remote)
+            elif command == "pull":
+                xray.pull(remote, dest_file=local)
+            elif command == "install":
+                xray.install(local, args)
+            elif command == "uninstall":
+                xray.uninstall(remote, args)
+            else:
+                raise click.UsageError("Unknown adb command %s" % command)
+        elif service == "vnc":
+            if command == "desktop":
+                xray.desktop(local)
+            else:
+                raise click.UsageError("Unknown vnc command %s" % command)
+        else:
+            raise click.UsageError("Unknown service %s" % service)
 
     def _handle_api_error(self, e):
         if e.message:

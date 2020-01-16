@@ -22,8 +22,9 @@ class Store(object):
         if os.path.exists(self.file):
             with open(self.file, 'r') as f:
                 yml = yaml.safe_load(f)
-                for (k, v) in yml.items():
-                    self.fields[k] = v
+                if yml:
+                    for (k, v) in yml.items():
+                        self.fields[k] = v
 
     def __getitem__(self, item):
         return self.fields.get(item, self.defaults.get(item, None))
