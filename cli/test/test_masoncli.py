@@ -45,32 +45,15 @@ class MasonTest(unittest.TestCase):
 
         self.api_mock.upload_artifact.assert_called_with(apkf, self.mason.artifact)
 
-    def test__build_project(self):
-        test_customer = 'mason-test'
+    def test_build_project(self):
         test_project = 'TestProjectName'
         test_version = '1.3.2.5.2.13.6'
         test_fast_build = False
 
-        expected_payload = {'customer': test_customer,
-                            'project': test_project,
-                            'version': test_version}
+        self.mason.build(test_project, test_version, False, test_fast_build)
 
-        assert (expected_payload == self.mason._get_build_payload(test_customer, test_project,
-                                                                  test_version, test_fast_build))
-
-    def test__build_project_fast_build(self):
-        test_customer = 'mason-test'
-        test_project = 'TestProjectName'
-        test_version = '1.3.2.5.2.13.6'
-        test_fast_build = True
-
-        expected_payload = {'customer': test_customer,
-                            'project': test_project,
-                            'version': test_version,
-                            'fastBuild': test_fast_build}
-
-        assert (expected_payload == self.mason._get_build_payload(test_customer, test_project,
-                                                                  test_version, test_fast_build))
+        self.api_mock.start_build.assert_called_with(
+            test_project, test_version, test_fast_build)
 
     def test_deploy_apk(self):
         self.mason.deploy('apk', 'TestItemName', '1.2.3.5.3.6', 'development', False, False)

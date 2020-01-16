@@ -10,6 +10,8 @@ class MasonApi:
         self.auth_store = auth_store
         self.endpoints_store = endpoints_store
 
+        self._customer = None
+
     def upload_artifact(self, binary, artifact):
         customer = self._get_validated_customer()
         signed_url = self._get_signed_url(customer, binary, artifact)
@@ -22,6 +24,14 @@ class MasonApi:
     def deploy_artifact(self, type, name, version, group, push, no_https):
         customer = self._get_validated_customer()
         self._deploy_artifact(customer, type, name, version, group, push, no_https)
+
+    def start_build(self, project, version, fast_build):
+        customer = self._get_validated_customer()
+        return self._start_build(customer, project, version, fast_build)
+
+    def get_build(self, id):
+        customer = self._get_validated_customer()
+        return self._get_build(customer, id)
 
     def _get_signed_url(self, customer, binary, artifact):
         md5 = hash_file(binary, 'md5', False)
@@ -64,7 +74,7 @@ class MasonApi:
         if artifact.get_registry_meta_data():
             payload.update(artifact.get_registry_meta_data())
 
-        url = self.endpoints_store['registry_artifact_url'] + '/{0}/'.format(customer)
+        url = self.endpoints_store['registry_artifact_url'] + '/{0}'.format(customer)
         self.handler.post(url, headers=headers, json=payload)
 
     def _deploy_artifact(self, customer, type, name, version, group, push, no_https):
@@ -86,7 +96,35 @@ class MasonApi:
         url = self.endpoints_store['deploy_url']
         self.handler.post(url, headers=headers, json=payload)
 
+    def _start_build(self, customer, project, version, fast_build):
+        headers = {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer {}'.format(self.auth_store['id_token'])
+        }
+        payload = {
+            'customer': customer,
+            'project': project,
+            'version': str(version)
+        }
+        if fast_build:
+            payload['fastBuild'] = fast_build
+
+        url = self.endpoints_store['builder_url'] + '/{0}/jobs'.format(customer)
+        return self.handler.post(url, headers=headers, json=payload)
+
+    def _get_build(self, customer, id):
+        headers = {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer {}'.format(self.auth_store['id_token'])
+        }
+
+        url = self.endpoints_store['builder_url'] + '/{}/jobs/{}'.format(customer, id)
+        return self.handler.get(url, headers=headers)
+
     def _get_validated_customer(self):
+        if self._customer:
+            return self._customer
+
         # Get the user info
         headers = {'Authorization': 'Bearer {}'.format(self.auth_store['access_token'])}
         user_info_data = self.handler.get(
@@ -98,5 +136,6 @@ class MasonApi:
         customer = user_info_data['user_metadata']['clients'][0]
         if not customer:
             raise ApiError('Could not retrieve customer information.')
+        self._customer = customer
 
         return customer

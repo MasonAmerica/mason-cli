@@ -8,7 +8,6 @@ from cli.internal.apis.mason import MasonApi
 from cli.internal.utils.hashing import hash_file
 from cli.internal.utils.remote import ApiError
 from cli.internal.utils.remote import RequestHandler
-from cli.internal.utils.remote import handle_failed_response
 from cli.internal.utils.remote import safe_request
 from cli.internal.utils.validation import validate_credentials
 
@@ -72,13 +71,16 @@ class MasonCli:
         else:
             self.config.logger.debug('Failed to check for updates: {}'.format(r))
 
-    def set_access_token(self, access_token):
+    @staticmethod
+    def set_access_token(access_token):
         AUTH['access_token'] = access_token
 
-    def set_id_token(self, id_token):
+    @staticmethod
+    def set_id_token(id_token):
         AUTH['id_token'] = id_token
 
-    def set_api_key(self, api_key):
+    @staticmethod
+    def set_api_key(api_key):
         AUTH['api_key'] = api_key
 
     def register_os_config(self, config):
@@ -93,104 +95,12 @@ class MasonCli:
         self.artifact = Media.parse(self.config, name, type, version, media)
         self._register_artifact(media)
 
-    def _register_artifact(self, binary):
-        validate_credentials(self.config)
-        if not self.config.skip_verify:
-            click.confirm('Continue register?', default=True, abort=True)
-
-        self.config.logger.debug('File SHA1: {}'.format(hash_file(binary, 'sha1', True)))
-        self.config.logger.debug('File MD5: {}'.format(hash_file(binary, 'md5', True)))
-
-        try:
-            self.api.upload_artifact(binary, self.artifact)
-            self.config.logger.info('Artifact registered.')
-        except ApiError as e:
-            if e.message:
-                self.config.logger.error(e.message)
-            raise click.Abort()
-
-    def _request_user_info(self):
-        headers = {'Authorization': 'Bearer {}'.format(AUTH['access_token'])}
-        r = safe_request(self.config, 'get', ENDPOINTS['user_info_url'], headers=headers)
-
-        if r.status_code == 200:
-            return r.json()
-        else:
-            handle_failed_response(self.config, r, 'Unable to get user info')
-
-    def _get_validated_customer(self):
-        # Get the user info
-        user_info_data = self._request_user_info()
-        if not user_info_data:
-            self.config.logger.error('Customer info not found.')
-            raise click.Abort()
-
-        # Extract the customer info
-        customer = user_info_data['user_metadata']['clients'][0]
-        if not customer:
-            self.config.logger.critical('Could not retrieve customer information.')
-            raise click.Abort()
-
-        return customer
-
     def build(self, project, version, block, fast_build):
         return self._build_project(project, version, block, fast_build)
 
-    def _build_project(self, project, version, block, fast_build):
-        validate_credentials(self.config)
-
-        headers = {'Content-Type': 'application/json',
-                   'Authorization': 'Bearer {}'.format(AUTH['id_token'])}
-
-        customer = self._get_validated_customer()
-        self.config.logger.debug('Queueing build...')
-
-        payload = self._get_build_payload(customer, project, version, fast_build)
-        builder_url = ENDPOINTS['builder_url'] + '/{0}/'.format(customer) + 'jobs'
-
-        r = safe_request(self.config, 'post', builder_url, headers=headers, json=payload)
-        if r.status_code == 200:
-            hostname = urlparse(ENDPOINTS['deploy_url']).hostname
-            self.config.logger.info('Build queued.')
-            self.config.logger.info('You can see the status of your build at '
-                                    'https://{}/controller/projects/{}'.format(hostname, project))
-
-            if block:
-                job_url = '{}/{}'.format(builder_url, r.json().get('data').get('submittedAt'))
-
-                # 40 minutes approximately since this doesn't account for the request time
-                timeout_seconds = 40 * 60
-                time_blocked = 0
-                while time_blocked < timeout_seconds:
-                    r = safe_request(self.config, 'get', job_url, headers=headers)
-                    if not r.status_code == 200:
-                        self.config.logger.error('Build status check failed')
-                        raise click.Abort()
-
-                    if r.json().get('data').get('status') == 'COMPLETED':
-                        self.config.logger.info('Build completed')
-                        return
-
-                    self.config.logger.info('Waiting for build to complete...')
-                    wait_time = 10 if fast_build else 30
-                    time.sleep(wait_time)
-                    time_blocked += wait_time
-
-                self.config.logger.error('Timed out waiting for build to complete.')
-                raise click.Abort()
-        else:
-            handle_failed_response(self.config, r, 'Unable to enqueue build')
-
-    @staticmethod
-    def _get_build_payload(customer, project, version, fast_build):
-        payload = {
-            'customer': customer,
-            'project': project,
-            'version': str(version)
-        }
-        if fast_build:
-            payload['fastBuild'] = fast_build
-        return payload
+    def stage(self, yaml, block, fast_build):
+        self.register_os_config(yaml)
+        self.build(self.artifact.get_name(), self.artifact.get_version(), block, fast_build)
 
     def deploy(self, item_type, name, version, group, push, no_https):
         validate_credentials(self.config)
@@ -203,54 +113,6 @@ class MasonCli:
         else:
             self.config.logger.critical('Unsupported deploy type {}'.format(item_type))
             raise click.Abort()
-
-    def _deploy_apk(self, name, version, group, push, no_https):
-
-        self._deploy_artifact('apk', name, version, group, push, no_https)
-
-    def _deploy_config(self, name, version, group, push, no_https):
-        self._deploy_artifact('config', name, version, group, push, no_https)
-
-    def _deploy_ota(self, name, version, group, push, no_https):
-        if name != 'mason-os':
-            self.config.logger.warning("Unknown name '{0}' for 'ota' deployments. "
-                                       "Forcing it to 'mason-os'".format(name))
-            name = 'mason-os'
-
-        self._deploy_artifact('ota', name, version, group, push, no_https)
-
-    def _deploy_artifact(self, type, name, version, group, push, no_https):
-        self.config.logger.info('---------- DEPLOY -----------')
-
-        self.config.logger.info('Name: {}'.format(name))
-        self.config.logger.info('Type: {}'.format(type))
-        self.config.logger.info('Version: {}'.format(version))
-        self.config.logger.info('Group: {}'.format(group))
-        self.config.logger.info('Push: {}'.format(push))
-
-        if no_https:
-            self.config.logger.info('')
-            self.config.logger.info('***WARNING***')
-            self.config.logger.info('--no-https enabled: this deployment will be delivered to '
-                                    'devices over HTTP.')
-            self.config.logger.info('***WARNING***')
-
-        self.config.logger.info('-----------------------------')
-
-        if not self.config.skip_verify:
-            click.confirm('Continue deploy?', default=True, abort=True)
-
-        try:
-            self.api.deploy_artifact(type, name, version, group, push, no_https)
-            self.config.logger.info('Artifact deployed.')
-        except ApiError as e:
-            if e.message:
-                self.config.logger.error(e.message)
-            raise click.Abort()
-
-    def stage(self, yaml, block, fast_build):
-        self.register_os_config(yaml)
-        self.build(self.artifact.get_name(), self.artifact.get_version(), block, fast_build)
 
     def login_token(self, api_key):
         self.set_api_key(api_key)
@@ -280,7 +142,8 @@ class MasonCli:
             'device': ''
         }
 
-    def logout(self):
+    @staticmethod
+    def logout():
         AUTH.clear()
         AUTH.save()
 
@@ -326,3 +189,104 @@ class MasonCli:
 
         except Exception as exc:
             raise click.Abort(exc)
+
+    def _register_artifact(self, binary):
+        validate_credentials(self.config)
+        if not self.config.skip_verify:
+            click.confirm('Continue register?', default=True, abort=True)
+
+        self.config.logger.debug('File SHA1: {}'.format(hash_file(binary, 'sha1', True)))
+        self.config.logger.debug('File MD5: {}'.format(hash_file(binary, 'md5', True)))
+
+        try:
+            self.api.upload_artifact(binary, self.artifact)
+            self.config.logger.info('Artifact registered.')
+        except ApiError as e:
+            self._handle_api_error(e)
+            return
+
+    def _deploy_apk(self, name, version, group, push, no_https):
+        self._deploy_artifact('apk', name, version, group, push, no_https)
+
+    def _deploy_config(self, name, version, group, push, no_https):
+        self._deploy_artifact('config', name, version, group, push, no_https)
+
+    def _deploy_ota(self, name, version, group, push, no_https):
+        if name != 'mason-os':
+            self.config.logger.warning("Unknown name '{0}' for 'ota' deployments. "
+                                       "Forcing it to 'mason-os'".format(name))
+            name = 'mason-os'
+
+        self._deploy_artifact('ota', name, version, group, push, no_https)
+
+    def _deploy_artifact(self, type, name, version, group, push, no_https):
+        self.config.logger.info('---------- DEPLOY -----------')
+
+        self.config.logger.info('Name: {}'.format(name))
+        self.config.logger.info('Type: {}'.format(type))
+        self.config.logger.info('Version: {}'.format(version))
+        self.config.logger.info('Group: {}'.format(group))
+        self.config.logger.info('Push: {}'.format(push))
+
+        if no_https:
+            self.config.logger.info('')
+            self.config.logger.info('***WARNING***')
+            self.config.logger.info('--no-https enabled: this deployment will be delivered to '
+                                    'devices over HTTP.')
+            self.config.logger.info('***WARNING***')
+
+        self.config.logger.info('-----------------------------')
+
+        if not self.config.skip_verify:
+            click.confirm('Continue deploy?', default=True, abort=True)
+
+        try:
+            self.api.deploy_artifact(type, name, version, group, push, no_https)
+            self.config.logger.info('Artifact deployed.')
+        except ApiError as e:
+            self._handle_api_error(e)
+            return
+
+    def _build_project(self, project, version, block, fast_build):
+        validate_credentials(self.config)
+
+        try:
+            build = self.api.start_build(project, version, fast_build)
+        except ApiError as e:
+            self._handle_api_error(e)
+            return
+
+        self.config.logger.info('Build queued.')
+        self.config.logger.info(
+            'You can see the status of your build at '
+            'https://{}/controller/projects/{}'.format(
+                urlparse(ENDPOINTS['deploy_url']).hostname, project))
+
+        if block:
+            # 40 minutes (*approximately* since this doesn't account for the request time)
+            timeout_seconds = 40 * 60
+            time_blocked = 0
+            while time_blocked < timeout_seconds:
+                try:
+                    build = self.api.get_build(build.get('data').get('submittedAt'))
+                except ApiError as e:
+                    self.config.logger.error('Build status check failed.')
+                    self._handle_api_error(e)
+                    return
+
+                if build.get('data').get('status') == 'COMPLETED':
+                    self.config.logger.info('Build completed.')
+                    return
+
+                self.config.logger.info('Waiting for build to complete...')
+                wait_time = 10 if fast_build else 30
+                time.sleep(wait_time)
+                time_blocked += wait_time
+
+            self.config.logger.error('Timed out waiting for build to complete.')
+            raise click.Abort()
+
+    def _handle_api_error(self, e):
+        if e.message:
+            self.config.logger.error(e.message)
+        raise click.Abort()
