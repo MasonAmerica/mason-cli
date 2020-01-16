@@ -24,11 +24,18 @@ class Config(object):
 pass_config = click.make_pass_decorator(Config, ensure=True)
 
 
+def install_logger(level):
+    logger.setLevel(level)
+    click_log.ClickHandler._use_stderr = False
+    click_log.basic_config(logger)
+
+
 # noinspection PyUnusedLocal
 def _version_callback(ctx, param, value):
     if not value or ctx.resilient_parsing:
         return
 
+    install_logger('INFO')
     _show_version_info()
     ctx.exit()
 
@@ -38,12 +45,9 @@ def _handle_set_level(ctx, param, value):
     default_level = os.environ.get('LOGLEVEL', 'INFO').upper()
     if default_level.isdigit():
         default_level = int(default_level)
+    install_logger(default_level)
 
-    logger.setLevel(default_level)
-    click_log.ClickHandler._use_stderr = False
-    click_log.basic_config(logger)
-
-    if value is None:
+    if not value or ctx.resilient_parsing:
         return
 
     if value.upper() == "TRACE":
