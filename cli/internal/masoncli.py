@@ -193,6 +193,7 @@ class MasonCli:
         return payload
 
     def deploy(self, item_type, name, version, group, push, no_https):
+        validate_credentials(self.config)
         if item_type == 'apk':
             self._deploy_apk(name, version, group, push, no_https)
         elif item_type == 'config':
@@ -204,42 +205,30 @@ class MasonCli:
             raise click.Abort()
 
     def _deploy_apk(self, name, version, group, push, no_https):
-        validate_credentials(self.config)
-        customer = self._get_validated_customer()
 
-        payload = self._get_deploy_payload(customer, group, name, version, 'apk', push, no_https)
-        self._deploy_payload(payload, 'apk')
+        self._deploy_artifact('apk', name, version, group, push, no_https)
 
     def _deploy_config(self, name, version, group, push, no_https):
-        validate_credentials(self.config)
-        customer = self._get_validated_customer()
-
-        payload = self._get_deploy_payload(customer, group, name, version, 'config', push, no_https)
-        self._deploy_payload(payload, 'config')
+        self._deploy_artifact('config', name, version, group, push, no_https)
 
     def _deploy_ota(self, name, version, group, push, no_https):
-        validate_credentials(self.config)
-        customer = self._get_validated_customer()
-
         if name != 'mason-os':
             self.config.logger.warning("Unknown name '{0}' for 'ota' deployments. "
                                        "Forcing it to 'mason-os'".format(name))
             name = 'mason-os'
 
-        payload = self._get_deploy_payload(customer, group, name, version, 'ota', push, no_https)
-        self._deploy_payload(payload, 'ota')
+        self._deploy_artifact('ota', name, version, group, push, no_https)
 
-    def _deploy_payload(self, payload, type):
+    def _deploy_artifact(self, type, name, version, group, push, no_https):
         self.config.logger.info('---------- DEPLOY -----------')
 
-        self.config.logger.info('Name: {}'.format(payload['name']))
-        self.config.logger.info('Type: {}'.format(payload['type']))
-        self.config.logger.info('Version: {}'.format(payload['version']))
-        self.config.logger.info('Group: {}'.format(payload['group']))
-        self.config.logger.info('Push: {}'.format(payload['push']))
-        self.config.logger.debug('Customer: {}'.format(payload['customer']))
+        self.config.logger.info('Name: {}'.format(name))
+        self.config.logger.info('Type: {}'.format(type))
+        self.config.logger.info('Version: {}'.format(version))
+        self.config.logger.info('Group: {}'.format(group))
+        self.config.logger.info('Push: {}'.format(push))
 
-        if payload.get('deployInsecure', False):
+        if no_https:
             self.config.logger.info('')
             self.config.logger.info('***WARNING***')
             self.config.logger.info('--no-https enabled: this deployment will be delivered to '
@@ -251,33 +240,13 @@ class MasonCli:
         if not self.config.skip_verify:
             click.confirm('Continue deploy?', default=True, abort=True)
 
-        headers = {'Content-Type': 'application/json',
-                   'Authorization': 'Bearer {}'.format(AUTH['id_token'])}
-
-        r = safe_request(self.config, 'post',
-                         ENDPOINTS['deploy_url'], headers=headers, json=payload)
-
-        if r.status_code == 200:
-            if r.text:
-                self.config.logger.debug(r.text)
-            self.config.logger.info('{}:{} was successfully deployed to {}'.format(
-                payload['name'], payload['version'], payload['group']))
-        else:
-            handle_failed_response(self.config, r, 'Unable to deploy {}'.format(type))
-
-    @staticmethod
-    def _get_deploy_payload(customer, group, name, version, item_type, push, no_https):
-        payload = {
-            'customer': customer,
-            'group': group,
-            'name': name,
-            'version': str(version),
-            'type': item_type,
-            'push': push
-        }
-        if no_https:
-            payload['deployInsecure'] = no_https
-        return payload
+        try:
+            self.api.deploy_artifact(type, name, version, group, push, no_https)
+            self.config.logger.info('Artifact deployed.')
+        except ApiError as e:
+            if e.message:
+                self.config.logger.error(e.message)
+            raise click.Abort()
 
     def stage(self, yaml, block, fast_build):
         self.register_os_config(yaml)

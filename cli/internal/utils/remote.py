@@ -25,7 +25,8 @@ class RequestHandler:
         self.config.logger.debug('Starting {} request to {}'.format(type.upper(), url))
         r = self._safe_request(type, url, *args, **kwargs)
         self.config.logger.debug(
-            'Finished request to {} with status code {}'.format(url, r.status_code))
+            'Finished request to {} with status code {} '
+            'and response {}'.format(url, r.status_code, r.text))
 
         if r.status_code != 200:
             self._handle_failed_response(r)
