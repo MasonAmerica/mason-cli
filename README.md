@@ -14,6 +14,20 @@ the CLI for your platform under "Assets".
 
 ### Developing the CLI
 
+#### Perquisites
+
+1. Install Python 3
+1. [Make it the default](https://linuxconfig.org/how-to-change-from-default-to-alternative-python-version-on-debian-linux#h2-change-python-version-system-wide)
+1. Run `pip install virtualenvwrapper`
+1. Run `echo "source virtualenvwrapper.sh" > ~/.bashrc`
+
+#### Building the CLI
+
 1. Clone this repo: `git clone https://github.com/MasonAmerica/mason-cli.git && cd mason-cli`
-1. Build the CLI: `pip3 install mock .`
-1. Run the tests: `pip3 install -e . && python3 setup.py test`
+1. Create a virtual environment: `mkvirtualenv mason-cli`
+   1. Or use an existing one: `workon mason-cli`
+1. Install dependencies: `pip install mock && pip install -e .`
+
+#### Testing the CLI
+
+1. Run `python3 setup.py test`
