@@ -1,12 +1,14 @@
+import abc
 import os
 import sys
 
 import click
+import six
 from adb.adb_commands import AdbCommands
 from adb.android_pubkey import keygen
 
-from cli.internal.utils.constants import AUTH
-from cli.internal.utils.constants import ENDPOINTS
+from cli.internal.commands.command import Command
+from cli.internal.utils.validation import validate_api_key
 from cli.internal.utils.websocket import WsHandle
 from cli.internal.utils.websocket import XRayProxyServer
 
@@ -28,16 +30,123 @@ except ImportError:
             rsa_signer = None
 
 
-class XRay(object):
+@six.add_metaclass(abc.ABCMeta)
+class XrayCommand(Command):
+    def __init__(self, config):
+        self.config = config
+        self.xray = XRay(config.device, config)
 
-    def __init__(self, device, logger):
+    def invoke(self, method):
+        validate_api_key(self.config)
+
+        try:
+            method()
+        except Exception as exc:
+            raise click.Abort(exc)
+
+    @staticmethod
+    def sanitized_args(args):
+        if args is None:
+            return []
+        else:
+            return list(args)
+
+
+class XrayLogcatCommand(XrayCommand):
+    def __init__(self, config, args):
+        super(XrayLogcatCommand, self).__init__(config)
+        self.args = args
+
+    def run(self):
+        def call():
+            self.xray.logcat(self.sanitized_args(self.args))
+
+        self.invoke(call)
+
+
+class XrayShellCommand(XrayCommand):
+    def __init__(self, config, args):
+        super(XrayShellCommand, self).__init__(config)
+        self.args = args
+
+    def run(self):
+        def call():
+            self.xray.shell(self.sanitized_args(self.args))
+
+        self.invoke(call)
+
+
+class XrayPushCommand(XrayCommand):
+    def __init__(self, config, local, remote):
+        super(XrayPushCommand, self).__init__(config)
+        self.local = local
+        self.remote = remote
+
+    def run(self):
+        def call():
+            self.xray.push(self.local, self.remote)
+
+        self.invoke(call)
+
+
+class XrayPullCommand(XrayCommand):
+    def __init__(self, config, remote, local):
+        super(XrayPullCommand, self).__init__(config)
+        self.remote = remote
+        self.local = local
+
+    def run(self):
+        def call():
+            self.xray.pull(self.remote, self.local)
+
+        self.invoke(call)
+
+
+class XrayInstallCommand(XrayCommand):
+    def __init__(self, config, local):
+        super(XrayInstallCommand, self).__init__(config)
+        self.local = local
+
+    def run(self):
+        def call():
+            self.xray.install(self.local)
+
+        self.invoke(call)
+
+
+class XrayUninstallCommand(XrayCommand):
+    def __init__(self, config, package):
+        super(XrayUninstallCommand, self).__init__(config)
+        self.package = package
+
+    def run(self):
+        def call():
+            self.xray.uninstall(self.package)
+
+        self.invoke(call)
+
+
+class XrayDesktopCommand(XrayCommand):
+    def __init__(self, config, port):
+        super(XrayDesktopCommand, self).__init__(config)
+        self.port = port
+
+    def run(self):
+        def call():
+            self.xray.desktop(self.port)
+
+        self.invoke(call)
+
+
+class XRay(object):
+    def __init__(self, device, config):
         self._device = device
-        self._apikey = AUTH['api_key']
+        self._apikey = config.auth_store['api_key']
         self._adb = AdbCommands()
         self._progress = None
         self._cur_bytes = 0
-        self._url = ENDPOINTS['xray_url'] + "/{}/{}"
-        self._logger = logger
+        self._url = config.endpoints_store['xray_url'] + "/{}/{}"
+        self._logger = config.logger
         self._adbkey = os.path.join(click.get_app_dir('Mason CLI'), 'adbkey')
 
     def _get_url(self, service):

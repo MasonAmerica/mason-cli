@@ -1,10 +1,14 @@
 import click
 
-from cli.internal.utils.constants import AUTH
-
 
 def validate_credentials(config):
-    if not AUTH['id_token'] or not AUTH['access_token']:
+    if not config.auth_store['id_token'] or not config.auth_store['access_token']:
+        config.logger.error('Not authenticated. Run \'mason login\' to sign in.')
+        raise click.Abort()
+
+
+def validate_api_key(config):
+    if not config.auth_store['api_key']:
         config.logger.error('Not authenticated. Run \'mason login\' to sign in.')
         raise click.Abort()
 
@@ -12,7 +16,7 @@ def validate_credentials(config):
 def validate_version(config, version, type):
     try:
         version = int(version)
-    except ValueError:
+    except (TypeError, ValueError):
         config.logger.error("Error in {}: '{}' is not a number.".format(type, version))
         raise click.Abort()
 

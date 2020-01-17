@@ -1,0 +1,10 @@
+os:
+  name: project-id
+  version: 1
+  configurations:
+    mason-management:
+      disable_keyguard: true
+apps:
+  - name: Testy Testeron
+    package_name: com.example.app
+    version_code: 1

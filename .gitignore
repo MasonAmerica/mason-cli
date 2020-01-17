@@ -5,4 +5,4 @@ dist
 *.spec
 .eggs
 __pycache__
-version.py
+cli/version.py

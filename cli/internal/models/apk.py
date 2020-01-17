@@ -16,8 +16,9 @@ logging.getLogger("pyaxmlparser.core").setLevel("ERROR")
 
 
 class Apk(IArtifact):
-    def __init__(self, config, apkf, cert_finder=None):
+    def __init__(self, config, binary, apkf, cert_finder=None):
         self.config = config
+        self.binary = binary
         self.apkf = apkf
         self.cert_finder = cert_finder or CertFinder(apkf)
         self.name = self.apkf.package
@@ -27,18 +28,9 @@ class Apk(IArtifact):
     @staticmethod
     def parse(config, apk):
         apk_abs = APK(apk)
-        apkf = Apk(config, apk_abs)
+
+        apkf = Apk(config, apk, apk_abs)
         apkf.validate()
-
-        config.logger.info('------------ APK ------------')
-        config.logger.info('File Name: {}'.format(apk))
-        config.logger.info('File size: {}'.format(os.path.getsize(apk)))
-        config.logger.info('Package: {}'.format(apkf.apkf.package))
-        config.logger.info('Version Name: {}'.format(apkf.apkf.get_androidversion_name()))
-        config.logger.info('Version Code: {}'.format(apkf.apkf.get_androidversion_code()))
-        config.logger.debug(apkf.get_details())
-        config.logger.info('-----------------------------')
-
         return apkf
 
     # TODO: Move this entire validation to service side.
@@ -58,7 +50,7 @@ class Apk(IArtifact):
                 Mason Platform does not currently support applications with a minimum sdk greater
                 than API 25. Please lower the minimum sdk value in your manifest or
                 gradle file.
-                """.format(self.apkf.filename)))
+            """.format(self.apkf.filename)))
             raise click.Abort()
 
         # Check if the app was signed with v1
@@ -71,7 +63,7 @@ class Apk(IArtifact):
                 ensure your app is either signed exclusively with v1 or with some combination
                 of v1 and other signing schemes. For more details on app signing, visit
                 https://s.android.com/security/apksigning
-                """.format(self.apkf.filename)))
+            """.format(self.apkf.filename)))
             raise click.Abort()
 
         # Check for 'Android Debug' CN for the given artifact, disallow upload
@@ -81,8 +73,18 @@ class Apk(IArtifact):
                     self.config.logger.error(inspect.cleandoc("""
                         Apps signed with a debug key are not allowed.
                         Please sign the APK with your release keys and try again.
-                        """))
+                    """))
                     raise click.Abort()
+
+    def log_details(self):
+        self.config.logger.info('------------ APK ------------')
+        self.config.logger.info('File Name: {}'.format(self.binary))
+        self.config.logger.info('File size: {}'.format(os.path.getsize(self.binary)))
+        self.config.logger.info('Package: {}'.format(self.apkf.package))
+        self.config.logger.info('Version Name: {}'.format(self.apkf.get_androidversion_name()))
+        self.config.logger.info('Version Code: {}'.format(self.apkf.get_androidversion_code()))
+        self.config.logger.debug(self.get_details())
+        self.config.logger.info('-----------------------------')
 
     def get_content_type(self):
         return 'application/vnd.android.package-archive'

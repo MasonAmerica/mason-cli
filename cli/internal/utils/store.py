@@ -5,32 +5,33 @@ import yaml
 
 
 class Store(object):
-    def __init__(self, name, fields):
-        self.file = os.path.join(click.get_app_dir('Mason CLI'), name + '.yml')
-        self.defaults = fields
-        self.fields = {}
+    def __init__(self, name, fields, dir=None, restore=True):
+        self._file = os.path.join(dir or click.get_app_dir('Mason CLI'), name + '.yml')
+        self._defaults = fields
+        self._fields = {}
 
-        self.restore()
+        if restore:
+            self.restore()
 
     def save(self):
-        if not os.path.exists(os.path.dirname(self.file)):
-            os.makedirs(os.path.dirname(self.file))
-        with open(self.file, 'w') as f:
-            f.write(yaml.safe_dump(self.fields))
+        if not os.path.exists(os.path.dirname(self._file)):
+            os.makedirs(os.path.dirname(self._file))
+        with open(self._file, 'w') as f:
+            f.write(yaml.safe_dump(self._fields))
 
     def restore(self):
-        if os.path.exists(self.file):
-            with open(self.file, 'r') as f:
+        if os.path.exists(self._file):
+            with open(self._file, 'r') as f:
                 yml = yaml.safe_load(f)
-                if yml:
+                if type(yml) is dict:
                     for (k, v) in yml.items():
-                        self.fields[k] = v
+                        self._fields[k] = v
 
     def __getitem__(self, item):
-        return self.fields.get(item, self.defaults.get(item, None))
+        return self._fields.get(item, self._defaults.get(item, None))
 
     def __setitem__(self, key, value):
-        self.fields[key] = value
+        self._fields[key] = value
 
     def clear(self):
-        self.fields = {}
+        self._fields = {}

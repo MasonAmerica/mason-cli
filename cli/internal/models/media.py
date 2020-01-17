@@ -24,26 +24,26 @@ class Media(IArtifact):
 
         media = Media(config, name, type, version, binary)
         media.validate()
-
-        config.logger.info('----------- MEDIA -----------')
-        config.logger.info('File Name: {}'.format(media.binary))
-        config.logger.info('File size: {}'.format(os.path.getsize(binary)))
-        config.logger.info('Name: {}'.format(media.name))
-        config.logger.info('Version: {}'.format(media.version))
-        config.logger.info('Type: {}'.format(media.type))
-
-        if media.details:
-            config.logger.debug('Details: ')
-            lines = list(line for line in (l.strip() for l in media.details) if line)
-            for line in lines:
-                config.logger.debug(line)
-        config.logger.info('-----------------------------')
-
         return media
 
     def validate(self):
         if self.type == 'bootanimation':
             self._validate_bootanimation()
+
+    def log_details(self):
+        self.config.logger.info('----------- MEDIA -----------')
+        self.config.logger.info('File Name: {}'.format(self.binary))
+        self.config.logger.info('File size: {}'.format(os.path.getsize(self.binary)))
+        self.config.logger.info('Name: {}'.format(self.name))
+        self.config.logger.info('Version: {}'.format(self.version))
+        self.config.logger.info('Type: {}'.format(self.type))
+
+        if self.details:
+            self.config.logger.debug('Details: ')
+            lines = list(line for line in (l.strip() for l in self.details) if line)
+            for line in lines:
+                self.config.logger.debug(line)
+        self.config.logger.info('-----------------------------')
 
     def get_content_type(self):
         if self.get_sub_type() == 'bootanimation':

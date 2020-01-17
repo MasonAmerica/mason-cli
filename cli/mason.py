@@ -4,11 +4,30 @@ import os
 import click
 import click_log
 
-from cli import __version__
-from cli.internal.masoncli import MasonCli
+from cli.internal.apis.mason import MasonApi
+from cli.internal.commands.build import BuildCommand
+from cli.internal.commands.deploy import DeployApkCommand
+from cli.internal.commands.deploy import DeployConfigCommand
+from cli.internal.commands.deploy import DeployOtaCommand
+from cli.internal.commands.init import InitCommand
+from cli.internal.commands.login import LoginCommand
+from cli.internal.commands.logout import LogoutCommand
+from cli.internal.commands.register import RegisterApkCommand
+from cli.internal.commands.register import RegisterConfigCommand
+from cli.internal.commands.register import RegisterMediaCommand
+from cli.internal.commands.stage import StageCommand
+from cli.internal.commands.version import VersionCommand
+from cli.internal.commands.xray import XrayDesktopCommand
+from cli.internal.commands.xray import XrayInstallCommand
+from cli.internal.commands.xray import XrayLogcatCommand
+from cli.internal.commands.xray import XrayPullCommand
+from cli.internal.commands.xray import XrayPushCommand
+from cli.internal.commands.xray import XrayShellCommand
+from cli.internal.commands.xray import XrayUninstallCommand
+from cli.internal.utils.constants import AUTH
+from cli.internal.utils.constants import ENDPOINTS
 from cli.internal.utils.constants import LOG_PROTOCOL_TRACE
-
-logger = logging.getLogger(__name__)
+from cli.internal.utils.remote import RequestHandler
 
 
 class Config(object):
@@ -17,17 +36,24 @@ class Config(object):
     and other flags.
     """
 
-    def __init__(self):
+    def __init__(self, logger=None, auth_store=AUTH, endpoints_store=ENDPOINTS, api=None):
+        logger = logger or logging.getLogger(__name__)
+        api = api or MasonApi(RequestHandler(self), auth_store, endpoints_store)
+
         self.logger = logger
+        self.auth_store = auth_store
+        self.endpoints_store = endpoints_store
+        self.api = api
 
 
 pass_config = click.make_pass_decorator(Config, ensure=True)
 
 
-def install_logger(level):
+def install_logger(logger, level):
     logger.setLevel(level)
     click_log.ClickHandler._use_stderr = False
     click_log.basic_config(logger)
+    return logger
 
 
 # noinspection PyUnusedLocal
@@ -35,8 +61,12 @@ def _version_callback(ctx, param, value):
     if not value or ctx.resilient_parsing:
         return
 
-    install_logger('INFO')
-    _show_version_info()
+    config = ctx.ensure_object(Config)
+    install_logger(config.logger, 'INFO')
+
+    command = VersionCommand(config)
+    command.run()
+
     ctx.exit()
 
 
@@ -45,7 +75,7 @@ def _handle_set_level(ctx, param, value):
     default_level = os.environ.get('LOGLEVEL', 'INFO').upper()
     if default_level.isdigit():
         default_level = int(default_level)
-    install_logger(default_level)
+    logger = install_logger(ctx.ensure_object(Config).logger, default_level)
 
     if not value or ctx.resilient_parsing:
         return
@@ -92,31 +122,8 @@ def cli(config, debug, verbose, api_key, id_token, access_token, no_color):
     Full docs: https://docs.bymason.com/
     """
 
-    config.mason = MasonCli(config)
-    if id_token:
-        config.mason.set_id_token(id_token)
-    if access_token:
-        config.mason.set_access_token(access_token)
-    if id_token or access_token:
-        logger.warning('The --id-token and --access-token options are deprecated. Please use '
-                       '--api-key instead.')
-    if api_key:
-        config.mason.set_api_key(api_key)
-
-    if no_color:
-        click_log.ColorFormatter.colors = {
-            'error': {},
-            'exception': {},
-            'critical': {},
-            'debug': {},
-            'warning': {}
-        }
-    if verbose or debug:
-        logger.warning('--debug and --verbose options are deprecated. Please use --verbosity debug '
-                       'instead.')
-        logger.setLevel('DEBUG')
-
-    config.mason.check_for_updates()
+    command = InitCommand(config, debug, verbose, no_color, api_key, id_token, access_token)
+    command.run()
 
 
 @cli.group()
@@ -133,7 +140,7 @@ def register(config, assume_yes, skip_verify):
     """
 
     if skip_verify:
-        logger.warning('--skip-verify is deprecated. Use --assume-yes instead.')
+        config.logger.warning('--skip-verify is deprecated. Use --assume-yes instead.')
 
     config.skip_verify = assume_yes or skip_verify
 
@@ -158,9 +165,8 @@ def config(config, configs):
     Full docs: https://docs.bymason.com/mason-cli/#mason-register-config
     """
 
-    for file in configs:
-        logger.debug('Registering {}...'.format(file))
-        config.mason.register_os_config(file)
+    command = RegisterConfigCommand(config, configs)
+    command.run()
 
 
 @register.command()
@@ -183,9 +189,8 @@ def apk(config, apks):
     Full docs: https://docs.bymason.com/mason-cli/#mason-register-apk
     """
 
-    for app in apks:
-        logger.debug('Registering {}...'.format(app))
-        config.mason.register_apk(app)
+    command = RegisterApkCommand(config, apks)
+    command.run()
 
 
 # TODO: add types when support for the deprecated param order is removed.
@@ -214,8 +219,8 @@ def media(config, type, name, version, media):
     """
 
     if os.path.isfile(type):
-        logger.warning('This command order is deprecated and will be removed. Use --help to see '
-                       'up-to-date argument order.')
+        config.logger.warning('This command order is deprecated and will be removed. Use --help '
+                              'to see up-to-date argument order.')
 
         # Media used to be the first argument
         old_media = type
@@ -227,8 +232,8 @@ def media(config, type, name, version, media):
         version = old_version
         media = old_media
 
-    logger.debug('Registering {}...'.format(media))
-    config.mason.register_media(name, type, version, media)
+    command = RegisterMediaCommand(config, name, type, version, media)
+    command.run()
 
 
 @cli.command()
@@ -264,8 +269,8 @@ def build(config, block, turbo, mason_version, project, version):
     Full docs: https://docs.bymason.com/mason-cli/#mason-build
     """
 
-    logger.debug('Starting build for {}:{}...'.format(project, version))
-    config.mason.build(project, version, block, turbo, mason_version)
+    command = BuildCommand(config, project, version, block, turbo, mason_version)
+    command.run()
 
 
 @cli.command()
@@ -303,13 +308,12 @@ def stage(config, assume_yes, block, turbo, mason_version, skip_verify, configs)
     """
 
     if skip_verify:
-        logger.warning('--skip-verify is deprecated. Use --assume-yes instead.')
+        config.logger.warning('--skip-verify is deprecated. Use --assume-yes instead.')
 
     config.skip_verify = assume_yes or skip_verify
 
-    for file in configs:
-        logger.debug('Staging {}...'.format(file))
-        config.mason.stage(file, block, turbo, mason_version)
+    command = StageCommand(config, configs, block, turbo, mason_version)
+    command.run()
 
 
 @cli.group()
@@ -330,7 +334,7 @@ def deploy(config, assume_yes, push, no_https, skip_verify):
     """
 
     if skip_verify:
-        logger.warning('--skip-verify is deprecated. Use --assume-yes instead.')
+        config.logger.warning('--skip-verify is deprecated. Use --assume-yes instead.')
 
     config.skip_verify = assume_yes or skip_verify
     config.push = push
@@ -368,9 +372,8 @@ def config(config, name, version, groups):
     Full docs: https://docs.bymason.com/mason-cli/#mason-deploy-config
     """
 
-    for group in groups:
-        logger.debug('Deploying {}:{}...'.format(name, version))
-        config.mason.deploy('config', name, version, group, config.push, config.no_https)
+    command = DeployConfigCommand(config, name, version, groups)
+    command.run()
 
 
 @deploy.command()
@@ -405,9 +408,8 @@ def apk(config, name, version, groups):
     Full docs: https://docs.bymason.com/mason-cli/#mason-deploy-apk
     """
 
-    for group in groups:
-        logger.debug('Deploying {}:{}...'.format(name, version))
-        config.mason.deploy('apk', name, version, group, config.push, config.no_https)
+    command = DeployApkCommand(config, name, version, groups)
+    command.run()
 
 
 @deploy.command()
@@ -435,9 +437,8 @@ def ota(config, name, version, groups):
     Full docs: https://docs.bymason.com/mason-cli/#mason-deploy-ota
     """
 
-    for group in groups:
-        logger.debug('Deploying {}:{}...'.format(name, version))
-        config.mason.deploy('ota', name, version, group, config.push, config.no_https)
+    command = DeployOtaCommand(config, name, version, groups)
+    command.run()
 
 
 @cli.group()
@@ -472,7 +473,8 @@ def logcat(config, args):
     Full docs: https://docs.bymason.com/mason-cli/#mason-xray-logcat
     """
 
-    config.mason.xray(config.device, 'adb', 'logcat', args=args)
+    command = XrayLogcatCommand(config, args)
+    command.run()
 
 
 @xray.command(context_settings=dict(
@@ -491,7 +493,8 @@ def shell(config, command):
     Full docs: https://docs.bymason.com/mason-cli/#mason-xray-shell
     """
 
-    config.mason.xray(config.device, 'adb', 'shell', args=command)
+    command = XrayShellCommand(config, command)
+    command.run()
 
 
 @xray.command()
@@ -510,7 +513,8 @@ def push(config, local, remote):
     Full docs: https://docs.bymason.com/mason-cli/#mason-xray-push
     """
 
-    config.mason.xray(config.device, 'adb', 'push', local=local, remote=remote)
+    command = XrayPushCommand(config, local, remote)
+    command.run()
 
 
 @xray.command()
@@ -529,7 +533,8 @@ def pull(config, remote, local):
     Full docs: https://docs.bymason.com/mason-cli/#mason-xray-pull
     """
 
-    config.mason.xray(config.device, 'adb', 'pull', remote=remote, local=local)
+    command = XrayPullCommand(config, remote, local)
+    command.run()
 
 
 @xray.command()
@@ -546,7 +551,8 @@ def install(config, apk):
     Full docs: https://docs.bymason.com/mason-cli/#mason-xray-install
     """
 
-    config.mason.xray(config.device, 'adb', 'install', local=apk)
+    command = XrayInstallCommand(config, apk)
+    command.run()
 
 
 @xray.command()
@@ -562,7 +568,9 @@ def uninstall(config, package):
 
     Full docs: https://docs.bymason.com/mason-cli/#mason-xray-uninstall
     """
-    config.mason.xray(config.device, 'adb', 'uninstall', remote=package)
+
+    command = XrayUninstallCommand(config, package)
+    command.run()
 
 
 @xray.command()
@@ -575,7 +583,8 @@ def desktop(config, port):
     Full docs: https://docs.bymason.com/mason-cli/#mason-xray-desktop
     """
 
-    config.mason.xray(config.device, 'vnc', 'desktop', local=port)
+    command = XrayDesktopCommand(config, port)
+    command.run()
 
 
 @cli.command()
@@ -593,11 +602,8 @@ def login(config, api_key, username, password):
     Full docs: https://docs.bymason.com/mason-cli/#mason-login
     """
 
-    if api_key:
-        config.mason.set_api_key(api_key)
-    logger.debug('Authenticating ' + username)
-    config.mason.login(username, password)
-    logger.info('Successfully logged in.')
+    command = LoginCommand(config, api_key, username, password)
+    command.run()
 
 
 @cli.command()
@@ -609,21 +615,17 @@ def logout(config):
     Full docs: https://docs.bymason.com/mason-cli/#mason-logout
     """
 
-    config.mason.logout()
-    logger.info('Successfully logged out.')
+    command = LogoutCommand(config)
+    command.run()
 
 
 @cli.command(hidden=True)
-def version():
+@pass_config
+def version(config):
     """Display the Mason CLI version."""
 
-    _show_version_info()
-
-
-def _show_version_info():
-    logger.info('Mason CLI v{}'.format(__version__))
-    logger.info('Copyright (C) 2019 Mason America (https://bymason.com)')
-    logger.info('License Apache 2.0 <https://www.apache.org/licenses/LICENSE-2.0>')
+    command = VersionCommand(config)
+    command.run()
 
 
 if __name__ == '__main__':

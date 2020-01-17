@@ -12,6 +12,10 @@ class IArtifact:
         pass
 
     @abstractmethod
+    def log_details(self):
+        pass
+
+    @abstractmethod
     def get_content_type(self):
         pass
 

@@ -8,8 +8,9 @@ from cli.internal.utils.validation import validate_version
 
 
 class OSConfig(IArtifact):
-    def __init__(self, config, ecosystem):
+    def __init__(self, config, binary, ecosystem):
         self.config = config
+        self.binary = binary
         self.ecosystem = ecosystem
         self.os = {}
         self.name = None
@@ -29,20 +30,8 @@ class OSConfig(IArtifact):
                 config.logger.error('Invalid configuration file: {}'.format(err))
                 raise click.Abort()
 
-        os_config = OSConfig(config, ecosystem)
+        os_config = OSConfig(config, config_yaml, ecosystem)
         os_config.validate()
-
-        config.logger.info('--------- OS Config ---------')
-        config.logger.info('File Name: {}'.format(config_yaml))
-        config.logger.info('File size: {}'.format(os.path.getsize(config_yaml)))
-        config.logger.info('Name: {}'.format(os_config.name))
-        config.logger.info('Version: {}'.format(os_config.version))
-
-        config.logger.debug('Parsed config:')
-        config.logger.debug(yaml.dump(ecosystem))
-
-        config.logger.info('-----------------------------')
-
         return os_config
 
     def validate(self):
@@ -53,6 +42,18 @@ class OSConfig(IArtifact):
             raise click.Abort()
 
         validate_version(self.config, self.version, 'os configuration')
+
+    def log_details(self):
+        self.config.logger.info('--------- OS Config ---------')
+        self.config.logger.info('File Name: {}'.format(self.binary))
+        self.config.logger.info('File size: {}'.format(os.path.getsize(self.binary)))
+        self.config.logger.info('Name: {}'.format(self.name))
+        self.config.logger.info('Version: {}'.format(self.version))
+
+        self.config.logger.debug('Parsed config:')
+        self.config.logger.debug(yaml.dump(self.ecosystem))
+
+        self.config.logger.info('-----------------------------')
 
     def get_content_type(self):
         return 'text/x-yaml'
