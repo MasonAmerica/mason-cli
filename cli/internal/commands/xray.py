@@ -1,5 +1,6 @@
 import abc
 import os
+import posixpath
 import sys
 
 import click
@@ -262,17 +263,35 @@ class XRay(object):
 
         return self._with_progressbar(remote, device.Pull, remote, dest_file=str(dest_file))
 
-    def install(self, local_path, args=None):
+    def install(self, local_path, replace_existing=True, grant_permissions=False, args=None):
         return self._run_in_reactor(self._install, local_path, args)
 
-    def _install(self, device, local_path, args=None):
-        def wrapped(progress_callback=None, *args, **kwargs):
-            return device.Install(transfer_progress_callback=progress_callback, *args, **kwargs)
+    def _install(self, device, local_path, replace_existing=True, grant_permissions=False, args=None):
+        destination_dir = '/data/local/tmp/'
+        basename = os.path.basename(local_path)
+        destination_path = posixpath.join(destination_dir, basename)
+        self._push(device, local_path, destination_path)
 
-        return self._with_progressbar(local_path, wrapped, local_path)
+        cmd = ['pm install']
+        if grant_permissions:
+            cmd.append('-g')
+        if replace_existing:
+            cmd.append('-r')
+        cmd.append('"{}"'.format(destination_path))
 
-    def uninstall(self, package, args=None):
-        return self._run_in_reactor(self._uninstall, package, args)
+        self._shell(device, cmd)
 
-    def _uninstall(self, device, package, args=None):
-        self._logger.info(device.Uninstall(package))
+        # Remove the apk
+        rm_cmd = ['rm', destination_path]
+        self._shell(device, rm_cmd)
+
+    def uninstall(self, package, keep_data=False, args=None):
+        return self._run_in_reactor(self._uninstall, package, keep_data, args)
+
+    def _uninstall(self, device, package, keep_data=False, args=None):
+        cmd = ['pm uninstall']
+        if keep_data:
+            cmd.append('-k')
+        cmd.append('"%s"' % package)
+
+        self._shell(device, cmd)
