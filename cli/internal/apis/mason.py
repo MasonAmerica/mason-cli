@@ -64,11 +64,11 @@ class MasonApi:
             'Authorization': 'Bearer {}'.format(self.auth_store['id_token'])
         }
         payload = {
-            'name': artifact.get_name(),
-            'version': artifact.get_version(),
+            'name': str(artifact.get_name()),
+            'version': str(artifact.get_version()),
             'customer': customer,
             'url': signed_url,
-            'type': artifact.get_type(),
+            'type': str(artifact.get_type()),
             'checksum': {
                 'sha1': sha1
             }
@@ -87,14 +87,13 @@ class MasonApi:
         }
         payload = {
             'customer': customer,
-            'group': group,
-            'name': name,
+            'group': str(group),
+            'name': str(name),
             'version': str(version),
-            'type': type,
-            'push': push
+            'type': str(type),
+            'push': bool(push),
+            'deployInsecure': bool(no_https)
         }
-        if no_https:
-            payload['deployInsecure'] = no_https
 
         url = self.endpoints_store['deploy_url']
         self.handler.post(url, headers=headers, json=payload)
@@ -106,13 +105,11 @@ class MasonApi:
         }
         payload = {
             'customer': customer,
-            'project': project,
-            'version': str(version)
+            'project': str(project),
+            'version': str(version),
+            'fastBuild': bool(fast_build),
+            'masonVersion': str(mason_version) if mason_version else None
         }
-        if fast_build:
-            payload['fastBuild'] = fast_build
-        if mason_version:
-            payload['masonVersion'] = mason_version
 
         url = self.endpoints_store['builder_url'] + '/{0}/jobs'.format(customer)
         return self.handler.post(url, headers=headers, json=payload)

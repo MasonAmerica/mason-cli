@@ -437,6 +437,11 @@ def ota(config, name, version, groups):
     Full docs: https://docs.bymason.com/mason-cli/#mason-deploy-ota
     """
 
+    if name != 'mason-os':
+        config.logger.warning("Unknown name '{0}' for 'ota' deployments. "
+                              "Forcing it to 'mason-os'".format(name))
+        name = 'mason-os'
+
     command = DeployOtaCommand(config, name, version, groups)
     command.run()
 

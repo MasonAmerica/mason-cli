@@ -16,13 +16,25 @@ except ImportError:
 
 
 class BuildCommand(Command):
-    def __init__(self, config, project, version, block, turbo, mason_version):
+    def __init__(
+        self,
+        config,
+        project,
+        version,
+        block,
+        turbo,
+        mason_version,
+        time=time,
+        urlparse=urlparse
+    ):
         self.config = config
         self.project = project
         self.version = version
         self.block = block
         self.turbo = turbo
         self.mason_version = mason_version
+        self.time = time
+        self.urlparse = urlparse
 
     def run(self):
         validate_credentials(self.config)
@@ -35,11 +47,12 @@ class BuildCommand(Command):
             e.exit(self.config)
             return
 
+        console_hostname = self.urlparse(self.config.endpoints_store['deploy_url']).hostname
         self.config.logger.info(inspect.cleandoc("""
             Build queued.
             You can see the status of your build at
             https://{}/controller/projects/{}
-        """.format(urlparse(self.config.endpoints_store['deploy_url']).hostname, self.project)))
+        """.format(console_hostname, self.project)))
 
         if self.block:
             self._wait_for_completion(build)
@@ -64,7 +77,7 @@ class BuildCommand(Command):
 
             self.config.logger.info('Waiting for build to complete...')
             wait_time = 10 if self.turbo else 30
-            time.sleep(wait_time)
+            self.time.sleep(wait_time)
             time_blocked += wait_time
 
         self.config.logger.error('Timed out waiting for build to complete.')

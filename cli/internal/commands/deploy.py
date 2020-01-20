@@ -76,9 +76,4 @@ class DeployOtaCommand(DeployCommand):
         super(DeployOtaCommand, self).__init__(config, 'ota', name, version, groups)
 
     def run(self):
-        if self.name != 'mason-os':
-            self.config.logger.warning("Unknown name '{0}' for 'ota' deployments. "
-                                       "Forcing it to 'mason-os'".format(self.name))
-            self.name = 'mason-os'
-
         self.deploy_artifact()

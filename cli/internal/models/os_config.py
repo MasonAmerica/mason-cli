@@ -75,3 +75,6 @@ class OSConfig(IArtifact):
 
     def get_details(self):
         return self.ecosystem
+
+    def __eq__(self, other):
+        return self.binary == other.binary

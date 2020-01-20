@@ -93,3 +93,6 @@ class Media(IArtifact):
 
             with zip_file.open('desc.txt') as filename:
                 self.details = filename.readlines()
+
+    def __eq__(self, other):
+        return self.binary == other.binary

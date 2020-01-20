@@ -147,6 +147,25 @@ class CliTest(unittest.TestCase):
             Aborted!
         """))
 
+    def test__register_config__negative_confirmation_aborts(self):
+        config_file = os.path.join(__tests_root__, 'res/config.yml')
+        api = MagicMock()
+        config = Config(auth_store=self._initialized_auth_store(), api=api)
+
+        result = self.runner.invoke(cli, ['register', 'config', config_file], obj=config, input='n')
+
+        self.assertEqual(result.exit_code, 1)
+        self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
+            --------- OS Config ---------
+            File Name: {}
+            File size: 190
+            Name: project-id
+            Version: 1
+            -----------------------------
+            Continue register? [Y/n]: n
+            Aborted!
+        """.format(config_file)))
+
     def test__register_config__file_is_registered(self):
         config_file = os.path.join(__tests_root__, 'res/config.yml')
         api = MagicMock()
@@ -188,6 +207,26 @@ class CliTest(unittest.TestCase):
             error: Not authenticated. Run 'mason login' to sign in.
             Aborted!
         """))
+
+    def test__register_apk__negative_confirmation_aborts(self):
+        apk_file = os.path.join(__tests_root__, 'res/v1.apk')
+        api = MagicMock()
+        config = Config(auth_store=self._initialized_auth_store(), api=api)
+
+        result = self.runner.invoke(cli, ['register', 'apk', apk_file], obj=config, input='n')
+
+        self.assertEqual(result.exit_code, 1)
+        self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
+            ------------ APK ------------
+            File Name: {}
+            File size: 1319297
+            Package: com.example.unittestapp1
+            Version Name: 1.0
+            Version Code: 1
+            -----------------------------
+            Continue register? [Y/n]: n
+            Aborted!
+        """.format(apk_file)))
 
     def test__register_apk__file_is_registered(self):
         apk_file = os.path.join(__tests_root__, 'res/v1.apk')
@@ -249,6 +288,29 @@ class CliTest(unittest.TestCase):
             error: Not authenticated. Run 'mason login' to sign in.
             Aborted!
         """))
+
+    def test__register_media__negative_confirmation_aborts(self):
+        media_file = os.path.join(__tests_root__, 'res/bootanimation.zip')
+        api = MagicMock()
+        config = Config(auth_store=self._initialized_auth_store(), api=api)
+
+        result = self.runner.invoke(cli, [
+            'register', 'media',
+            'bootanimation', 'Anim name', '1', media_file
+        ], obj=config, input='n')
+
+        self.assertEqual(result.exit_code, 1)
+        self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
+            ----------- MEDIA -----------
+            File Name: {}
+            File size: 3156136
+            Name: Anim name
+            Version: 1
+            Type: bootanimation
+            -----------------------------
+            Continue register? [Y/n]: n
+            Aborted!
+        """.format(media_file)))
 
     def test__register_media__file_is_registered(self):
         media_file = os.path.join(__tests_root__, 'res/bootanimation.zip')
@@ -342,6 +404,25 @@ class CliTest(unittest.TestCase):
             Aborted!
         """))
 
+    def test__stage__negative_confirmation_aborts(self):
+        config_file = os.path.join(__tests_root__, 'res/config.yml')
+        api = MagicMock()
+        config = Config(auth_store=self._initialized_auth_store(), api=api)
+
+        result = self.runner.invoke(cli, ['stage', config_file], obj=config, input='n')
+
+        self.assertEqual(result.exit_code, 1)
+        self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
+            --------- OS Config ---------
+            File Name: {}
+            File size: 190
+            Name: project-id
+            Version: 1
+            -----------------------------
+            Continue register? [Y/n]: n
+            Aborted!
+        """.format(config_file)))
+
     def test__stage__file_is_registered(self):
         config_file = os.path.join(__tests_root__, 'res/config.yml')
         api = MagicMock()
@@ -413,6 +494,28 @@ class CliTest(unittest.TestCase):
         self.assertEqual(result.exit_code, 1)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             error: Not authenticated. Run 'mason login' to sign in.
+            Aborted!
+        """))
+
+    def test__deploy_config__negative_confirmation_aborts(self):
+        api = MagicMock()
+        config = Config(auth_store=self._initialized_auth_store(), api=api)
+
+        result = self.runner.invoke(cli, [
+            'deploy', 'config',
+            'project-id', '1', 'group'
+        ], obj=config, input='n')
+
+        self.assertEqual(result.exit_code, 1)
+        self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
+            ---------- DEPLOY -----------
+            Name: project-id
+            Type: config
+            Version: 1
+            Group: group
+            Push: False
+            -----------------------------
+            Continue deploy? [Y/n]: n
             Aborted!
         """))
 
@@ -489,6 +592,28 @@ class CliTest(unittest.TestCase):
             Aborted!
         """))
 
+    def test__deploy_apk__negative_confirmation_aborts(self):
+        api = MagicMock()
+        config = Config(auth_store=self._initialized_auth_store(), api=api)
+
+        result = self.runner.invoke(cli, [
+            'deploy', 'apk',
+            'com.example.app', '1', 'group'
+        ], obj=config, input='n')
+
+        self.assertEqual(result.exit_code, 1)
+        self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
+            ---------- DEPLOY -----------
+            Name: com.example.app
+            Type: apk
+            Version: 1
+            Group: group
+            Push: False
+            -----------------------------
+            Continue deploy? [Y/n]: n
+            Aborted!
+        """))
+
     def test__deploy_apk__config_is_deployed(self):
         api = MagicMock()
         config = Config(auth_store=self._initialized_auth_store(), api=api)
@@ -554,6 +679,28 @@ class CliTest(unittest.TestCase):
         self.assertEqual(result.exit_code, 1)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             error: Not authenticated. Run 'mason login' to sign in.
+            Aborted!
+        """))
+
+    def test__deploy_ota__negative_confirmation_aborts(self):
+        api = MagicMock()
+        config = Config(auth_store=self._initialized_auth_store(), api=api)
+
+        result = self.runner.invoke(cli, [
+            'deploy', 'ota',
+            'mason-os', '2.0.0', 'group'
+        ], obj=config, input='n')
+
+        self.assertEqual(result.exit_code, 1)
+        self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
+            ---------- DEPLOY -----------
+            Name: mason-os
+            Type: ota
+            Version: 2.0.0
+            Group: group
+            Push: False
+            -----------------------------
+            Continue deploy? [Y/n]: n
             Aborted!
         """))
 

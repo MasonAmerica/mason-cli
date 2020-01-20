@@ -116,6 +116,9 @@ class Apk(IArtifact):
             self.details = self.cert_finder.find()
         return self.details
 
+    def __eq__(self, other):
+        return self.binary == other.binary
+
 
 class CertFinder:
     def __init__(self, apkf):
