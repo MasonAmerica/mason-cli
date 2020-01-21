@@ -157,7 +157,7 @@ class MasonApiTest(unittest.TestCase):
         )
 
     def test__start_build__default_requests_are_correct(self):
-        self.api.start_build('project-id', 'myVersion', 'myFastBuild', None)
+        self.api.start_build('project-id', 'myVersion', 'myFastBuild', 'myOsVersion')
 
         self.handler.post.assert_called_with(
             'url_root/mason-test/jobs',
@@ -167,7 +167,21 @@ class MasonApiTest(unittest.TestCase):
                 'project': 'project-id',
                 'version': 'myVersion',
                 'fastBuild': True,
-                'masonVersion': None
+                'masonVersion': 'myOsVersion'
+            }
+        )
+
+    def test__start_build__no_os_version_requests_are_correct(self):
+        self.api.start_build('project-id', 'myVersion', 'myFastBuild', None)
+
+        self.handler.post.assert_called_with(
+            'url_root/mason-test/jobs',
+            headers={'Content-Type': 'application/json', 'Authorization': 'Bearer Foobar'},
+            json={
+                'customer': 'mason-test',
+                'project': 'project-id',
+                'version': 'myVersion',
+                'fastBuild': True
             }
         )
 

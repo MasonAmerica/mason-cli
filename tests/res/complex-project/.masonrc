@@ -1,0 +1,7 @@
+{
+  "config": ".mason/config.yml",
+  "apps": [
+    "test-path/v1.apk",
+    "built-apks"
+  ]
+}

@@ -15,6 +15,7 @@ from cli.internal.commands.logout import LogoutCommand
 from cli.internal.commands.register import RegisterApkCommand
 from cli.internal.commands.register import RegisterConfigCommand
 from cli.internal.commands.register import RegisterMediaCommand
+from cli.internal.commands.register import RegisterProjectCommand
 from cli.internal.commands.stage import StageCommand
 from cli.internal.commands.version import VersionCommand
 from cli.internal.commands.xray import XrayDesktopCommand
@@ -143,6 +144,27 @@ def register(config, assume_yes, skip_verify):
         config.logger.warning('--skip-verify is deprecated. Use --assume-yes instead.')
 
     config.skip_verify = assume_yes or skip_verify
+
+
+@register.command()
+@click.argument('context', type=click.Path(exists=True, file_okay=False), required=True,
+                default='.')
+@pass_config
+def project(config, context):
+    """
+    Register whole projects.
+
+      CONTEXT pointing the project directory. Defaults to the current directory.
+
+    \b
+    Example:
+      $ mason register project
+
+    Full docs: https://docs.bymason.com/mason-cli/#mason-register-project
+    """
+
+    command = RegisterProjectCommand(config, context)
+    command.run()
 
 
 @register.command()

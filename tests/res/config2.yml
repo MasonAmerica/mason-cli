@@ -1,0 +1,9 @@
+os:
+  name: project-id2
+  version: 2
+  configurations:
+    mason-management:
+      disable_keyguard: true
+apps:
+  - name: Dummy app
+    package_name: com.example.unittestapp1

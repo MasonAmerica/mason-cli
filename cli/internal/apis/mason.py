@@ -108,8 +108,9 @@ class MasonApi:
             'project': str(project),
             'version': str(version),
             'fastBuild': bool(fast_build),
-            'masonVersion': str(mason_version) if mason_version else None
         }
+        if mason_version:
+            payload['masonVersion'] = str(mason_version)
 
         url = self.endpoints_store['builder_url'] + '/{0}/jobs'.format(customer)
         return self.handler.post(url, headers=headers, json=payload)

@@ -22,7 +22,8 @@ class RequestHandler:
             'put', url, data=IterableToFileAdapter(iterable), *args, **kwargs)
 
     def _request_wrapper(self, type, url, *args, **kwargs):
-        self.config.logger.debug('Starting {} request to {}'.format(type.upper(), url))
+        self.config.logger.debug('Starting {} request to {} with payload {}'.format(
+            type.upper(), url, kwargs.get('json')))
         r = self._safe_request(type, url, *args, **kwargs)
         self.config.logger.debug(
             'Finished request to {} with status code {} '

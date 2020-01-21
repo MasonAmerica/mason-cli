@@ -1,7 +1,11 @@
 import abc
+import copy
+import os
+import tempfile
 
 import click
 import six
+import yaml
 
 from cli.internal.commands.command import Command
 from cli.internal.models.apk import Apk
@@ -41,8 +45,20 @@ class RegisterConfigCommand(RegisterCommand):
         self.config_files = config_files
 
     def run(self):
-        for file in self.config_files:
-            self.register_artifact(file, OSConfig.parse(self.config, file))
+        for num, file in enumerate(self.config_files):
+            config = OSConfig.parse(self.config, file)
+            self._sanitize_config_for_upload(config)
+            self.register_artifact(file, config)
+
+            if num + 1 < len(self.config_files):
+                self.config.logger.info('')
+
+    def _sanitize_config_for_upload(self, config):
+        raw_config = copy.deepcopy(config.ecosystem)
+        prev = raw_config.pop('from', None)
+        if prev:
+            with open(config.binary, 'w') as f:
+                f.write(yaml.safe_dump(raw_config))
 
 
 class RegisterApkCommand(RegisterCommand):
@@ -51,8 +67,11 @@ class RegisterApkCommand(RegisterCommand):
         self.apk_files = apk_files
 
     def run(self):
-        for file in self.apk_files:
+        for num, file in enumerate(self.apk_files):
             self.register_artifact(file, Apk.parse(self.config, file))
+
+            if num + 1 < len(self.apk_files):
+                self.config.logger.info('')
 
 
 class RegisterMediaCommand(RegisterCommand):
@@ -67,3 +86,100 @@ class RegisterMediaCommand(RegisterCommand):
         self.register_artifact(
             self.media_file,
             Media.parse(self.config, self.name, self.type, self.version, self.media_file))
+
+
+class RegisterProjectCommand(RegisterCommand):
+    def __init__(self, config, context_file, working_dir=tempfile.mkdtemp()):
+        super(RegisterProjectCommand, self).__init__(config)
+        self.context_file = context_file
+        self.working_dir = working_dir
+
+    def run(self):
+        # Needs to be a local import to prevent recursion
+        from cli.internal.commands.stage import StageCommand
+
+        masonrc = self._validated_masonrc()
+        context = self._parse_context(masonrc)
+
+        raw_config_file = self._validated_file(context.get('config') or 'mason.yml')
+        apk_files = self._validated_files(context.get('apps') or [], 'apk')
+        config_file = self._rewritten_config(raw_config_file, apk_files)
+
+        RegisterApkCommand(self.config, apk_files).run()
+        self.config.logger.info('')
+        StageCommand(self.config, [config_file], True, True, None).run()
+
+    def _validated_masonrc(self):
+        masonrc = os.path.join(self.context_file, '.masonrc')
+
+        if not os.path.isfile(masonrc):
+            self.config.logger.error(
+                ".masonrc file not found. Please run 'mason init' to create the project context.")
+            raise click.Abort()
+
+        return masonrc
+
+    def _validated_file(self, path):
+        if os.path.isabs(path):
+            file = path
+        else:
+            file = os.path.abspath(os.path.join(self.context_file, path))
+
+        if not os.path.isfile(file):
+            self.config.logger.error('Project resource does not exist: {}'.format(file))
+            raise click.Abort()
+
+        return file
+
+    def _validated_files(self, paths, extension):
+        files = []
+
+        for file in paths:
+            if os.path.isdir(file):
+                sub_paths = list(map(lambda sub: os.path.join(file, sub), os.listdir(file)))
+                sub_paths = list(filter(lambda f: f.endswith('.apk'), sub_paths))
+                files.extend(self._validated_files(sub_paths, extension))
+            else:
+                files.append(self._validated_file(file))
+
+        return files
+
+    def _parse_context(self, masonrc):
+        with open(masonrc, 'r') as f:
+            context = yaml.safe_load(f)
+            if type(context) is not dict:
+                self.config.logger.error('.masonrc file is corrupt.')
+                raise click.Abort()
+        return context
+
+    def _rewritten_config(self, raw_config_file, apk_files):
+        raw_config = OSConfig.parse(self.config, raw_config_file).ecosystem
+        config = copy.deepcopy(raw_config)
+        apps = raw_config.get('apps') or []
+        apks = list(map(lambda apk: Apk.parse(self.config, apk), apk_files))
+
+        config['from'] = raw_config_file
+        for apk in apks:
+            package_name = apk.get_name()
+            version = apk.get_version()
+            self._validate_app_presence(package_name, apps)
+
+            for app in config.get('apps'):
+                if package_name == app.get('package_name'):
+                    app['version_code'] = int(version)
+                    break
+
+        config_file = os.path.join(self.working_dir, 'config.yml')
+        with open(config_file, 'w') as f:
+            f.write(yaml.safe_dump(config))
+        return config_file
+
+    def _validate_app_presence(self, package_name, apps):
+        for app in apps:
+            if package_name == app.get('package_name'):
+                return
+
+        self.config.logger.error(
+            "App '{}' declared in project context not found in project "
+            "configuration.".format(package_name))
+        raise click.Abort()

@@ -17,6 +17,7 @@ class OSConfig(IArtifact):
         self.version = None
 
         if type(ecosystem) is dict:
+            self.user_binary = self.ecosystem.get('from') or self.binary
             self.os = self.ecosystem.get('os', {})
             self.name = str(self.os.get('name', None))
             self.version = str(self.os.get('version', None))
@@ -45,7 +46,7 @@ class OSConfig(IArtifact):
 
     def log_details(self):
         self.config.logger.info('--------- OS Config ---------')
-        self.config.logger.info('File Name: {}'.format(self.binary))
+        self.config.logger.info('File Name: {}'.format(self.user_binary))
         self.config.logger.info('File size: {}'.format(os.path.getsize(self.binary)))
         self.config.logger.info('Name: {}'.format(self.name))
         self.config.logger.info('Version: {}'.format(self.version))

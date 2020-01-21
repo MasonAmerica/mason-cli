@@ -1,3 +1,4 @@
+import contextlib
 import inspect
 import os
 import unittest
@@ -185,6 +186,37 @@ class CliTest(unittest.TestCase):
             Artifact registered.
         """.format(config_file)))
 
+    def test__register_config__files_are_registered(self):
+        config_file1 = os.path.join(__tests_root__, 'res/config.yml')
+        config_file2 = os.path.join(__tests_root__, 'res/config2.yml')
+        api = MagicMock()
+        config = Config(auth_store=self._initialized_auth_store(), api=api)
+
+        result = self.runner.invoke(cli, [
+            'register', 'config', config_file1, config_file2
+        ], obj=config)
+
+        self.assertEqual(result.exit_code, 0)
+        self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
+            --------- OS Config ---------
+            File Name: {}
+            File size: 190
+            Name: project-id
+            Version: 1
+            -----------------------------
+            Continue register? [Y/n]: 
+            Artifact registered.
+
+            --------- OS Config ---------
+            File Name: {}
+            File size: 175
+            Name: project-id2
+            Version: 2
+            -----------------------------
+            Continue register? [Y/n]: 
+            Artifact registered.
+        """.format(config_file1, config_file2)))
+
     def test__register_apk__no_files_fails(self):
         result = self.runner.invoke(cli, ['register', 'apk'])
 
@@ -247,6 +279,37 @@ class CliTest(unittest.TestCase):
             Continue register? [Y/n]: 
             Artifact registered.
         """.format(apk_file)))
+
+    def test__register_apk__files_are_registered(self):
+        apk_file1 = os.path.join(__tests_root__, 'res/v1.apk')
+        apk_file2 = os.path.join(__tests_root__, 'res/v1and2.apk')
+        api = MagicMock()
+        config = Config(auth_store=self._initialized_auth_store(), api=api)
+
+        result = self.runner.invoke(cli, ['register', 'apk', apk_file1, apk_file2], obj=config)
+
+        self.assertEqual(result.exit_code, 0)
+        self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
+            ------------ APK ------------
+            File Name: {}
+            File size: 1319297
+            Package: com.example.unittestapp1
+            Version Name: 1.0
+            Version Code: 1
+            -----------------------------
+            Continue register? [Y/n]: 
+            Artifact registered.
+
+            ------------ APK ------------
+            File Name: {}
+            File size: 1323413
+            Package: com.example.unittestapp1
+            Version Name: 1.0
+            Version Code: 1
+            -----------------------------
+            Continue register? [Y/n]: 
+            Artifact registered.
+        """.format(apk_file1, apk_file2)))
 
     def test__register_media__no_files_fails(self):
         result = self.runner.invoke(cli, ['register', 'media'])
@@ -335,6 +398,180 @@ class CliTest(unittest.TestCase):
             Artifact registered.
         """.format(media_file)))
 
+    def test__register_project__no_context_fails(self):
+        api = MagicMock()
+        config = Config(auth_store=self._uninitialized_auth_store(), api=api)
+
+        result = self.runner.invoke(cli, ['register', 'project'], obj=config)
+
+        self.assertEqual(result.exit_code, 1)
+        self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
+            error: .masonrc file not found. Please run 'mason init' to create the project context.
+            Aborted!
+        """))
+
+    def test__register_project__non_existent_context_fails(self):
+        invalid_project = os.path.join(__tests_root__, 'res/invalid-project')
+        config_file = os.path.join(__tests_root__, 'res/invalid-project/mason.yml')
+        api = MagicMock()
+        config = Config(auth_store=self._uninitialized_auth_store(), api=api)
+
+        with self._cd(invalid_project):
+            result = self.runner.invoke(cli, ['register', 'project'], obj=config)
+
+        self.assertEqual(result.exit_code, 1)
+        self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
+            error: Project resource does not exist: {}
+            Aborted!
+        """.format(config_file)))
+
+    def test__register_project__no_creds_fails(self):
+        simple_project = os.path.join(__tests_root__, 'res/simple-project')
+        api = MagicMock()
+        config = Config(auth_store=self._uninitialized_auth_store(), api=api)
+
+        with self._cd(simple_project):
+            result = self.runner.invoke(cli, ['register', 'project'], obj=config)
+
+        self.assertEqual(result.exit_code, 1)
+        self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
+            error: Not authenticated. Run 'mason login' to sign in.
+            Aborted!
+        """))
+
+    def test__register_project__negative_confirmation_aborts(self):
+        simple_project = os.path.join(__tests_root__, 'res/simple-project')
+        apk_file = os.path.join(__tests_root__, 'res/simple-project/v1.apk')
+        api = MagicMock()
+        config = Config(auth_store=self._initialized_auth_store(), api=api)
+
+        with self._cd(simple_project):
+            result = self.runner.invoke(cli, ['register', 'project'], obj=config, input='n')
+
+        self.assertEqual(result.exit_code, 1)
+        self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
+            ------------ APK ------------
+            File Name: {}
+            File size: 1319297
+            Package: com.example.unittestapp1
+            Version Name: 1.0
+            Version Code: 1
+            -----------------------------
+            Continue register? [Y/n]: n
+            Aborted!
+        """.format(apk_file)))
+
+    def test__register_project__app_not_present_fails(self):
+        no_app_project = os.path.join(__tests_root__, 'res/no-app-project')
+        api = MagicMock()
+        config = Config(auth_store=self._initialized_auth_store(), api=api)
+
+        with self._cd(no_app_project):
+            result = self.runner.invoke(cli, ['register', 'project'], obj=config)
+
+        self.assertEqual(result.exit_code, 1)
+        self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
+            error: App '{}' declared in project context not found in project configuration.
+            Aborted!
+        """.format('com.example.unittestapp1')))
+
+    def test__register_project__simple_project_is_registered_and_built(self):
+        simple_project = os.path.join(__tests_root__, 'res/simple-project')
+        config_file = os.path.join(__tests_root__, 'res/simple-project/mason.yml')
+        apk_file = os.path.join(__tests_root__, 'res/simple-project/v1.apk')
+        api = MagicMock()
+        api.get_build = MagicMock(return_value={'data': {'status': 'COMPLETED'}})
+        config = Config(
+            auth_store=self._initialized_auth_store(),
+            endpoints_store=self._initialized_endpoints_store(),
+            api=api
+        )
+
+        with self._cd(simple_project):
+            result = self.runner.invoke(cli, ['register', 'project'], obj=config)
+
+        self.assertEqual(result.exit_code, 0)
+        self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
+            ------------ APK ------------
+            File Name: {}
+            File size: 1319297
+            Package: com.example.unittestapp1
+            Version Name: 1.0
+            Version Code: 1
+            -----------------------------
+            Continue register? [Y/n]: 
+            Artifact registered.
+
+            --------- OS Config ---------
+            File Name: {}
+            File size: 189
+            Name: project-id2
+            Version: 2
+            -----------------------------
+            Continue register? [Y/n]: 
+            Artifact registered.
+
+            Build queued.
+            You can see the status of your build at
+            https://platform.bymason.com/controller/projects/project-id2
+
+            Build completed.
+        """.format(apk_file, config_file)))
+
+    def test__register_project__complex_project_is_registered_and_built(self):
+        complex_project = os.path.join(__tests_root__, 'res/complex-project')
+        config_file = os.path.join(__tests_root__, 'res/complex-project/.mason/config.yml')
+        apk_file1 = os.path.join(__tests_root__, 'res/complex-project/test-path/v1.apk')
+        apk_file2 = os.path.join(__tests_root__, 'res/complex-project/built-apks/built.apk')
+        api = MagicMock()
+        api.get_build = MagicMock(return_value={'data': {'status': 'COMPLETED'}})
+        config = Config(
+            auth_store=self._initialized_auth_store(),
+            endpoints_store=self._initialized_endpoints_store(),
+            api=api
+        )
+
+        with self._cd(complex_project):
+            result = self.runner.invoke(cli, ['register', 'project'], obj=config)
+
+        self.assertEqual(result.exit_code, 0)
+        self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
+            ------------ APK ------------
+            File Name: {}
+            File size: 1319297
+            Package: com.example.unittestapp1
+            Version Name: 1.0
+            Version Code: 1
+            -----------------------------
+            Continue register? [Y/n]: 
+            Artifact registered.
+
+            ------------ APK ------------
+            File Name: {}
+            File size: 1323413
+            Package: com.example.unittestapp1
+            Version Name: 1.0
+            Version Code: 1
+            -----------------------------
+            Continue register? [Y/n]: 
+            Artifact registered.
+
+            --------- OS Config ---------
+            File Name: {}
+            File size: 189
+            Name: project-id2
+            Version: 2
+            -----------------------------
+            Continue register? [Y/n]: 
+            Artifact registered.
+
+            Build queued.
+            You can see the status of your build at
+            https://platform.bymason.com/controller/projects/project-id2
+
+            Build completed.
+        """.format(apk_file1, apk_file2, config_file)))
+
     def test__build__invalid_version_fails(self):
         result = self.runner.invoke(cli, ['build', 'project-id', 'invalid'])
 
@@ -354,7 +591,11 @@ class CliTest(unittest.TestCase):
 
     def test__build__build_is_started(self):
         api = MagicMock()
-        config = Config(auth_store=self._initialized_auth_store(), api=api)
+        config = Config(
+            auth_store=self._initialized_auth_store(),
+            endpoints_store=self._initialized_endpoints_store(),
+            api=api
+        )
 
         result = self.runner.invoke(cli, ['build', 'project-id', '1'], obj=config)
 
@@ -368,7 +609,11 @@ class CliTest(unittest.TestCase):
     def test__build__build_is_started_and_awaited_for_completion(self):
         api = MagicMock()
         api.get_build = MagicMock(return_value={'data': {'status': 'COMPLETED'}})
-        config = Config(auth_store=self._initialized_auth_store(), api=api)
+        config = Config(
+            auth_store=self._initialized_auth_store(),
+            endpoints_store=self._initialized_endpoints_store(),
+            api=api
+        )
 
         result = self.runner.invoke(cli, ['build', '--await', 'project-id', '1'], obj=config)
 
@@ -426,7 +671,11 @@ class CliTest(unittest.TestCase):
     def test__stage__file_is_registered(self):
         config_file = os.path.join(__tests_root__, 'res/config.yml')
         api = MagicMock()
-        config = Config(auth_store=self._initialized_auth_store(), api=api)
+        config = Config(
+            auth_store=self._initialized_auth_store(),
+            endpoints_store=self._initialized_endpoints_store(),
+            api=api
+        )
 
         result = self.runner.invoke(cli, ['stage', config_file], obj=config)
 
@@ -450,7 +699,11 @@ class CliTest(unittest.TestCase):
         config_file = os.path.join(__tests_root__, 'res/config.yml')
         api = MagicMock()
         api.get_build = MagicMock(return_value={'data': {'status': 'COMPLETED'}})
-        config = Config(auth_store=self._initialized_auth_store(), api=api)
+        config = Config(
+            auth_store=self._initialized_auth_store(),
+            endpoints_store=self._initialized_endpoints_store(),
+            api=api
+        )
 
         result = self.runner.invoke(cli, ['stage', '--await', config_file], obj=config)
 
@@ -614,7 +867,7 @@ class CliTest(unittest.TestCase):
             Aborted!
         """))
 
-    def test__deploy_apk__config_is_deployed(self):
+    def test__deploy_apk__apk_is_deployed(self):
         api = MagicMock()
         config = Config(auth_store=self._initialized_auth_store(), api=api)
 
@@ -704,7 +957,7 @@ class CliTest(unittest.TestCase):
             Aborted!
         """))
 
-    def test__deploy_ota__config_is_deployed(self):
+    def test__deploy_ota__ota_is_deployed(self):
         api = MagicMock()
         config = Config(auth_store=self._initialized_auth_store(), api=api)
 
@@ -861,3 +1114,17 @@ class CliTest(unittest.TestCase):
             auth_store['access_token'] = 'access'
 
             return auth_store
+
+    def _initialized_endpoints_store(self):
+        endpoints_store = MagicMock()
+        endpoints_store.__getitem__ = MagicMock(return_value='https://platform.bymason.com')
+        return endpoints_store
+
+    @contextlib.contextmanager
+    def _cd(self, dir):
+        cwd = os.getcwd()
+        os.chdir(dir)
+        try:
+            yield dir
+        finally:
+            os.chdir(cwd)
