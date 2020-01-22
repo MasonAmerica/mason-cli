@@ -102,7 +102,7 @@ class RegisterProjectCommand(RegisterCommand):
         context = self._parse_context(masonrc)
 
         raw_config_file = self._validated_file(context.get('config') or 'mason.yml')
-        apk_files = self._validated_files(context.get('apps') or [], 'apk')
+        apk_files = self._validated_files(context.get('apps'), 'apk')
         config_file = self._rewritten_config(raw_config_file, apk_files)
 
         RegisterApkCommand(self.config, apk_files).run()
@@ -132,6 +132,11 @@ class RegisterProjectCommand(RegisterCommand):
         return file
 
     def _validated_files(self, paths, extension):
+        if not paths:
+            return []
+        elif type(paths) != list:
+            paths = [paths]
+
         files = []
 
         for file in paths:

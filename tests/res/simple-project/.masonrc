@@ -1,5 +1,3 @@
 {
-  "apps": [
-    "v1.apk"
-  ]
+  "apps": "v1.apk"
 }
