@@ -36,8 +36,13 @@ class RegisterCommand(Command):
             self.config.logger.info("{} '{}' registered.".format(
                 artifact.get_type().capitalize(), artifact.get_name()))
         except ApiError as e:
-            e.exit(self.config)
-            return
+            if self.config.force and e.message and 'already exists' in e.message:
+                self.config.logger.info("{} '{}' already registered, ignoring.".format(
+                    artifact.get_type().capitalize(), artifact.get_name()))
+                pass
+            else:
+                e.exit(self.config)
+                return
 
 
 class RegisterConfigCommand(RegisterCommand):
@@ -106,7 +111,10 @@ class RegisterProjectCommand(RegisterCommand):
         apk_files = self._validated_files(context.get('apps'), 'apk')
         config_file = self._rewritten_config(raw_config_file, apk_files)
 
+        self.config.force = True
         RegisterApkCommand(self.config, apk_files).run()
+        self.config.force = False
+
         self.config.logger.info('')
         StageCommand(self.config, [config_file], True, True, None).run()
 

@@ -40,8 +40,7 @@ class RequestHandler:
             return func(*args, **kwargs)
         except requests.RequestException as e:
             self.config.logger.debug('{} request to {} failed: {}'.format(type.upper(), args[0], e))
-            self.config.logger.error('Network request failed. Check you internet connection.')
-            raise ApiError()
+            raise ApiError('Network request failed. Check you internet connection.')
 
     def _handle_failed_response(self, r):
         self._handle_status(r.status_code)
@@ -49,7 +48,7 @@ class RequestHandler:
         if r.text:
             self._handle_errors_new_type(r)
             self._handle_errors_old_type(r)
-            self.config.logger.error(r.text)
+            raise ApiError(r.text)
 
         raise ApiError()
 
@@ -57,10 +56,8 @@ class RequestHandler:
         if status_code == 400:
             self.config.logger.debug('Client made a bad request, failed.')
         elif status_code == 401:
-            self.config.logger.error(
-                "Unauthorized: session expired or access denied. Run 'mason login' to "
-                "start a new session.")
-            raise ApiError()
+            raise ApiError("Unauthorized: session expired or access denied. Run 'mason login' to "
+                           "start a new session.")
         elif status_code == 403:
             self.config.logger.error('Access to domain is forbidden. Please contact support.')
         elif status_code == 404:
@@ -110,26 +107,22 @@ class RequestHandler:
             details = err_result['details']
             if type(details) is list:
                 details = [detail['message'] for detail in details]
-            self.config.logger.error('{}: {}'.format(err_result['error'], details))
+            raise ApiError('{}: {}'.format(err_result['error'], details))
         except (KeyError, ValueError):
             return
-
-        raise ApiError()
 
     def _handle_errors_old_type(self, r):
         try:
             details = r.json()['error']['details']
-            self.config.logger.error(details)
+            raise ApiError(details)
         except (KeyError, ValueError):
             try:
-                self.config.logger.error(r.json()['data'])
+                raise ApiError(r.json()['data'])
             except (KeyError, ValueError):
                 try:
-                    self.config.logger.error(r.json()['message'])
+                    raise ApiError(r.json()['message'])
                 except (KeyError, ValueError):
                     return
-
-        raise ApiError()
 
 
 class ApiError(Exception):

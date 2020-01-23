@@ -7,6 +7,7 @@ from click.testing import CliRunner
 from mock import MagicMock
 
 from cli import __version__
+from cli.internal.utils.remote import ApiError
 from cli.internal.utils.store import Store
 from cli.mason import Config
 from cli.mason import cli
@@ -474,6 +475,86 @@ class CliTest(unittest.TestCase):
             error: App '{}' declared in project context not found in project configuration.
             Aborted!
         """.format('com.example.unittestapp1')))
+
+    def test__register_project__config_already_present_failed(self):
+        simple_project = os.path.join(__tests_root__, 'res/simple-project')
+        config_file = os.path.join(__tests_root__, 'res/simple-project/mason.yml')
+        apk_file = os.path.join(__tests_root__, 'res/simple-project/v1.apk')
+        api = MagicMock()
+        api.upload_artifact = MagicMock(side_effect=ApiError(
+            'Artifact already exists and cannot be overwritten'))
+        config = Config(auth_store=self._initialized_auth_store(), api=api)
+
+        with self._cd(simple_project):
+            result = self.runner.invoke(cli, ['register', 'project'], obj=config)
+
+        self.assertEqual(result.exit_code, 1)
+        self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
+            ------------ APK ------------
+            File Name: {}
+            File size: 1319297
+            Package: com.example.unittestapp1
+            Version Name: 1.0
+            Version Code: 1
+            -----------------------------
+            Continue register? [Y/n]: 
+            Apk 'com.example.unittestapp1' already registered, ignoring.
+
+            --------- OS Config ---------
+            File Name: {}
+            File size: 189
+            Name: project-id2
+            Version: 2
+            -----------------------------
+            Continue register? [Y/n]: 
+            error: Artifact already exists and cannot be overwritten
+            Aborted!
+        """.format(apk_file, config_file)))
+
+    def test__register_project__artifact_already_present_is_ignored(self):
+        # noinspection PyUnusedLocal
+        def api_response(binary, artifact):
+            if artifact.get_type() == 'apk':
+                raise ApiError('Artifact already exists and cannot be overwritten')
+
+        simple_project = os.path.join(__tests_root__, 'res/simple-project')
+        config_file = os.path.join(__tests_root__, 'res/simple-project/mason.yml')
+        apk_file = os.path.join(__tests_root__, 'res/simple-project/v1.apk')
+        api = MagicMock()
+        api.upload_artifact = MagicMock(side_effect=api_response)
+        api.get_build = MagicMock(return_value={'data': {'status': 'COMPLETED'}})
+        config = Config(auth_store=self._initialized_auth_store(), api=api)
+
+        with self._cd(simple_project):
+            result = self.runner.invoke(cli, ['register', 'project'], obj=config)
+
+        self.assertEqual(result.exit_code, 0)
+        self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
+            ------------ APK ------------
+            File Name: {}
+            File size: 1319297
+            Package: com.example.unittestapp1
+            Version Name: 1.0
+            Version Code: 1
+            -----------------------------
+            Continue register? [Y/n]: 
+            Apk 'com.example.unittestapp1' already registered, ignoring.
+
+            --------- OS Config ---------
+            File Name: {}
+            File size: 189
+            Name: project-id2
+            Version: 2
+            -----------------------------
+            Continue register? [Y/n]: 
+            Config 'project-id2' registered.
+
+            Build queued.
+            You can see the status of your build at
+            https://platform.bymason.com/controller/projects/project-id2
+
+            Build completed.
+        """.format(apk_file, config_file)))
 
     def test__register_project__simple_project_is_registered_and_built(self):
         simple_project = os.path.join(__tests_root__, 'res/simple-project')
