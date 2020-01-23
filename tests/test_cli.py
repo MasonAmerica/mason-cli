@@ -183,7 +183,7 @@ class CliTest(unittest.TestCase):
             Version: 1
             -----------------------------
             Continue register? [Y/n]: 
-            Artifact registered.
+            Config 'project-id' registered.
         """.format(config_file)))
 
     def test__register_config__files_are_registered(self):
@@ -205,7 +205,7 @@ class CliTest(unittest.TestCase):
             Version: 1
             -----------------------------
             Continue register? [Y/n]: 
-            Artifact registered.
+            Config 'project-id' registered.
 
             --------- OS Config ---------
             File Name: {}
@@ -214,7 +214,7 @@ class CliTest(unittest.TestCase):
             Version: 2
             -----------------------------
             Continue register? [Y/n]: 
-            Artifact registered.
+            Config 'project-id2' registered.
         """.format(config_file1, config_file2)))
 
     def test__register_apk__no_files_fails(self):
@@ -277,7 +277,7 @@ class CliTest(unittest.TestCase):
             Version Code: 1
             -----------------------------
             Continue register? [Y/n]: 
-            Artifact registered.
+            Apk 'com.example.unittestapp1' registered.
         """.format(apk_file)))
 
     def test__register_apk__files_are_registered(self):
@@ -298,7 +298,7 @@ class CliTest(unittest.TestCase):
             Version Code: 1
             -----------------------------
             Continue register? [Y/n]: 
-            Artifact registered.
+            Apk 'com.example.unittestapp1' registered.
 
             ------------ APK ------------
             File Name: {}
@@ -308,7 +308,7 @@ class CliTest(unittest.TestCase):
             Version Code: 1
             -----------------------------
             Continue register? [Y/n]: 
-            Artifact registered.
+            Apk 'com.example.unittestapp1' registered.
         """.format(apk_file1, apk_file2)))
 
     def test__register_media__no_files_fails(self):
@@ -395,7 +395,7 @@ class CliTest(unittest.TestCase):
             Type: bootanimation
             -----------------------------
             Continue register? [Y/n]: 
-            Artifact registered.
+            Media 'Anim name' registered.
         """.format(media_file)))
 
     def test__register_project__no_context_fails(self):
@@ -500,7 +500,7 @@ class CliTest(unittest.TestCase):
             Version Code: 1
             -----------------------------
             Continue register? [Y/n]: 
-            Artifact registered.
+            Apk 'com.example.unittestapp1' registered.
 
             --------- OS Config ---------
             File Name: {}
@@ -509,7 +509,7 @@ class CliTest(unittest.TestCase):
             Version: 2
             -----------------------------
             Continue register? [Y/n]: 
-            Artifact registered.
+            Config 'project-id2' registered.
 
             Build queued.
             You can see the status of your build at
@@ -544,7 +544,7 @@ class CliTest(unittest.TestCase):
             Version Code: 1
             -----------------------------
             Continue register? [Y/n]: 
-            Artifact registered.
+            Apk 'com.example.unittestapp1' registered.
 
             ------------ APK ------------
             File Name: {}
@@ -554,7 +554,7 @@ class CliTest(unittest.TestCase):
             Version Code: 1
             -----------------------------
             Continue register? [Y/n]: 
-            Artifact registered.
+            Apk 'com.example.unittestapp1' registered.
 
             --------- OS Config ---------
             File Name: {}
@@ -563,7 +563,7 @@ class CliTest(unittest.TestCase):
             Version: 2
             -----------------------------
             Continue register? [Y/n]: 
-            Artifact registered.
+            Config 'project-id2' registered.
 
             Build queued.
             You can see the status of your build at
@@ -688,7 +688,7 @@ class CliTest(unittest.TestCase):
             Version: 1
             -----------------------------
             Continue register? [Y/n]: 
-            Artifact registered.
+            Config 'project-id' registered.
 
             Build queued.
             You can see the status of your build at
@@ -716,7 +716,7 @@ class CliTest(unittest.TestCase):
             Version: 1
             -----------------------------
             Continue register? [Y/n]: 
-            Artifact registered.
+            Config 'project-id' registered.
 
             Build queued.
             You can see the status of your build at
@@ -791,7 +791,7 @@ class CliTest(unittest.TestCase):
             Push: False
             -----------------------------
             Continue deploy? [Y/n]: 
-            Artifact deployed.
+            Config 'project-id' deployed.
         """))
 
     def test__deploy_config__warning_is_logged_when_no_https_flag_is_used(self):
@@ -817,7 +817,7 @@ class CliTest(unittest.TestCase):
             ***WARNING***
             -----------------------------
             Continue deploy? [Y/n]: 
-            Artifact deployed.
+            Config 'project-id' deployed.
         """))
 
     def test__deploy_apk__invalid_name_fails(self):
@@ -886,7 +886,7 @@ class CliTest(unittest.TestCase):
             Push: False
             -----------------------------
             Continue deploy? [Y/n]: 
-            Artifact deployed.
+            Apk 'com.example.app' deployed.
         """))
 
     def test__deploy_apk__warning_is_logged_when_no_https_flag_is_used(self):
@@ -912,7 +912,7 @@ class CliTest(unittest.TestCase):
             ***WARNING***
             -----------------------------
             Continue deploy? [Y/n]: 
-            Artifact deployed.
+            Apk 'com.example.app' deployed.
         """))
 
     def test__deploy_ota__no_group_fails(self):
@@ -976,7 +976,7 @@ class CliTest(unittest.TestCase):
             Push: False
             -----------------------------
             Continue deploy? [Y/n]: 
-            Artifact deployed.
+            Ota 'mason-os' deployed.
         """))
 
     def test__deploy_ota__warning_is_logged_when_no_https_flag_is_used(self):
@@ -1002,7 +1002,7 @@ class CliTest(unittest.TestCase):
             ***WARNING***
             -----------------------------
             Continue deploy? [Y/n]: 
-            Artifact deployed.
+            Ota 'mason-os' deployed.
         """))
 
     def test__deploy_ota__warning_is_logged_when_invalid_name(self):
@@ -1029,7 +1029,7 @@ class CliTest(unittest.TestCase):
             ***WARNING***
             -----------------------------
             Continue deploy? [Y/n]: 
-            Artifact deployed.
+            Ota 'mason-os' deployed.
         """))
 
     def test__login__saves_creds(self):

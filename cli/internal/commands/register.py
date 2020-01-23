@@ -33,7 +33,8 @@ class RegisterCommand(Command):
 
         try:
             self.config.api.upload_artifact(binary, artifact)
-            self.config.logger.info('Artifact registered.')
+            self.config.logger.info("{} '{}' registered.".format(
+                artifact.get_type().capitalize(), artifact.get_name()))
         except ApiError as e:
             e.exit(self.config)
             return

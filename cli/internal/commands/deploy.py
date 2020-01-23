@@ -31,7 +31,7 @@ class DeployCommand(Command):
         try:
             self.config.api.deploy_artifact(
                 self.type, self.name, self.version, group, self.config.push, self.config.no_https)
-            self.config.logger.info('Artifact deployed.')
+            self.config.logger.info("{} '{}' deployed.".format(self.type.capitalize(), self.name))
         except ApiError as e:
             e.exit(self.config)
             return
