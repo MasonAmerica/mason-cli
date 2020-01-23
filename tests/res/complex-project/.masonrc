@@ -1,5 +1,8 @@
 {
-  "config": ".mason/config.yml",
+  "configs": [
+    ".mason",
+    "config3.yml"
+  ],
   "apps": [
     "test-path/v1.apk",
     "built-apks"

@@ -601,7 +601,8 @@ class CliTest(unittest.TestCase):
 
     def test__register_project__complex_project_is_registered_and_built(self):
         complex_project = os.path.join(__tests_root__, 'res/complex-project')
-        config_file = os.path.join(__tests_root__, 'res/complex-project/.mason/config.yml')
+        config_file1 = os.path.join(__tests_root__, 'res/complex-project/.mason/config2.yml')
+        config_file2 = os.path.join(__tests_root__, 'res/complex-project/config3.yml')
         apk_file1 = os.path.join(__tests_root__, 'res/complex-project/test-path/v1.apk')
         apk_file2 = os.path.join(__tests_root__, 'res/complex-project/built-apks/built.apk')
         api = MagicMock()
@@ -651,7 +652,22 @@ class CliTest(unittest.TestCase):
             https://platform.bymason.com/controller/projects/project-id2
 
             Build completed.
-        """.format(apk_file1, apk_file2, config_file)))
+
+            --------- OS Config ---------
+            File Name: {}
+            File size: 262
+            Name: project-id3
+            Version: 1
+            -----------------------------
+            Continue register? [Y/n]: 
+            Config 'project-id3' registered.
+
+            Build queued.
+            You can see the status of your build at
+            https://platform.bymason.com/controller/projects/project-id3
+
+            Build completed.
+        """.format(apk_file1, apk_file2, config_file1, config_file2)))
 
     def test__build__invalid_version_fails(self):
         result = self.runner.invoke(cli, ['build', 'project-id', 'invalid'])

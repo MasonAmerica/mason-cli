@@ -69,7 +69,7 @@ class RegisterCommandTest(unittest.TestCase):
         simple_project = os.path.join(__tests_root__, 'res/simple-project')
         apk_file = os.path.join(__tests_root__, 'res/simple-project/v1.apk')
         working_dir = tempfile.mkdtemp()
-        config_file = os.path.join(working_dir, 'config.yml')
+        config_file = os.path.join(working_dir, 'mason.yml')
         command = RegisterProjectCommand(config, simple_project, working_dir)
 
         command.run()
@@ -86,7 +86,7 @@ class RegisterCommandTest(unittest.TestCase):
         config.api.get_build = MagicMock(return_value={'data': {'status': 'COMPLETED'}})
         simple_project = os.path.join(__tests_root__, 'res/simple-project')
         working_dir = tempfile.mkdtemp()
-        config_file = os.path.join(working_dir, 'config.yml')
+        config_file = os.path.join(working_dir, 'mason.yml')
         command = RegisterProjectCommand(config, simple_project, working_dir)
 
         command.run()

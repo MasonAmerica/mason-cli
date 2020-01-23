@@ -107,16 +107,18 @@ class RegisterProjectCommand(RegisterCommand):
         masonrc = self._validated_masonrc()
         context = self._parse_context(masonrc)
 
-        raw_config_file = self._validated_file(context.get('config') or 'mason.yml')
+        raw_config_files = self._validated_files(context.get('configs') or 'mason.yml', 'yml')
         apk_files = self._validated_files(context.get('apps'), 'apk')
-        config_file = self._rewritten_config(raw_config_file, apk_files)
+        config_files = []
+        for raw_config_file in raw_config_files:
+            config_files.append(self._rewritten_config(raw_config_file, apk_files))
 
         self.config.force = True
         RegisterApkCommand(self.config, apk_files).run()
         self.config.force = False
 
         self.config.logger.info('')
-        StageCommand(self.config, [config_file], True, True, None).run()
+        StageCommand(self.config, config_files, True, True, None).run()
 
     def _validated_masonrc(self):
         masonrc = os.path.join(self.context_file, '.masonrc')
@@ -151,7 +153,7 @@ class RegisterProjectCommand(RegisterCommand):
         for file in paths:
             if os.path.isdir(file):
                 sub_paths = list(map(lambda sub: os.path.join(file, sub), os.listdir(file)))
-                sub_paths = list(filter(lambda f: f.endswith('.apk'), sub_paths))
+                sub_paths = list(filter(lambda f: f.endswith('.{}'.format(extension)), sub_paths))
                 files.extend(self._validated_files(sub_paths, extension))
             else:
                 files.append(self._validated_file(file))
@@ -183,7 +185,7 @@ class RegisterProjectCommand(RegisterCommand):
                     app['version_code'] = int(version)
                     break
 
-        config_file = os.path.join(self.working_dir, 'config.yml')
+        config_file = os.path.join(self.working_dir, os.path.basename(raw_config_file))
         with open(config_file, 'w') as f:
             f.write(yaml.safe_dump(config))
         return config_file

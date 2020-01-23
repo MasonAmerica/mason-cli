@@ -13,7 +13,7 @@ class StageCommand(Command):
         self.mason_version = mason_version
 
     def run(self):
-        for file in self.config_files:
+        for num, file in enumerate(self.config_files):
             artifact = OSConfig.parse(self.config, file)
             register_command = RegisterConfigCommand(self.config, [file])
             build_command = BuildCommand(
@@ -27,3 +27,6 @@ class StageCommand(Command):
             register_command.run()
             self.config.logger.info('')
             build_command.run()
+
+            if num + 1 < len(self.config_files):
+                self.config.logger.info('')
