@@ -30,4 +30,7 @@ the CLI for your platform under "Assets".
 
 #### Testing the CLI
 
-1. Run `python3 setup.py test`
+All behavior changes and bug fixes should come with associated test changes. While you can manually
+run tests with `python3 setup.py test`, the best way to do so is with IntelliJ's
+[Auto Test](https://www.jetbrains.com/help/idea/monitoring-and-managing-tests.html) feature which
+continuously tests your code as you write it. Just run all tests in the `tests` folder.
