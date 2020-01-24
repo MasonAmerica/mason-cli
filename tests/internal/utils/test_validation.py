@@ -4,8 +4,8 @@ import click
 from mock import MagicMock
 
 from cli.internal.utils.validation import validate_api_key
+from cli.internal.utils.validation import validate_artifact_version
 from cli.internal.utils.validation import validate_credentials
-from cli.internal.utils.validation import validate_version
 
 
 class ValidationTest(unittest.TestCase):
@@ -59,22 +59,25 @@ class ValidationTest(unittest.TestCase):
 
     def test__validate_version__object_fails(self):
         with self.assertRaises(click.Abort):
-            validate_version(MagicMock(), {}, 'foo')
+            validate_artifact_version(MagicMock(), {}, 'foo')
 
     def test__validate_version__text_string_fails(self):
         with self.assertRaises(click.Abort):
-            validate_version(MagicMock(), 'foo', 'foo')
+            validate_artifact_version(MagicMock(), 'foo', 'foo')
+
+    def test__validate_version__latest_keyword_succeeds(self):
+        self.assertIsNone(validate_artifact_version(MagicMock(), 'latest', 'foo'))
 
     def test__validate_version__huge_number_fails(self):
         with self.assertRaises(click.Abort):
-            validate_version(MagicMock(), 3498738943789379832389423942983, 'foo')
+            validate_artifact_version(MagicMock(), 3498738943789379832389423942983, 'foo')
 
     def test__validate_version__negative_number_fails(self):
         with self.assertRaises(click.Abort):
-            validate_version(MagicMock(), -1, 'foo')
+            validate_artifact_version(MagicMock(), -1, 'foo')
 
     def test__validate_version__number_string_succeeds(self):
-        self.assertIsNone(validate_version(MagicMock(), '123', 'foo'))
+        self.assertIsNone(validate_artifact_version(MagicMock(), '123', 'foo'))
 
     def test__validate_version__number_succeeds(self):
-        self.assertIsNone(validate_version(MagicMock(), 321, 'foo'))
+        self.assertIsNone(validate_artifact_version(MagicMock(), 321, 'foo'))

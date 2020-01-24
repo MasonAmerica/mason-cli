@@ -9,7 +9,7 @@ import click
 from pyaxmlparser import APK
 
 from cli.internal.models.artifacts import IArtifact
-from cli.internal.utils.validation import validate_version
+from cli.internal.utils.validation import validate_artifact_version
 
 # Disable pyaxmlparser logs since it spits out unnecessary warnings
 logging.getLogger("pyaxmlparser.core").setLevel("ERROR")
@@ -35,7 +35,7 @@ class Apk(IArtifact):
 
     # TODO: Move this entire validation to service side.
     def validate(self):
-        validate_version(self.config, self.version, 'apk')
+        validate_artifact_version(self.config, self.version, self.get_type())
 
         # If not parsed well by apk_parse
         if not self.apkf.is_valid_APK():

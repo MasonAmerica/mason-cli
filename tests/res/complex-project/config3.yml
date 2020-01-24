@@ -1,12 +1,1 @@
-os:
-  name: project-id3
-  version: 1
-  configurations:
-    mason-management:
-      disable_keyguard: true
-apps:
-  - name: Testy Testeron
-    package_name: com.example.app
-    version_code: 1
-  - name: Dummy app
-    package_name: com.example.unittestapp1
+../config3.yml

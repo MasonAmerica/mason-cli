@@ -32,14 +32,85 @@ class RegisterCommandTest(unittest.TestCase):
         with self.assertRaises(click.Abort):
             command.run()
 
-    def test_config_registers_successfully(self):
-        config_file = os.path.join(__tests_root__, 'res/config.yml')
+    def test_registration_with_rewrite_exits_cleanly_on_failure(self):
+        config_file = os.path.join(__tests_root__, 'res/config3.yml')
         command = RegisterConfigCommand(self.config, [config_file])
+        self.config.api.get_latest_artifact = MagicMock(side_effect=ApiError())
+
+        with self.assertRaises(click.Abort):
+            command.run()
+
+    def test_config_registers_successfully(self):
+        input_config_file = os.path.join(__tests_root__, 'res/config.yml')
+        working_dir = tempfile.mkdtemp()
+        config_file = os.path.join(working_dir, 'config.yml')
+        command = RegisterConfigCommand(self.config, [input_config_file], working_dir)
 
         command.run()
 
         self.config.api.upload_artifact.assert_called_with(
             config_file, OSConfig.parse(self.config, config_file))
+
+    def test_config_registers_rewritten_config_successfully(self):
+        self.config.api.get_latest_artifact = MagicMock(return_value={'version': '41'})
+        input_config_file = os.path.join(__tests_root__, 'res/config4.yml')
+        working_dir = tempfile.mkdtemp()
+        config_file = os.path.join(working_dir, 'config4.yml')
+        command = RegisterConfigCommand(self.config, [input_config_file], working_dir)
+
+        command.run()
+        with open(config_file, 'r') as f:
+            yml = yaml.safe_load(f)
+
+        self.assertDictEqual(yml, {
+            'os': {
+                'name': 'project-id4',
+                'version': 42,
+                'configurations': {'mason-management': {'disable_keyguard': True}}
+            },
+            'apps': [{
+                'name': 'Testy Testeron',
+                'package_name': 'com.example.app1',
+                'version_code': 1
+            }, {
+                'name': 'Testy Testeron',
+                'package_name': 'com.example.app2',
+                'version_code': 41
+            }]
+        })
+
+    def test_config_registers_new_rewritten_config_successfully(self):
+        # noinspection PyUnusedLocal
+        def version_finder(name, type):
+            if type == 'apk':
+                return {'version': '12'}
+
+        self.config.api.get_latest_artifact = MagicMock(side_effect=version_finder)
+        input_config_file = os.path.join(__tests_root__, 'res/config4.yml')
+        working_dir = tempfile.mkdtemp()
+        config_file = os.path.join(working_dir, 'config4.yml')
+        command = RegisterConfigCommand(self.config, [input_config_file], working_dir)
+
+        command.run()
+        with open(config_file, 'r') as f:
+            yml = yaml.safe_load(f)
+
+        self.assertDictEqual(yml, {
+            'os': {
+                'name': 'project-id4',
+                'version': 1,
+                'configurations': {'mason-management': {'disable_keyguard': True}}
+            },
+            'apps': [{
+                'name': 'Testy Testeron',
+                'package_name': 'com.example.app1',
+                'version_code': 1
+            }, {
+                'name': 'Testy Testeron',
+                'package_name': 'com.example.app2',
+                'version_code': 12
+            }]
+        })
 
     def test_apk_registers_successfully(self):
         apk_file1 = os.path.join(__tests_root__, 'res/v1.apk')
@@ -63,31 +134,29 @@ class RegisterCommandTest(unittest.TestCase):
             media_file, Media.parse(self.config, 'Boot anim', 'bootanimation', '1', media_file))
 
     def test_project_registers_successfully(self):
-        config = self.config.copy()
-        config.endpoints_store.__getitem__ = MagicMock(return_value='https://google.com')
-        config.api.get_build = MagicMock(return_value={'data': {'status': 'COMPLETED'}})
+        self.config.endpoints_store.__getitem__ = MagicMock(return_value='https://google.com')
+        self.config.api.get_build = MagicMock(return_value={'data': {'status': 'COMPLETED'}})
         simple_project = os.path.join(__tests_root__, 'res/simple-project')
         apk_file = os.path.join(__tests_root__, 'res/simple-project/v1.apk')
         working_dir = tempfile.mkdtemp()
         config_file = os.path.join(working_dir, 'mason.yml')
-        command = RegisterProjectCommand(config, simple_project, working_dir)
+        command = RegisterProjectCommand(self.config, simple_project, working_dir)
 
         command.run()
 
-        config.api.upload_artifact.assert_has_calls([
-            call(apk_file, Apk.parse(config, apk_file)),
-            call(config_file, OSConfig.parse(config, config_file))
+        self.config.api.upload_artifact.assert_has_calls([
+            call(apk_file, Apk.parse(self.config, apk_file)),
+            call(config_file, OSConfig.parse(self.config, config_file))
         ])
-        config.api.start_build.assert_called_with('project-id2', '2', True, None)
+        self.config.api.start_build.assert_called_with('project-id2', '2', True, None)
 
     def test_project_registers_updated_config(self):
-        config = self.config.copy()
-        config.endpoints_store.__getitem__ = MagicMock(return_value='https://google.com')
-        config.api.get_build = MagicMock(return_value={'data': {'status': 'COMPLETED'}})
+        self.config.endpoints_store.__getitem__ = MagicMock(return_value='https://google.com')
+        self.config.api.get_build = MagicMock(return_value={'data': {'status': 'COMPLETED'}})
         simple_project = os.path.join(__tests_root__, 'res/simple-project')
         working_dir = tempfile.mkdtemp()
         config_file = os.path.join(working_dir, 'mason.yml')
-        command = RegisterProjectCommand(config, simple_project, working_dir)
+        command = RegisterProjectCommand(self.config, simple_project, working_dir)
 
         command.run()
         with open(config_file, 'r') as f:

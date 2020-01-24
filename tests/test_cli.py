@@ -21,6 +21,7 @@ class CliTest(unittest.TestCase):
     def test__version__command_prints_info(self):
         result = self.runner.invoke(cli, ['version'])
 
+        self.assertIsNone(result.exception)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             Mason CLI v{}
@@ -31,6 +32,7 @@ class CliTest(unittest.TestCase):
     def test__version__V_flag_prints_info(self):
         result = self.runner.invoke(cli, ['-V'])
 
+        self.assertIsNone(result.exception)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             Mason CLI v{}
@@ -41,6 +43,7 @@ class CliTest(unittest.TestCase):
     def test__version__version_option_prints_info(self):
         result = self.runner.invoke(cli, ['--version'])
 
+        self.assertIsNone(result.exception)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             Mason CLI v{}
@@ -51,6 +54,7 @@ class CliTest(unittest.TestCase):
     def test__logging__starts_at_info_level_by_default(self):
         result = self.runner.invoke(cli, ['version'])
 
+        self.assertIsNone(result.exception)
         self.assertEqual(result.exit_code, 0)
         self.assertNotIn('Lowest logging level activated.', result.output)
         self.assertNotIn('debug: Debug logging activated.', result.output)
@@ -58,6 +62,7 @@ class CliTest(unittest.TestCase):
     def test__logging__switching_to_debug_level_logs_debug_messages(self):
         result = self.runner.invoke(cli, ['-v', 'debug', 'version'])
 
+        self.assertIsNone(result.exception)
         self.assertEqual(result.exit_code, 0)
         self.assertNotIn('Lowest logging level activated.', result.output)
         self.assertIn('debug: Debug logging activated.', result.output)
@@ -65,6 +70,7 @@ class CliTest(unittest.TestCase):
     def test__logging__switching_to_custom_level_logs_custom_messages(self):
         result = self.runner.invoke(cli, ['-v', '1', 'version'])
 
+        self.assertIsNone(result.exception)
         self.assertEqual(result.exit_code, 0)
         self.assertIn('Lowest logging level activated.', result.output)
         self.assertIn('debug: Debug logging activated.', result.output)
@@ -74,6 +80,7 @@ class CliTest(unittest.TestCase):
         result = self.runner.invoke(cli, ['version'])
         del os.environ['LOGLEVEL']
 
+        self.assertIsNone(result.exception)
         self.assertEqual(result.exit_code, 0)
         self.assertNotIn('Lowest logging level activated.', result.output)
         self.assertIn('debug: Debug logging activated.', result.output)
@@ -83,6 +90,7 @@ class CliTest(unittest.TestCase):
         result = self.runner.invoke(cli, ['version'])
         del os.environ['LOGLEVEL']
 
+        self.assertIsNone(result.exception)
         self.assertEqual(result.exit_code, 0)
         self.assertIn('Lowest logging level activated.', result.output)
         self.assertIn('debug: Debug logging activated.', result.output)
@@ -90,12 +98,14 @@ class CliTest(unittest.TestCase):
     def test__logging__colors_are_enabled_by_default(self):
         result = self.runner.invoke(cli, ['-v', 'debug', 'version'], color=True)
 
+        self.assertIsNone(result.exception)
         self.assertEqual(result.exit_code, 0)
         self.assertIn(b'\x1b[34mdebug: \x1b[0mDebug logging activated.', result.stdout_bytes)
 
     def test__logging__colors_can_be_disabled(self):
         result = self.runner.invoke(cli, ['-v', 'debug', '--no-color', 'version'], color=True)
 
+        self.assertIsNone(result.exception)
         self.assertEqual(result.exit_code, 0)
         self.assertNotIn(b'\x1b[34mdebug: \x1b[0mDebug logging activated.', result.stdout_bytes)
 
@@ -107,6 +117,7 @@ class CliTest(unittest.TestCase):
 
         result = self.runner.invoke(cli, ['version'], obj=config)
 
+        self.assertIsNone(result.exception)
         self.assertEqual(result.exit_code, 0)
 
         self.assertDictEqual(auth_store._fields, {'api_key': 'Foobar'})
@@ -119,6 +130,7 @@ class CliTest(unittest.TestCase):
 
         result = self.runner.invoke(cli, ['--token', 'New foobar', 'version'], obj=config)
 
+        self.assertIsNone(result.exception)
         self.assertEqual(result.exit_code, 0)
 
         self.assertDictEqual(auth_store._fields, {'api_key': 'New foobar'})
@@ -143,9 +155,52 @@ class CliTest(unittest.TestCase):
 
         result = self.runner.invoke(cli, ['register', 'config', config_file], obj=config)
 
+        self.assertIsInstance(result.exception, SystemExit)
         self.assertEqual(result.exit_code, 1)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             error: Not authenticated. Run 'mason login' to sign in.
+            Aborted!
+        """))
+
+    def test__register_config__existing_artifact_fails(self):
+        config_file = os.path.join(__tests_root__, 'res/config.yml')
+        api = MagicMock()
+        api.upload_artifact = MagicMock(side_effect=ApiError(
+            'Artifact already exists and cannot be overwritten'))
+        config = Config(auth_store=self._initialized_auth_store(), api=api)
+
+        result = self.runner.invoke(cli, ['register', 'config', config_file], obj=config)
+
+        self.assertIsInstance(result.exception, SystemExit)
+        self.assertEqual(result.exit_code, 1)
+        self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
+            --------- OS Config ---------
+            File Name: {}
+            File size: 184
+            Name: project-id
+            Version: 1
+            -----------------------------
+            Continue register? [Y/n]: 
+            error: Artifact already exists and cannot be overwritten
+            Aborted!
+        """.format(config_file)))
+
+    def test__register_config__latest_non_existent_apk_fails(self):
+        config_file = os.path.join(__tests_root__, 'res/complex-project/config3.yml')
+        api = MagicMock()
+        api.get_latest_artifact = MagicMock(return_value=None)
+        config = Config(
+            auth_store=self._initialized_auth_store(),
+            endpoints_store=self._initialized_endpoints_store(),
+            api=api
+        )
+
+        result = self.runner.invoke(cli, ['register', 'config', config_file], obj=config)
+
+        self.assertIsInstance(result.exception, SystemExit)
+        self.assertEqual(result.exit_code, 1)
+        self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
+            error: Apk 'com.example.app2' not found, register it first.
             Aborted!
         """))
 
@@ -156,11 +211,12 @@ class CliTest(unittest.TestCase):
 
         result = self.runner.invoke(cli, ['register', 'config', config_file], obj=config, input='n')
 
+        self.assertIsInstance(result.exception, SystemExit)
         self.assertEqual(result.exit_code, 1)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             --------- OS Config ---------
             File Name: {}
-            File size: 190
+            File size: 184
             Name: project-id
             Version: 1
             -----------------------------
@@ -175,16 +231,38 @@ class CliTest(unittest.TestCase):
 
         result = self.runner.invoke(cli, ['register', 'config', config_file], obj=config)
 
+        self.assertIsNone(result.exception)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             --------- OS Config ---------
             File Name: {}
-            File size: 190
+            File size: 184
             Name: project-id
             Version: 1
             -----------------------------
             Continue register? [Y/n]: 
             Config 'project-id' registered.
+        """.format(config_file)))
+
+    def test__register_config__rewritten_file_is_registered(self):
+        config_file = os.path.join(__tests_root__, 'res/config4.yml')
+        api = MagicMock()
+        api.get_latest_artifact = MagicMock(return_value={'version': '41'})
+        config = Config(auth_store=self._initialized_auth_store(), api=api)
+
+        result = self.runner.invoke(cli, ['register', 'config', config_file], obj=config)
+
+        self.assertIsNone(result.exception)
+        self.assertEqual(result.exit_code, 0)
+        self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
+            --------- OS Config ---------
+            File Name: {}
+            File size: 262
+            Name: project-id4
+            Version: 42
+            -----------------------------
+            Continue register? [Y/n]: 
+            Config 'project-id4' registered.
         """.format(config_file)))
 
     def test__register_config__files_are_registered(self):
@@ -197,11 +275,12 @@ class CliTest(unittest.TestCase):
             'register', 'config', config_file1, config_file2
         ], obj=config)
 
+        self.assertIsNone(result.exception)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             --------- OS Config ---------
             File Name: {}
-            File size: 190
+            File size: 184
             Name: project-id
             Version: 1
             -----------------------------
@@ -210,7 +289,7 @@ class CliTest(unittest.TestCase):
 
             --------- OS Config ---------
             File Name: {}
-            File size: 175
+            File size: 171
             Name: project-id2
             Version: 2
             -----------------------------
@@ -235,11 +314,36 @@ class CliTest(unittest.TestCase):
 
         result = self.runner.invoke(cli, ['register', 'apk', apk_file], obj=config)
 
+        self.assertIsInstance(result.exception, SystemExit)
         self.assertEqual(result.exit_code, 1)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             error: Not authenticated. Run 'mason login' to sign in.
             Aborted!
         """))
+
+    def test__register_apk__existing_artifact_fails(self):
+        apk_file = os.path.join(__tests_root__, 'res/v1.apk')
+        api = MagicMock()
+        api.upload_artifact = MagicMock(side_effect=ApiError(
+            'Artifact already exists and cannot be overwritten'))
+        config = Config(auth_store=self._initialized_auth_store(), api=api)
+
+        result = self.runner.invoke(cli, ['register', 'apk', apk_file], obj=config)
+
+        self.assertIsInstance(result.exception, SystemExit)
+        self.assertEqual(result.exit_code, 1)
+        self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
+            ------------ APK ------------
+            File Name: {}
+            File size: 1319297
+            Package: com.example.unittestapp1
+            Version Name: 1.0
+            Version Code: 1
+            -----------------------------
+            Continue register? [Y/n]: 
+            error: Artifact already exists and cannot be overwritten
+            Aborted!
+        """.format(apk_file)))
 
     def test__register_apk__negative_confirmation_aborts(self):
         apk_file = os.path.join(__tests_root__, 'res/v1.apk')
@@ -248,6 +352,7 @@ class CliTest(unittest.TestCase):
 
         result = self.runner.invoke(cli, ['register', 'apk', apk_file], obj=config, input='n')
 
+        self.assertIsInstance(result.exception, SystemExit)
         self.assertEqual(result.exit_code, 1)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             ------------ APK ------------
@@ -268,6 +373,7 @@ class CliTest(unittest.TestCase):
 
         result = self.runner.invoke(cli, ['register', 'apk', apk_file], obj=config)
 
+        self.assertIsNone(result.exception)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             ------------ APK ------------
@@ -289,6 +395,7 @@ class CliTest(unittest.TestCase):
 
         result = self.runner.invoke(cli, ['register', 'apk', apk_file1, apk_file2], obj=config)
 
+        self.assertIsNone(result.exception)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             ------------ APK ------------
@@ -321,6 +428,7 @@ class CliTest(unittest.TestCase):
         result = self.runner.invoke(
             cli, ['register', 'media', 'bootanimation', 'Anim name', '1', 'foobar'])
 
+        self.assertIsInstance(result.exception, SystemExit)
         self.assertEqual(result.exit_code, 1)
 
     def test__register_media__invalid_media_type_fails(self):
@@ -328,6 +436,7 @@ class CliTest(unittest.TestCase):
         result = self.runner.invoke(
             cli, ['register', 'media', 'invalid', 'Anim name', '1', media_file])
 
+        self.assertIsInstance(result.exception, SystemExit)
         self.assertEqual(result.exit_code, 1)
 
     def test__register_media__invalid_version_fails(self):
@@ -335,6 +444,7 @@ class CliTest(unittest.TestCase):
         result = self.runner.invoke(
             cli, ['register', 'media', 'bootanimation', 'Anim name', 'invalid', media_file])
 
+        self.assertIsInstance(result.exception, SystemExit)
         self.assertEqual(result.exit_code, 1)
 
     def test__register_media__no_creds_fails(self):
@@ -347,6 +457,7 @@ class CliTest(unittest.TestCase):
             'bootanimation', 'Anim name', '1', media_file
         ], obj=config)
 
+        self.assertIsInstance(result.exception, SystemExit)
         self.assertEqual(result.exit_code, 1)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             error: Not authenticated. Run 'mason login' to sign in.
@@ -363,6 +474,7 @@ class CliTest(unittest.TestCase):
             'bootanimation', 'Anim name', '1', media_file
         ], obj=config, input='n')
 
+        self.assertIsInstance(result.exception, SystemExit)
         self.assertEqual(result.exit_code, 1)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             ----------- MEDIA -----------
@@ -386,6 +498,7 @@ class CliTest(unittest.TestCase):
             'bootanimation', 'Anim name', '1', media_file
         ], obj=config)
 
+        self.assertIsNone(result.exception)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             ----------- MEDIA -----------
@@ -405,6 +518,7 @@ class CliTest(unittest.TestCase):
 
         result = self.runner.invoke(cli, ['register', 'project'], obj=config)
 
+        self.assertIsInstance(result.exception, SystemExit)
         self.assertEqual(result.exit_code, 1)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             error: .masonrc file not found. Please run 'mason init' to create the project context.
@@ -420,6 +534,7 @@ class CliTest(unittest.TestCase):
         with self._cd(invalid_project):
             result = self.runner.invoke(cli, ['register', 'project'], obj=config)
 
+        self.assertIsInstance(result.exception, SystemExit)
         self.assertEqual(result.exit_code, 1)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             error: Project resource does not exist: {}
@@ -434,6 +549,7 @@ class CliTest(unittest.TestCase):
         with self._cd(simple_project):
             result = self.runner.invoke(cli, ['register', 'project'], obj=config)
 
+        self.assertIsInstance(result.exception, SystemExit)
         self.assertEqual(result.exit_code, 1)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             error: Not authenticated. Run 'mason login' to sign in.
@@ -449,6 +565,7 @@ class CliTest(unittest.TestCase):
         with self._cd(simple_project):
             result = self.runner.invoke(cli, ['register', 'project'], obj=config, input='n')
 
+        self.assertIsInstance(result.exception, SystemExit)
         self.assertEqual(result.exit_code, 1)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             ------------ APK ------------
@@ -470,6 +587,7 @@ class CliTest(unittest.TestCase):
         with self._cd(no_app_project):
             result = self.runner.invoke(cli, ['register', 'project'], obj=config)
 
+        self.assertIsInstance(result.exception, SystemExit)
         self.assertEqual(result.exit_code, 1)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             error: App '{}' declared in project context not found in project configuration.
@@ -488,6 +606,7 @@ class CliTest(unittest.TestCase):
         with self._cd(simple_project):
             result = self.runner.invoke(cli, ['register', 'project'], obj=config)
 
+        self.assertIsInstance(result.exception, SystemExit)
         self.assertEqual(result.exit_code, 1)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             ------------ APK ------------
@@ -528,6 +647,7 @@ class CliTest(unittest.TestCase):
         with self._cd(simple_project):
             result = self.runner.invoke(cli, ['register', 'project'], obj=config)
 
+        self.assertIsNone(result.exception)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             ------------ APK ------------
@@ -571,6 +691,7 @@ class CliTest(unittest.TestCase):
         with self._cd(simple_project):
             result = self.runner.invoke(cli, ['register', 'project'], obj=config)
 
+        self.assertIsNone(result.exception)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             ------------ APK ------------
@@ -607,6 +728,7 @@ class CliTest(unittest.TestCase):
         apk_file2 = os.path.join(__tests_root__, 'res/complex-project/built-apks/built.apk')
         api = MagicMock()
         api.get_build = MagicMock(return_value={'data': {'status': 'COMPLETED'}})
+        api.get_latest_artifact = MagicMock(return_value={'version': '41'})
         config = Config(
             auth_store=self._initialized_auth_store(),
             endpoints_store=self._initialized_endpoints_store(),
@@ -616,6 +738,7 @@ class CliTest(unittest.TestCase):
         with self._cd(complex_project):
             result = self.runner.invoke(cli, ['register', 'project'], obj=config)
 
+        self.assertIsNone(result.exception)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             ------------ APK ------------
@@ -655,9 +778,9 @@ class CliTest(unittest.TestCase):
 
             --------- OS Config ---------
             File Name: {}
-            File size: 262
+            File size: 339
             Name: project-id3
-            Version: 1
+            Version: 42
             -----------------------------
             Continue register? [Y/n]: 
             Config 'project-id3' registered.
@@ -680,6 +803,7 @@ class CliTest(unittest.TestCase):
 
         result = self.runner.invoke(cli, ['build', 'project-id', '1'], obj=config)
 
+        self.assertIsInstance(result.exception, SystemExit)
         self.assertEqual(result.exit_code, 1)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             error: Not authenticated. Run 'mason login' to sign in.
@@ -696,6 +820,7 @@ class CliTest(unittest.TestCase):
 
         result = self.runner.invoke(cli, ['build', 'project-id', '1'], obj=config)
 
+        self.assertIsNone(result.exception)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             Build queued.
@@ -714,6 +839,7 @@ class CliTest(unittest.TestCase):
 
         result = self.runner.invoke(cli, ['build', '--await', 'project-id', '1'], obj=config)
 
+        self.assertIsNone(result.exception)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             Build queued.
@@ -740,6 +866,7 @@ class CliTest(unittest.TestCase):
 
         result = self.runner.invoke(cli, ['stage', config_file], obj=config)
 
+        self.assertIsInstance(result.exception, SystemExit)
         self.assertEqual(result.exit_code, 1)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             error: Not authenticated. Run 'mason login' to sign in.
@@ -753,11 +880,12 @@ class CliTest(unittest.TestCase):
 
         result = self.runner.invoke(cli, ['stage', config_file], obj=config, input='n')
 
+        self.assertIsInstance(result.exception, SystemExit)
         self.assertEqual(result.exit_code, 1)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             --------- OS Config ---------
             File Name: {}
-            File size: 190
+            File size: 184
             Name: project-id
             Version: 1
             -----------------------------
@@ -776,11 +904,12 @@ class CliTest(unittest.TestCase):
 
         result = self.runner.invoke(cli, ['stage', config_file], obj=config)
 
+        self.assertIsNone(result.exception)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             --------- OS Config ---------
             File Name: {}
-            File size: 190
+            File size: 184
             Name: project-id
             Version: 1
             -----------------------------
@@ -804,11 +933,12 @@ class CliTest(unittest.TestCase):
 
         result = self.runner.invoke(cli, ['stage', '--await', config_file], obj=config)
 
+        self.assertIsNone(result.exception)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             --------- OS Config ---------
             File Name: {}
-            File size: 190
+            File size: 184
             Name: project-id
             Version: 1
             -----------------------------
@@ -841,6 +971,7 @@ class CliTest(unittest.TestCase):
             'project-id', '1', 'group'
         ], obj=config)
 
+        self.assertIsInstance(result.exception, SystemExit)
         self.assertEqual(result.exit_code, 1)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             error: Not authenticated. Run 'mason login' to sign in.
@@ -856,6 +987,7 @@ class CliTest(unittest.TestCase):
             'project-id', '1', 'group'
         ], obj=config, input='n')
 
+        self.assertIsInstance(result.exception, SystemExit)
         self.assertEqual(result.exit_code, 1)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             ---------- DEPLOY -----------
@@ -878,6 +1010,7 @@ class CliTest(unittest.TestCase):
             'project-id', '1', 'group'
         ], obj=config)
 
+        self.assertIsNone(result.exception)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             ---------- DEPLOY -----------
@@ -900,6 +1033,7 @@ class CliTest(unittest.TestCase):
             'project-id', '1', 'group'
         ], obj=config)
 
+        self.assertIsNone(result.exception)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             ---------- DEPLOY -----------
@@ -936,6 +1070,7 @@ class CliTest(unittest.TestCase):
             'com.example.app', '1', 'group'
         ], obj=config)
 
+        self.assertIsInstance(result.exception, SystemExit)
         self.assertEqual(result.exit_code, 1)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             error: Not authenticated. Run 'mason login' to sign in.
@@ -951,6 +1086,7 @@ class CliTest(unittest.TestCase):
             'com.example.app', '1', 'group'
         ], obj=config, input='n')
 
+        self.assertIsInstance(result.exception, SystemExit)
         self.assertEqual(result.exit_code, 1)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             ---------- DEPLOY -----------
@@ -973,6 +1109,7 @@ class CliTest(unittest.TestCase):
             'com.example.app', '1', 'group'
         ], obj=config)
 
+        self.assertIsNone(result.exception)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             ---------- DEPLOY -----------
@@ -995,6 +1132,7 @@ class CliTest(unittest.TestCase):
             'com.example.app', '1', 'group'
         ], obj=config)
 
+        self.assertIsNone(result.exception)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             ---------- DEPLOY -----------
@@ -1026,6 +1164,7 @@ class CliTest(unittest.TestCase):
             'mason-os', '2.0.0', 'group'
         ], obj=config)
 
+        self.assertIsInstance(result.exception, SystemExit)
         self.assertEqual(result.exit_code, 1)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             error: Not authenticated. Run 'mason login' to sign in.
@@ -1041,6 +1180,7 @@ class CliTest(unittest.TestCase):
             'mason-os', '2.0.0', 'group'
         ], obj=config, input='n')
 
+        self.assertIsInstance(result.exception, SystemExit)
         self.assertEqual(result.exit_code, 1)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             ---------- DEPLOY -----------
@@ -1063,6 +1203,7 @@ class CliTest(unittest.TestCase):
             'mason-os', '2.0.0', 'group'
         ], obj=config)
 
+        self.assertIsNone(result.exception)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             ---------- DEPLOY -----------
@@ -1085,6 +1226,7 @@ class CliTest(unittest.TestCase):
             'mason-os', '2.0.0', 'group'
         ], obj=config)
 
+        self.assertIsNone(result.exception)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             ---------- DEPLOY -----------
@@ -1111,6 +1253,7 @@ class CliTest(unittest.TestCase):
             'invalid', '2.0.0', 'group'
         ], obj=config)
 
+        self.assertIsNone(result.exception)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             warning: Unknown name 'invalid' for 'ota' deployments. Forcing it to 'mason-os'
@@ -1143,6 +1286,7 @@ class CliTest(unittest.TestCase):
             '--password', 'pass'
         ], obj=config)
 
+        self.assertIsNone(result.exception)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             Successfully logged in.
@@ -1171,6 +1315,7 @@ class CliTest(unittest.TestCase):
             '--password', 'pass'
         ], obj=config)
 
+        self.assertIsNone(result.exception)
         self.assertEqual(result.exit_code, 0)
 
         auth_store.clear()
@@ -1190,6 +1335,7 @@ class CliTest(unittest.TestCase):
 
         result = self.runner.invoke(cli, ['logout'], obj=config)
 
+        self.assertIsNone(result.exception)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             Successfully logged out.

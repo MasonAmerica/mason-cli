@@ -13,7 +13,10 @@ def validate_api_key(config):
         raise click.Abort()
 
 
-def validate_version(config, version, type):
+def validate_artifact_version(config, version, type):
+    if version == 'latest':
+        return
+
     try:
         version = int(version)
     except (TypeError, ValueError):

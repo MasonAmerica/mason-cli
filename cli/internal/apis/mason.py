@@ -19,11 +19,15 @@ class MasonApi:
         download_url = signed_url['url']
 
         self._upload_to_signed_url(upload_url, binary, artifact)
-        self._register_signed_url(customer, download_url, binary, artifact)
+        return self._register_signed_url(customer, download_url, binary, artifact)
 
     def deploy_artifact(self, type, name, version, group, push, no_https):
         customer = self._get_validated_customer()
-        self._deploy_artifact(customer, type, name, version, group, push, no_https)
+        return self._deploy_artifact(customer, type, name, version, group, push, no_https)
+
+    def get_latest_artifact(self, name, type):
+        customer = self._get_validated_customer()
+        return self._get_latest_artifact(customer, name, type)
 
     def start_build(self, project, version, fast_build, mason_version):
         customer = self._get_validated_customer()
@@ -97,6 +101,24 @@ class MasonApi:
 
         url = self.endpoints_store['deploy_url']
         self.handler.post(url, headers=headers, json=payload)
+
+    def _get_latest_artifact(self, customer, name, type_):
+        headers = {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer {}'.format(self.auth_store['id_token'])
+        }
+
+        url = self.endpoints_store['registry_artifact_url'] + '/{0}'.format(customer)
+        result = self.handler.get(url, headers=headers)
+
+        if not type(result) == list:
+            return None
+
+        sorted_artifacts = sorted(
+            result, key=lambda artifact: int(artifact.get('version')), reverse=True)
+        for artifact in sorted_artifacts:
+            if artifact.get('name') == name and artifact.get('type') == type_:
+                return artifact
 
     def _start_build(self, customer, project, version, fast_build, mason_version):
         headers = {

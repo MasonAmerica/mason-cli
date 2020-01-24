@@ -4,7 +4,7 @@ import click
 import yaml
 
 from cli.internal.models.artifacts import IArtifact
-from cli.internal.utils.validation import validate_version
+from cli.internal.utils.validation import validate_artifact_version
 
 
 class OSConfig(IArtifact):
@@ -42,7 +42,7 @@ class OSConfig(IArtifact):
                 'the full docs here: https://docs.bymason.com/project-config/.')
             raise click.Abort()
 
-        validate_version(self.config, self.version, 'os configuration')
+        validate_artifact_version(self.config, self.version, self.get_type())
 
     def log_details(self):
         self.config.logger.info('--------- OS Config ---------')

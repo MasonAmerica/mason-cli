@@ -36,7 +36,7 @@ class RegisterCommand(Command):
             self.config.logger.info("{} '{}' registered.".format(
                 artifact.get_type().capitalize(), artifact.get_name()))
         except ApiError as e:
-            if self.config.force and e.message and 'already exists' in e.message:
+            if getattr(self.config, 'force', None) and e.message and 'already exists' in e.message:
                 self.config.logger.info("{} '{}' already registered, ignoring.".format(
                     artifact.get_type().capitalize(), artifact.get_name()))
                 pass
@@ -46,25 +46,61 @@ class RegisterCommand(Command):
 
 
 class RegisterConfigCommand(RegisterCommand):
-    def __init__(self, config, config_files):
+    def __init__(self, config, config_files, working_dir=tempfile.mkdtemp()):
         super(RegisterConfigCommand, self).__init__(config)
         self.config_files = config_files
+        self.working_dir = working_dir
 
     def run(self):
+        configs = []
+
         for num, file in enumerate(self.config_files):
             config = OSConfig.parse(self.config, file)
-            self._sanitize_config_for_upload(config)
-            self.register_artifact(file, config)
+            config = self._sanitize_config_for_upload(config)
+            self.register_artifact(config.binary, config)
+
+            configs.append(config)
 
             if num + 1 < len(self.config_files):
                 self.config.logger.info('')
 
+        return configs
+
     def _sanitize_config_for_upload(self, config):
         raw_config = copy.deepcopy(config.ecosystem)
-        prev = raw_config.pop('from', None)
-        if prev:
-            with open(config.binary, 'w') as f:
-                f.write(yaml.safe_dump(raw_config))
+
+        raw_config.pop('from', None)
+        try:
+            self.maybe_inject_config_version(config, raw_config)
+            self.maybe_inject_app_versions(raw_config)
+        except ApiError as e:
+            e.exit(self.config)
+
+        config_file = os.path.join(self.working_dir, os.path.basename(config.binary))
+        with open(config_file, 'w') as f:
+            f.write(yaml.safe_dump(raw_config))
+        rewritten_config = OSConfig.parse(self.config, config_file)
+        rewritten_config.user_binary = config.user_binary
+        return rewritten_config
+
+    def maybe_inject_config_version(self, config, raw_config):
+        if config.get_version() == 'latest':
+            latest_config = self.config.api.get_latest_artifact(config.get_name(), 'config')
+            if latest_config:
+                raw_config['os']['version'] = int(latest_config.get('version')) + 1
+            else:
+                raw_config['os']['version'] = 1
+
+    def maybe_inject_app_versions(self, raw_config):
+        for app in raw_config.get('apps') or []:
+            if app.get('version_code') == 'latest':
+                latest_apk = self.config.api.get_latest_artifact(app.get('package_name'), 'apk')
+                if latest_apk:
+                    app['version_code'] = int(latest_apk.get('version'))
+                else:
+                    self.config.logger.error("Apk '{}' not found, register it first.".format(
+                        app.get('package_name')))
+                    raise click.Abort()
 
 
 class RegisterApkCommand(RegisterCommand):
@@ -118,7 +154,7 @@ class RegisterProjectCommand(RegisterCommand):
         self.config.force = False
 
         self.config.logger.info('')
-        StageCommand(self.config, config_files, True, True, None).run()
+        StageCommand(self.config, config_files, True, True, None, self.working_dir).run()
 
     def _validated_masonrc(self):
         masonrc = os.path.join(self.context_file, '.masonrc')
