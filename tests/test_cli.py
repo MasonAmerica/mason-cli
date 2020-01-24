@@ -141,11 +141,13 @@ class CliTest(unittest.TestCase):
     def test__register_config__no_files_fails(self):
         result = self.runner.invoke(cli, ['register', 'config'])
 
+        self.assertIsInstance(result.exception, SystemExit)
         self.assertEqual(result.exit_code, 2)
 
     def test__register_config__non_existent_file_fails(self):
         result = self.runner.invoke(cli, ['register', 'config', 'foobar'])
 
+        self.assertIsInstance(result.exception, SystemExit)
         self.assertEqual(result.exit_code, 2)
 
     def test__register_config__no_creds_fails(self):
@@ -300,11 +302,13 @@ class CliTest(unittest.TestCase):
     def test__register_apk__no_files_fails(self):
         result = self.runner.invoke(cli, ['register', 'apk'])
 
+        self.assertIsInstance(result.exception, SystemExit)
         self.assertEqual(result.exit_code, 2)
 
     def test__register_apk__non_existent_file_fails(self):
         result = self.runner.invoke(cli, ['register', 'apk', 'foobar'])
 
+        self.assertIsInstance(result.exception, SystemExit)
         self.assertEqual(result.exit_code, 2)
 
     def test__register_apk__no_creds_fails(self):
@@ -422,6 +426,7 @@ class CliTest(unittest.TestCase):
     def test__register_media__no_files_fails(self):
         result = self.runner.invoke(cli, ['register', 'media'])
 
+        self.assertIsInstance(result.exception, SystemExit)
         self.assertEqual(result.exit_code, 2)
 
     def test__register_media__non_existent_file_fails(self):
@@ -795,6 +800,7 @@ class CliTest(unittest.TestCase):
     def test__build__invalid_version_fails(self):
         result = self.runner.invoke(cli, ['build', 'project-id', 'invalid'])
 
+        self.assertIsInstance(result.exception, SystemExit)
         self.assertEqual(result.exit_code, 2)
 
     def test__build__no_creds_fails(self):
@@ -852,11 +858,13 @@ class CliTest(unittest.TestCase):
     def test__stage__no_files_fails(self):
         result = self.runner.invoke(cli, ['stage'])
 
+        self.assertIsInstance(result.exception, SystemExit)
         self.assertEqual(result.exit_code, 2)
 
     def test__stage__non_existent_file_fails(self):
         result = self.runner.invoke(cli, ['stage', 'foobar'])
 
+        self.assertIsInstance(result.exception, SystemExit)
         self.assertEqual(result.exit_code, 2)
 
     def test__stage__no_creds_fails(self):
@@ -955,11 +963,13 @@ class CliTest(unittest.TestCase):
     def test__deploy_config__invalid_name_fails(self):
         result = self.runner.invoke(cli, ['deploy', 'config', 'project-id', 'invalid', 'group'])
 
+        self.assertIsInstance(result.exception, SystemExit)
         self.assertEqual(result.exit_code, 2)
 
     def test__deploy_config__no_group_fails(self):
         result = self.runner.invoke(cli, ['deploy', 'config', 'project-id', '1'])
 
+        self.assertIsInstance(result.exception, SystemExit)
         self.assertEqual(result.exit_code, 2)
 
     def test__deploy_config__no_creds_fails(self):
@@ -975,6 +985,23 @@ class CliTest(unittest.TestCase):
         self.assertEqual(result.exit_code, 1)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             error: Not authenticated. Run 'mason login' to sign in.
+            Aborted!
+        """))
+
+    def test__deploy_config__non_existant_latest_config_fails(self):
+        api = MagicMock()
+        api.get_latest_artifact = MagicMock(return_value=None)
+        config = Config(auth_store=self._initialized_auth_store(), api=api)
+
+        result = self.runner.invoke(cli, [
+            'deploy', 'config',
+            'project-id', 'latest', 'group'
+        ], obj=config)
+
+        self.assertIsInstance(result.exception, SystemExit)
+        self.assertEqual(result.exit_code, 1)
+        self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
+            error: Config 'project-id' not found, register it first.
             Aborted!
         """))
 
@@ -1024,6 +1051,30 @@ class CliTest(unittest.TestCase):
             Config 'project-id' deployed.
         """))
 
+    def test__deploy_config__latest_config_is_deployed(self):
+        api = MagicMock()
+        api.get_latest_artifact = MagicMock(return_value={'version': '42'})
+        config = Config(auth_store=self._initialized_auth_store(), api=api)
+
+        result = self.runner.invoke(cli, [
+            'deploy', 'config',
+            'project-id', 'latest', 'group'
+        ], obj=config)
+
+        self.assertIsNone(result.exception)
+        self.assertEqual(result.exit_code, 0)
+        self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
+            ---------- DEPLOY -----------
+            Name: project-id
+            Type: config
+            Version: 42
+            Group: group
+            Push: False
+            -----------------------------
+            Continue deploy? [Y/n]: 
+            Config 'project-id' deployed.
+        """))
+
     def test__deploy_config__warning_is_logged_when_no_https_flag_is_used(self):
         api = MagicMock()
         config = Config(auth_store=self._initialized_auth_store(), api=api)
@@ -1054,11 +1105,13 @@ class CliTest(unittest.TestCase):
     def test__deploy_apk__invalid_name_fails(self):
         result = self.runner.invoke(cli, ['deploy', 'apk', 'com.example.app', 'invalid', 'group'])
 
+        self.assertIsInstance(result.exception, SystemExit)
         self.assertEqual(result.exit_code, 2)
 
     def test__deploy_apk__no_group_fails(self):
         result = self.runner.invoke(cli, ['deploy', 'apk', 'com.example.app', '1'])
 
+        self.assertIsInstance(result.exception, SystemExit)
         self.assertEqual(result.exit_code, 2)
 
     def test__deploy_apk__no_creds_fails(self):
@@ -1074,6 +1127,23 @@ class CliTest(unittest.TestCase):
         self.assertEqual(result.exit_code, 1)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             error: Not authenticated. Run 'mason login' to sign in.
+            Aborted!
+        """))
+
+    def test__deploy_apk__non_existant_latest_apk_fails(self):
+        api = MagicMock()
+        api.get_latest_artifact = MagicMock(return_value=None)
+        config = Config(auth_store=self._initialized_auth_store(), api=api)
+
+        result = self.runner.invoke(cli, [
+            'deploy', 'apk',
+            'com.example.app', 'latest', 'group'
+        ], obj=config)
+
+        self.assertIsInstance(result.exception, SystemExit)
+        self.assertEqual(result.exit_code, 1)
+        self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
+            error: Apk 'com.example.app' not found, register it first.
             Aborted!
         """))
 
@@ -1123,6 +1193,30 @@ class CliTest(unittest.TestCase):
             Apk 'com.example.app' deployed.
         """))
 
+    def test__deploy_apk__latest_apk_is_deployed(self):
+        api = MagicMock()
+        api.get_latest_artifact = MagicMock(return_value={'version': '42'})
+        config = Config(auth_store=self._initialized_auth_store(), api=api)
+
+        result = self.runner.invoke(cli, [
+            'deploy', 'apk',
+            'com.example.app', 'latest', 'group'
+        ], obj=config)
+
+        self.assertIsNone(result.exception)
+        self.assertEqual(result.exit_code, 0)
+        self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
+            ---------- DEPLOY -----------
+            Name: com.example.app
+            Type: apk
+            Version: 42
+            Group: group
+            Push: False
+            -----------------------------
+            Continue deploy? [Y/n]: 
+            Apk 'com.example.app' deployed.
+        """))
+
     def test__deploy_apk__warning_is_logged_when_no_https_flag_is_used(self):
         api = MagicMock()
         config = Config(auth_store=self._initialized_auth_store(), api=api)
@@ -1153,6 +1247,7 @@ class CliTest(unittest.TestCase):
     def test__deploy_ota__no_group_fails(self):
         result = self.runner.invoke(cli, ['deploy', 'ota', 'mason-os', '1'])
 
+        self.assertIsInstance(result.exception, SystemExit)
         self.assertEqual(result.exit_code, 2)
 
     def test__deploy_ota__no_creds_fails(self):

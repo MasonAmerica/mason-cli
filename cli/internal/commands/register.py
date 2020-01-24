@@ -71,8 +71,8 @@ class RegisterConfigCommand(RegisterCommand):
 
         raw_config.pop('from', None)
         try:
-            self.maybe_inject_config_version(config, raw_config)
-            self.maybe_inject_app_versions(raw_config)
+            self._maybe_inject_config_version(config, raw_config)
+            self._maybe_inject_app_versions(raw_config)
         except ApiError as e:
             e.exit(self.config)
 
@@ -83,7 +83,7 @@ class RegisterConfigCommand(RegisterCommand):
         rewritten_config.user_binary = config.user_binary
         return rewritten_config
 
-    def maybe_inject_config_version(self, config, raw_config):
+    def _maybe_inject_config_version(self, config, raw_config):
         if config.get_version() == 'latest':
             latest_config = self.config.api.get_latest_artifact(config.get_name(), 'config')
             if latest_config:
@@ -91,7 +91,7 @@ class RegisterConfigCommand(RegisterCommand):
             else:
                 raw_config['os']['version'] = 1
 
-    def maybe_inject_app_versions(self, raw_config):
+    def _maybe_inject_app_versions(self, raw_config):
         for app in raw_config.get('apps') or []:
             if app.get('version_code') == 'latest':
                 latest_apk = self.config.api.get_latest_artifact(app.get('package_name'), 'apk')

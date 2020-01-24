@@ -23,6 +23,13 @@ class DeployCommandTest(unittest.TestCase):
         with self.assertRaises(click.Abort):
             command.run()
 
+    def test_non_existent_latest_config_fails(self):
+        self.config.api.get_latest_artifact = MagicMock(return_value=None)
+        command = DeployConfigCommand(self.config, 'project-id', 'latest', ['group1', 'group2'])
+
+        with self.assertRaises(click.Abort):
+            command.run()
+
     def test_config_deploys_successfully(self):
         command = DeployConfigCommand(self.config, 'project-id', '1', ['group1', 'group2'])
 
@@ -33,6 +40,24 @@ class DeployCommandTest(unittest.TestCase):
             call('config', 'project-id', '1', 'group2', True, False)
         ])
 
+    def test_latest_config_deploys_successfully(self):
+        self.config.api.get_latest_artifact = MagicMock(return_value={'version': '42'})
+        command = DeployConfigCommand(self.config, 'project-id', 'latest', ['group1', 'group2'])
+
+        command.run()
+
+        self.config.api.deploy_artifact.assert_has_calls([
+            call('config', 'project-id', '42', 'group1', True, False),
+            call('config', 'project-id', '42', 'group2', True, False)
+        ])
+
+    def test_non_existent_latest_apk_fails(self):
+        self.config.api.get_latest_artifact = MagicMock(return_value=None)
+        command = DeployApkCommand(self.config, 'com.example.app', 'latest', ['group1', 'group2'])
+
+        with self.assertRaises(click.Abort):
+            command.run()
+
     def test_apk_deploys_successfully(self):
         command = DeployApkCommand(self.config, 'com.example.app', '1', ['group1', 'group2'])
 
@@ -41,6 +66,17 @@ class DeployCommandTest(unittest.TestCase):
         self.config.api.deploy_artifact.assert_has_calls([
             call('apk', 'com.example.app', '1', 'group1', True, False),
             call('apk', 'com.example.app', '1', 'group2', True, False)
+        ])
+
+    def test_latest_apk_deploys_successfully(self):
+        self.config.api.get_latest_artifact = MagicMock(return_value={'version': '42'})
+        command = DeployApkCommand(self.config, 'com.example.app', 'latest', ['group1', 'group2'])
+
+        command.run()
+
+        self.config.api.deploy_artifact.assert_has_calls([
+            call('apk', 'com.example.app', '42', 'group1', True, False),
+            call('apk', 'com.example.app', '42', 'group2', True, False)
         ])
 
     def test_ota_deploys_successfully(self):

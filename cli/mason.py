@@ -25,6 +25,7 @@ from cli.internal.commands.xray import XrayPullCommand
 from cli.internal.commands.xray import XrayPushCommand
 from cli.internal.commands.xray import XrayShellCommand
 from cli.internal.commands.xray import XrayUninstallCommand
+from cli.internal.utils import mason_types
 from cli.internal.utils.constants import AUTH
 from cli.internal.utils.constants import ENDPOINTS
 from cli.internal.utils.constants import LOG_PROTOCOL_TRACE
@@ -365,7 +366,7 @@ def deploy(config, assume_yes, push, no_https, skip_verify):
 
 @deploy.command()
 @click.argument('name')
-@click.argument('version', type=click.IntRange(min=0))
+@click.argument('version', type=mason_types.Version())
 @click.argument('groups', nargs=-1, required=True)
 @pass_config
 def config(config, name, version, groups):
@@ -400,7 +401,7 @@ def config(config, name, version, groups):
 
 @deploy.command()
 @click.argument('name')
-@click.argument('version', type=click.IntRange(min=0))
+@click.argument('version', type=mason_types.Version())
 @click.argument('groups', nargs=-1, required=True)
 @pass_config
 def apk(config, name, version, groups):

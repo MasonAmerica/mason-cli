@@ -60,7 +60,19 @@ class DeployConfigCommand(DeployCommand):
         super(DeployConfigCommand, self).__init__(config, 'config', name, version, groups)
 
     def run(self):
+        self._maybe_inject_version()
         self.deploy_artifact()
+
+    def _maybe_inject_version(self):
+        if self.version != 'latest':
+            return
+
+        latest_config = self.config.api.get_latest_artifact(self.name, 'config')
+        if latest_config:
+            self.version = latest_config.get('version')
+        else:
+            self.config.logger.error("Config '{}' not found, register it first.".format(self.name))
+            raise click.Abort()
 
 
 class DeployApkCommand(DeployCommand):
@@ -68,7 +80,19 @@ class DeployApkCommand(DeployCommand):
         super(DeployApkCommand, self).__init__(config, 'apk', name, version, groups)
 
     def run(self):
+        self._maybe_inject_version()
         self.deploy_artifact()
+
+    def _maybe_inject_version(self):
+        if self.version != 'latest':
+            return
+
+        latest_apk = self.config.api.get_latest_artifact(self.name, 'apk')
+        if latest_apk:
+            self.version = latest_apk.get('version')
+        else:
+            self.config.logger.error("Apk '{}' not found, register it first.".format(self.name))
+            raise click.Abort()
 
 
 class DeployOtaCommand(DeployCommand):
