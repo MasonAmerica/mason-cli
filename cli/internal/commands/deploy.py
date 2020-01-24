@@ -17,9 +17,9 @@ class DeployCommand(Command):
         self.version = version
         self.groups = groups
 
-    def deploy_artifact(self):
-        validate_credentials(self.config)
+        validate_credentials(config)
 
+    def deploy_artifact(self):
         for group in self.groups:
             self._deploy_to_group(group)
 

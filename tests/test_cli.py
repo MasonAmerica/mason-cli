@@ -514,7 +514,7 @@ class CliTest(unittest.TestCase):
 
     def test__register_project__no_context_fails(self):
         api = MagicMock()
-        config = Config(auth_store=self._uninitialized_auth_store(), api=api)
+        config = Config(auth_store=self._initialized_auth_store(), api=api)
 
         result = self.runner.invoke(cli, ['register', 'project'], obj=config)
 
@@ -525,11 +525,11 @@ class CliTest(unittest.TestCase):
             Aborted!
         """))
 
-    def test__register_project__non_existent_context_fails(self):
+    def test__register_project__non_existent_resource_fails(self):
         invalid_project = os.path.join(__tests_root__, 'res/invalid-project')
         config_file = os.path.join(__tests_root__, 'res/invalid-project/mason.yml')
         api = MagicMock()
-        config = Config(auth_store=self._uninitialized_auth_store(), api=api)
+        config = Config(auth_store=self._initialized_auth_store(), api=api)
 
         with self._cd(invalid_project):
             result = self.runner.invoke(cli, ['register', 'project'], obj=config)

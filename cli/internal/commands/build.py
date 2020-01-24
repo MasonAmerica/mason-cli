@@ -1,7 +1,7 @@
 import inspect
-import time
 
 import click
+import time
 
 from cli.internal.commands.command import Command
 from cli.internal.utils.remote import ApiError
@@ -36,8 +36,9 @@ class BuildCommand(Command):
         self.time = time
         self.urlparse = urlparse
 
+        validate_credentials(config)
+
     def run(self):
-        validate_credentials(self.config)
         self.config.logger.debug('Starting build for {}:{}...'.format(self.project, self.version))
 
         try:

@@ -1,10 +1,10 @@
 import abc
 import os
 import posixpath
-import sys
 
 import click
 import six
+import sys
 from adb.adb_commands import AdbCommands
 from adb.android_pubkey import keygen
 
@@ -266,7 +266,14 @@ class XRay(object):
     def install(self, local_path, replace_existing=True, grant_permissions=False, args=None):
         return self._run_in_reactor(self._install, local_path, args)
 
-    def _install(self, device, local_path, replace_existing=True, grant_permissions=False, args=None):
+    def _install(
+        self,
+        device,
+        local_path,
+        replace_existing=True,
+        grant_permissions=False,
+        args=None
+    ):
         destination_dir = '/data/local/tmp/'
         basename = os.path.basename(local_path)
         destination_path = posixpath.join(destination_dir, basename)

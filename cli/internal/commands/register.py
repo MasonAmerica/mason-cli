@@ -21,9 +21,9 @@ class RegisterCommand(Command):
     def __init__(self, config):
         self.config = config
 
-    def register_artifact(self, binary, artifact):
-        validate_credentials(self.config)
+        validate_credentials(config)
 
+    def register_artifact(self, binary, artifact):
         artifact.log_details()
         if not self.config.skip_verify:
             click.confirm('Continue register?', default=True, abort=True)
