@@ -7,7 +7,6 @@ from cli.internal.models.artifacts import IArtifact
 
 
 class Media(IArtifact):
-
     def __init__(self, config, name, type, version, binary):
         self.config = config
         self.name = str(name)
@@ -95,4 +94,4 @@ class Media(IArtifact):
                 self.details = filename.readlines()
 
     def __eq__(self, other):
-        return self.binary == other.binary
+        return self.binary == other.binary and self.version == other.version

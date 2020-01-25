@@ -509,6 +509,31 @@ class CliTest(unittest.TestCase):
             Media 'Anim name' registered.
         """.format(media_file)))
 
+    def test__register_media__latest_file_is_registered(self):
+        media_file = os.path.join(__tests_root__, 'res/bootanimation.zip')
+        api = MagicMock()
+        api.get_latest_artifact = MagicMock(return_value={'version': '41'})
+        config = Config(auth_store=self._initialized_auth_store(), api=api)
+
+        result = self.runner.invoke(cli, [
+            'register', 'media',
+            'bootanimation', 'Anim name', 'latest', media_file
+        ], obj=config)
+
+        self.assertIsNone(result.exception)
+        self.assertEqual(result.exit_code, 0)
+        self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
+            ----------- MEDIA -----------
+            File Name: {}
+            File size: 3156136
+            Name: Anim name
+            Version: 42
+            Type: bootanimation
+            -----------------------------
+            Continue register? [Y/n]: 
+            Media 'Anim name' registered.
+        """.format(media_file)))
+
     def test__register_project__no_context_fails(self):
         api = MagicMock()
         config = Config(auth_store=self._initialized_auth_store(), api=api)

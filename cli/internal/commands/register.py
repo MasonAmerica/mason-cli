@@ -125,9 +125,20 @@ class RegisterMediaCommand(RegisterCommand):
         self.media_file = media_file
 
     def run(self):
+        self._maybe_inject_version()
         self.register_artifact(
             self.media_file,
             Media.parse(self.config, self.name, self.type, self.version, self.media_file))
+
+    def _maybe_inject_version(self):
+        if self.version != 'latest':
+            return
+
+        latest_media = self.config.api.get_latest_artifact(self.name, 'media')
+        if latest_media:
+            self.version = int(latest_media.get('version')) + 1
+        else:
+            self.version = 1
 
 
 class RegisterProjectCommand(RegisterCommand):

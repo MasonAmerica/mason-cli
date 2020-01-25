@@ -124,9 +124,31 @@ class RegisterCommandTest(unittest.TestCase):
             call(apk_file2, Apk.parse(self.config, apk_file2))
         ])
 
-    def test_ota_registers_successfully(self):
+    def test_media_registers_successfully(self):
         media_file = os.path.join(__tests_root__, 'res/bootanimation.zip')
         command = RegisterMediaCommand(self.config, 'Boot Anim', 'bootanimation', '1', media_file)
+
+        command.run()
+
+        self.config.api.upload_artifact.assert_called_with(
+            media_file, Media.parse(self.config, 'Boot anim', 'bootanimation', '1', media_file))
+
+    def test_latest_media_registers_successfully(self):
+        self.config.api.get_latest_artifact = MagicMock(return_value={'version': '41'})
+        media_file = os.path.join(__tests_root__, 'res/bootanimation.zip')
+        command = RegisterMediaCommand(
+            self.config, 'Boot Anim', 'bootanimation', 'latest', media_file)
+
+        command.run()
+
+        self.config.api.upload_artifact.assert_called_with(
+            media_file, Media.parse(self.config, 'Boot anim', 'bootanimation', '42', media_file))
+
+    def test_latest_non_existant_media_registers_successfully(self):
+        self.config.api.get_latest_artifact = MagicMock(return_value=None)
+        media_file = os.path.join(__tests_root__, 'res/bootanimation.zip')
+        command = RegisterMediaCommand(
+            self.config, 'Boot Anim', 'bootanimation', 'latest', media_file)
 
         command.run()
 

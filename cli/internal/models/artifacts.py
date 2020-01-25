@@ -6,7 +6,6 @@ import six
 
 @six.add_metaclass(abc.ABCMeta)
 class IArtifact:
-
     @abstractmethod
     def validate(self):
         pass
@@ -46,3 +45,9 @@ class IArtifact:
     @abstractmethod
     def __eq__(self, other):
         pass
+
+    def __repr__(self):
+        return '{}({})'.format(
+            type(self).__name__,
+            ', '.join('%s=%s' % item for item in vars(self).items())
+        )
