@@ -424,7 +424,7 @@ class CliTest(unittest.TestCase):
         """.format(apk_file1, apk_file2)))
 
     def test__register_media__no_files_fails(self):
-        result = self.runner.invoke(cli, ['register', 'media'])
+        result = self.runner.invoke(cli, ['register', 'media', 'bootanimation', 'Anim name', '1'])
 
         self.assertIsInstance(result.exception, SystemExit)
         self.assertEqual(result.exit_code, 2)
@@ -434,15 +434,7 @@ class CliTest(unittest.TestCase):
             cli, ['register', 'media', 'bootanimation', 'Anim name', '1', 'foobar'])
 
         self.assertIsInstance(result.exception, SystemExit)
-        self.assertEqual(result.exit_code, 1)
-
-    def test__register_media__invalid_media_type_fails(self):
-        media_file = os.path.join(__tests_root__, 'res/bootanimation.zip')
-        result = self.runner.invoke(
-            cli, ['register', 'media', 'invalid', 'Anim name', '1', media_file])
-
-        self.assertIsInstance(result.exception, SystemExit)
-        self.assertEqual(result.exit_code, 1)
+        self.assertEqual(result.exit_code, 2)
 
     def test__register_media__invalid_version_fails(self):
         media_file = os.path.join(__tests_root__, 'res/bootanimation.zip')
@@ -450,7 +442,7 @@ class CliTest(unittest.TestCase):
             cli, ['register', 'media', 'bootanimation', 'Anim name', 'invalid', media_file])
 
         self.assertIsInstance(result.exception, SystemExit)
-        self.assertEqual(result.exit_code, 1)
+        self.assertEqual(result.exit_code, 2)
 
     def test__register_media__no_creds_fails(self):
         media_file = os.path.join(__tests_root__, 'res/bootanimation.zip')

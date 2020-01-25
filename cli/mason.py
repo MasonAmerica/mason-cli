@@ -121,6 +121,7 @@ def cli(config, debug, verbose, api_key, id_token, access_token, no_color):
     The Mason CLI provides command line tools to help you manage your configurations in the Mason
     Platform.
 
+    \b
     Full docs: https://docs.bymason.com/
     """
 
@@ -138,6 +139,7 @@ def register(config, assume_yes, skip_verify):
     """
     Register artifacts to the Mason Platform.
 
+    \b
     Full docs: https://docs.bymason.com/mason-cli/#mason-register
     """
 
@@ -161,6 +163,7 @@ def project(config, context):
     Example:
       $ mason register project
 
+    \b
     Full docs: https://docs.bymason.com/mason-cli/#mason-register-project
     """
 
@@ -185,6 +188,7 @@ def config(config, configs):
     Or all in a subdirectory:
       $ mason register config configs/*.yml
 
+    \b
     Full docs: https://docs.bymason.com/mason-cli/#mason-register-config
     """
 
@@ -209,6 +213,7 @@ def apk(config, apks):
     Or all in a subdirectory:
       $ mason register apk apks/*.apk
 
+    \b
     Full docs: https://docs.bymason.com/mason-cli/#mason-register-apk
     """
 
@@ -216,20 +221,28 @@ def apk(config, apks):
     command.run()
 
 
-# TODO: add types when support for the deprecated param order is removed.
-@register.command()
-@click.argument('type')
-@click.argument('name')
-@click.argument('version')
-@click.argument('media')
-@pass_config
-def media(config, type, name, version, media):
+@register.group()
+def media():
     """
     Register media artifacts.
 
     \b
-      TYPE of the media artifact. One of:
-        - bootanimation
+    Full docs: https://docs.bymason.com/mason-cli/#mason-register-media
+    """
+
+    pass
+
+
+@media.command()
+@click.argument('name')
+@click.argument('version', type=mason_types.Version())
+@click.argument('media', type=click.Path(exists=True, dir_okay=False))
+@pass_config
+def bootanimation(config, name, version, media):
+    """
+    Register media artifacts.
+
+    \b
       NAME of the media artifact.
       VERSION of the media artifact.
       MEDIA file to be uploaded.
@@ -238,24 +251,11 @@ def media(config, type, name, version, media):
     For example, register a boot animation:
       $ mason register media bootanimation mason-test 1 bootanimation.zip
 
-    Full docs: https://docs.bymason.com/mason-cli/#mason-register-media
+    \b
+    Full docs: https://docs.bymason.com/mason-cli/#mason-register-media-bootanimation
     """
 
-    if os.path.isfile(type):
-        config.logger.warning('This command order is deprecated and will be removed. Use --help '
-                              'to see up-to-date argument order.')
-
-        # Media used to be the first argument
-        old_media = type
-        old_name = name
-        old_type = version
-        old_version = media
-        type = old_type
-        name = old_name
-        version = old_version
-        media = old_media
-
-    command = RegisterMediaCommand(config, name, type, version, media)
+    command = RegisterMediaCommand(config, name, 'bootanimation', version, media)
     command.run()
 
 
@@ -289,6 +289,7 @@ def build(config, block, turbo, mason_version, project, version):
     can be built with:
       $ mason build mason-test 5
 
+    \b
     Full docs: https://docs.bymason.com/mason-cli/#mason-build
     """
 
@@ -327,6 +328,7 @@ def stage(config, assume_yes, block, turbo, mason_version, skip_verify, configs)
       $ mason register config ...
       $ mason build ...
 
+    \b
     Full docs: https://docs.bymason.com/mason-cli/#mason-stage
     """
 
@@ -353,6 +355,7 @@ def deploy(config, assume_yes, push, no_https, skip_verify):
     """
     Deploy artifacts to groups.
 
+    \b
     Full docs: https://docs.bymason.com/mason-cli/#mason-deploy
     """
 
@@ -392,6 +395,7 @@ def config(config, name, version, groups):
     or deployed to multiple groups:
       $ mason deploy config mason-test 1 group1 group2 group3
 
+    \b
     Full docs: https://docs.bymason.com/mason-cli/#mason-deploy-config
     """
 
@@ -428,6 +432,7 @@ def apk(config, name, version, groups):
     or deployed to multiple groups:
       $ mason deploy apk com.test.app 1 group1 group2 group3
 
+    \b
     Full docs: https://docs.bymason.com/mason-cli/#mason-deploy-apk
     """
 
@@ -457,6 +462,7 @@ def ota(config, name, version, groups):
     or to multiple groups:
       $ mason deploy ota mason-os 2.0.0 group1 group2 group3
 
+    \b
     Full docs: https://docs.bymason.com/mason-cli/#mason-deploy-ota
     """
 
@@ -479,6 +485,7 @@ def xray(config, device):
     \b
       DEVICE to connect with (full device identifier).
 
+    \b
     Full docs: https://docs.bymason.com/mason-cli/#mason-xray
     """
 
@@ -498,6 +505,7 @@ def logcat(config, args):
       DEVICE to connect with (full device identifier).
       ARGS supplied to logcat (optional, see https://d.android.com/studio/command-line/logcat).
 
+    \b
     Full docs: https://docs.bymason.com/mason-cli/#mason-xray-logcat
     """
 
@@ -518,6 +526,7 @@ def shell(config, command):
       DEVICE to connect with (full device identifier).
       COMMAND to run (optional, if empty an interactive shell is opened).
 
+    \b
     Full docs: https://docs.bymason.com/mason-cli/#mason-xray-shell
     """
 
@@ -538,6 +547,7 @@ def push(config, local, remote):
       LOCAL path of the file to be pushed.
       REMOTE path of the destination file.
 
+    \b
     Full docs: https://docs.bymason.com/mason-cli/#mason-xray-push
     """
 
@@ -558,6 +568,7 @@ def pull(config, remote, local):
       REMOTE path of the file on-device to pull.
       LOCAL directory in which to store the file (optional, defaults to the current directory).
 
+    \b
     Full docs: https://docs.bymason.com/mason-cli/#mason-xray-pull
     """
 
@@ -576,6 +587,7 @@ def install(config, apk):
       DEVICE to connect with (full device identifier).
       APK to install.
 
+    \b
     Full docs: https://docs.bymason.com/mason-cli/#mason-xray-install
     """
 
@@ -594,6 +606,7 @@ def uninstall(config, package):
       DEVICE to connect with (full device identifier).
       PACKAGE name to uninstall.
 
+    \b
     Full docs: https://docs.bymason.com/mason-cli/#mason-xray-uninstall
     """
 
@@ -608,6 +621,7 @@ def desktop(config, port):
     """
     Open a VNC connection to the device.
 
+    \b
     Full docs: https://docs.bymason.com/mason-cli/#mason-xray-desktop
     """
 
@@ -627,6 +641,7 @@ def login(config, api_key, username, password):
     """
     Authenticate via username and password or with an API Key.
 
+    \b
     Full docs: https://docs.bymason.com/mason-cli/#mason-login
     """
 
@@ -640,6 +655,7 @@ def logout(config):
     """
     Log out of the Mason CLI.
 
+    \b
     Full docs: https://docs.bymason.com/mason-cli/#mason-logout
     """
 
