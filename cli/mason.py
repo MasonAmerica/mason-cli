@@ -6,10 +6,10 @@ import click_log
 
 from cli.internal.apis.mason import MasonApi
 from cli.internal.commands.build import BuildCommand
+from cli.internal.commands.cli_init import CliInitCommand
 from cli.internal.commands.deploy import DeployApkCommand
 from cli.internal.commands.deploy import DeployConfigCommand
 from cli.internal.commands.deploy import DeployOtaCommand
-from cli.internal.commands.init import InitCommand
 from cli.internal.commands.login import LoginCommand
 from cli.internal.commands.logout import LogoutCommand
 from cli.internal.commands.register import RegisterApkCommand
@@ -141,7 +141,7 @@ def cli(config, debug, verbose, api_key, id_token, access_token, no_color):
     Full docs: https://docs.bymason.com/
     """
 
-    command = InitCommand(config, debug, verbose, no_color, api_key, id_token, access_token)
+    command = CliInitCommand(config, debug, verbose, no_color, api_key, id_token, access_token)
     command.run()
 
 

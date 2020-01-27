@@ -10,7 +10,7 @@ from cli.internal.utils.store import Store
 from cli.version import __version__
 
 
-class InitCommand(Command):
+class CliInitCommand(Command):
     def __init__(self, config, debug, verbose, no_color, api_key, id_token, access_token):
         self.config = config
         self.debug = debug
