@@ -1,6 +1,7 @@
 import contextlib
 import inspect
 import os
+import shutil
 import unittest
 
 from click.testing import CliRunner
@@ -139,6 +140,230 @@ class CliTest(unittest.TestCase):
         auth_store.clear()
         auth_store.restore()
         self.assertDictEqual(auth_store._fields, {})
+
+    def test__init__outside_home_dir_shows_warning(self):
+        api = MagicMock()
+        config = Config(auth_store=self._initialized_auth_store(), api=api)
+
+        with self.runner.isolated_filesystem():
+            current_dir = os.path.abspath('.')
+            result = self.runner.invoke(cli, ['init'], obj=config, input='n')
+
+        self.assertIsInstance(result.exception, SystemExit)
+        self.assertEqual(result.exit_code, 1)
+        self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
+
+                    ##     ##    ###     ######   #######  ##    ##
+                    ###   ###   ## ##   ##    ## ##     ## ###   ##
+                    #### ####  ##   ##  ##       ##     ## ####  ##
+                    ## ### ## ##     ##  ######  ##     ## ## ## ##
+                    ##     ## #########       ## ##     ## ##  ####
+                    ##     ## ##     ## ##    ## ##     ## ##   ###
+                    ##     ## ##     ##  ######   #######  ##    ##
+
+            You're about to initialize a Mason project in this directory:
+
+              {}
+
+            warning: You are currently outside your home directory.
+            Are you ready to proceed? [Y/n]: n
+            Aborted!
+        """.format(current_dir)))
+
+    def test__init__in_home_dir_shows_warning(self):
+        api = MagicMock()
+        config = Config(auth_store=self._initialized_auth_store(), api=api)
+
+        with self._cd(os.path.expanduser('~')):
+            current_dir = os.path.abspath('.')
+            result = self.runner.invoke(cli, ['init'], obj=config, input='n')
+
+        self.assertIsInstance(result.exception, SystemExit)
+        self.assertEqual(result.exit_code, 1)
+        self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
+
+                    ##     ##    ###     ######   #######  ##    ##
+                    ###   ###   ## ##   ##    ## ##     ## ###   ##
+                    #### ####  ##   ##  ##       ##     ## ####  ##
+                    ## ### ## ##     ##  ######  ##     ## ## ## ##
+                    ##     ## #########       ## ##     ## ##  ####
+                    ##     ## ##     ## ##    ## ##     ## ##   ###
+                    ##     ## ##     ##  ######   #######  ##    ##
+
+            You're about to initialize a Mason project in this directory:
+
+              {}
+
+            warning: You are initializing your home directory as a Mason project.
+            Are you ready to proceed? [Y/n]: n
+            Aborted!
+        """.format(current_dir)))
+
+    def test__init__in_existing_mason_project_dir_shows_warning(self):
+        api = MagicMock()
+        config = Config(auth_store=self._initialized_auth_store(), api=api)
+
+        with self._home_dir_isolated_filesystem():
+            current_dir = os.path.abspath('.')
+            open(os.path.join(current_dir, '.masonrc'), "w").close()
+
+            result = self.runner.invoke(cli, ['init'], obj=config, input='n')
+
+        self.assertIsInstance(result.exception, SystemExit)
+        self.assertEqual(result.exit_code, 1)
+        self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
+
+                    ##     ##    ###     ######   #######  ##    ##
+                    ###   ###   ## ##   ##    ## ##     ## ###   ##
+                    #### ####  ##   ##  ##       ##     ## ####  ##
+                    ## ### ## ##     ##  ######  ##     ## ## ## ##
+                    ##     ## #########       ## ##     ## ##  ####
+                    ##     ## ##     ## ##    ## ##     ## ##   ###
+                    ##     ## ##     ##  ######   #######  ##    ##
+
+            You're about to initialize a Mason project in this directory:
+
+              {}
+
+            warning: You are initializing in an existing Mason project directory.
+            Are you ready to proceed? [Y/n]: n
+            Aborted!
+        """.format(current_dir)))
+
+    def test__init__selecting_new_project_succeeds(self):
+        api = MagicMock()
+        api.get_latest_artifact = MagicMock(return_value=None)
+        interactivity = MagicMock()
+        interactivity.pick = MagicMock(return_value=('project-id', 0))
+        config = Config(
+            auth_store=self._initialized_auth_store(),
+            api=api,
+            interactivity=interactivity
+        )
+
+        with self._home_dir_isolated_filesystem():
+            current_dir = os.path.abspath('.')
+
+            result = self.runner.invoke(cli, ['init'], obj=config, input='y\nproject-id')
+
+        self.assertIsNone(result.exception)
+        self.assertEqual(result.exit_code, 0)
+        self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
+
+                    ##     ##    ###     ######   #######  ##    ##
+                    ###   ###   ## ##   ##    ## ##     ## ###   ##
+                    #### ####  ##   ##  ##       ##     ## ####  ##
+                    ## ### ## ##     ##  ######  ##     ## ## ## ##
+                    ##     ## #########       ## ##     ## ##  ####
+                    ##     ## ##     ## ##    ## ##     ## ##   ###
+                    ##     ## ##     ##  ######   #######  ##    ##
+
+            You're about to initialize a Mason project in this directory:
+
+              {}
+
+            Are you ready to proceed? [Y/n]: y
+            Enter your new project ID: project-id
+
+            Where should Mason look for apps? (Enter multiple paths separated by a comma, or leave blank if none.): 
+
+            Writing configuration file to mason.yml...
+            Writing project information to .masonrc...
+
+            Mason initialization complete!
+        """.format(current_dir)))
+
+    def test__init__selecting_existing_project_succeeds(self):
+        api = MagicMock()
+        api.get_latest_artifact = MagicMock(return_value=None)
+        interactivity = MagicMock()
+        interactivity.pick = MagicMock(return_value=('project-id', 1))
+        config = Config(
+            auth_store=self._initialized_auth_store(),
+            api=api,
+            interactivity=interactivity
+        )
+
+        with self._home_dir_isolated_filesystem():
+            current_dir = os.path.abspath('.')
+
+            result = self.runner.invoke(cli, ['init'], obj=config)
+
+        self.assertIsNone(result.exception)
+        self.assertEqual(result.exit_code, 0)
+        self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
+
+                    ##     ##    ###     ######   #######  ##    ##
+                    ###   ###   ## ##   ##    ## ##     ## ###   ##
+                    #### ####  ##   ##  ##       ##     ## ####  ##
+                    ## ### ## ##     ##  ######  ##     ## ## ## ##
+                    ##     ## #########       ## ##     ## ##  ####
+                    ##     ## ##     ## ##    ## ##     ## ##   ###
+                    ##     ## ##     ##  ######   #######  ##    ##
+
+            You're about to initialize a Mason project in this directory:
+
+              {}
+
+            Are you ready to proceed? [Y/n]: 
+
+            Where should Mason look for apps? (Enter multiple paths separated by a comma, or leave blank if none.): 
+
+            Writing configuration file to mason.yml...
+            Writing project information to .masonrc...
+
+            Mason initialization complete!
+        """.format(current_dir)))
+
+    def test__init__selecting_apps_succeeds(self):
+        api = MagicMock()
+        api.get_latest_artifact = MagicMock(return_value=None)
+        interactivity = MagicMock()
+        interactivity.pick = MagicMock(return_value=('project-id', 1))
+        config = Config(
+            auth_store=self._initialized_auth_store(),
+            api=api,
+            interactivity=interactivity
+        )
+
+        with self._home_dir_isolated_filesystem():
+            current_dir = os.path.abspath('.')
+            os.makedirs(os.path.join(current_dir, 'apps'))
+            os.makedirs(os.path.join(current_dir, 'apps2'))
+
+            apk_file = os.path.join(__tests_root__, 'res/v1.apk')
+            shutil.copyfile(apk_file, os.path.join(current_dir, 'apps/app.apk'))
+
+            result = self.runner.invoke(cli, ['init'], obj=config, input='y\nfake-dir\napps, apps2')
+
+        self.assertIsNone(result.exception)
+        self.assertEqual(result.exit_code, 0)
+        self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
+
+                    ##     ##    ###     ######   #######  ##    ##
+                    ###   ###   ## ##   ##    ## ##     ## ###   ##
+                    #### ####  ##   ##  ##       ##     ## ####  ##
+                    ## ### ## ##     ##  ######  ##     ## ## ## ##
+                    ##     ## #########       ## ##     ## ##  ####
+                    ##     ## ##     ## ##    ## ##     ## ##   ###
+                    ##     ## ##     ##  ######   #######  ##    ##
+
+            You're about to initialize a Mason project in this directory:
+
+              {}
+
+            Are you ready to proceed? [Y/n]: y
+
+            App directories found: apps
+            Where should Mason look for apps? (Enter multiple paths separated by a comma, or leave blank if none.): fake-dir
+            error: Path does not exist: {}
+            Where should Mason look for apps? (Enter multiple paths separated by a comma, or leave blank if none.): apps, apps2
+
+            Writing configuration file to mason.yml...
+            Writing project information to .masonrc...
+
+            Mason initialization complete!
+        """.format(current_dir, os.path.join(current_dir, 'fake-dir'))))
 
     def test__register_config__no_files_fails(self):
         result = self.runner.invoke(cli, ['register', 'config'])
@@ -1524,3 +1749,19 @@ class CliTest(unittest.TestCase):
             yield dir
         finally:
             os.chdir(cwd)
+
+    @contextlib.contextmanager
+    def _home_dir_isolated_filesystem(self):
+        cwd = os.getcwd()
+        t = os.path.join(os.path.expanduser('~'), '.cache/tmp-mason-tests')
+        if not os.path.exists(t):
+            os.makedirs(t)
+        os.chdir(t)
+        try:
+            yield t
+        finally:
+            os.chdir(cwd)
+            try:
+                shutil.rmtree(t)
+            except (OSError, IOError):
+                pass

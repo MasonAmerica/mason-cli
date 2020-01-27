@@ -11,6 +11,7 @@ ENDPOINTS = Store('endpoints', {
     'client_id': 'QLWpUwYOOcLlAJsmyQhQMXyeWn6RZpoc',
     'auth_url': 'https://bymason.auth0.com/oauth/ro',
     'user_info_url': 'https://bymason.auth0.com/userinfo',
+    'projects_url': 'https://platform.bymason.com/api/dashboard/projects',
     'registry_artifact_url': 'https://platform.bymason.com/api/registry/artifacts',
     'registry_signed_url': 'https://platform.bymason.com/api/registry/signedurl',
     'builder_url': 'https://platform.bymason.com/api/tracker/builder',

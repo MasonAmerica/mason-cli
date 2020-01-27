@@ -12,6 +12,10 @@ class MasonApi:
 
         self._customer = None
 
+    def get_projects(self):
+        customer = self._get_validated_customer()
+        return self._get_projects(customer)
+
     def upload_artifact(self, binary, artifact):
         customer = self._get_validated_customer()
         signed_url = self._get_signed_url(customer, binary, artifact)
@@ -39,6 +43,14 @@ class MasonApi:
 
     def login(self, username, password):
         return self._login(password, username)
+
+    def _get_projects(self, customer):
+        headers = {
+            'Authorization': 'Bearer {}'.format(self.auth_store['id_token'])
+        }
+
+        url = self.endpoints_store['projects_url'] + '/{}'.format(customer)
+        return self.handler.get(url, headers=headers)
 
     def _get_signed_url(self, customer, binary, artifact):
         md5 = hash_file(binary, 'md5', False)
@@ -102,13 +114,24 @@ class MasonApi:
         url = self.endpoints_store['deploy_url']
         self.handler.post(url, headers=headers, json=payload)
 
+    def _get_artifact(self, customer, name, type_, version):
+        headers = {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer {}'.format(self.auth_store['id_token'])
+        }
+
+        url = self.endpoints_store['registry_artifact_url'] + '/{}/{}/{}/{}'.format(
+            customer, type_, name, version)
+        return self.handler.get(url, headers=headers)
+
     def _get_latest_artifact(self, customer, name, type_):
         headers = {
             'Content-Type': 'application/json',
             'Authorization': 'Bearer {}'.format(self.auth_store['id_token'])
         }
 
-        url = self.endpoints_store['registry_artifact_url'] + '/{0}'.format(customer)
+        url = self.endpoints_store['registry_artifact_url'] + '/{}/{}/{}'.format(
+            customer, type_, name)
         result = self.handler.get(url, headers=headers)
 
         if not type(result) == list:
@@ -118,7 +141,7 @@ class MasonApi:
             result, key=lambda artifact: int(artifact.get('version')), reverse=True)
         for artifact in sorted_artifacts:
             if artifact.get('name') == name and artifact.get('type') == type_:
-                return artifact
+                return self._get_artifact(customer, name, type_, artifact.get('version'))
 
     def _start_build(self, customer, project, version, fast_build, mason_version):
         headers = {

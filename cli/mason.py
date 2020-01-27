@@ -10,6 +10,7 @@ from cli.internal.commands.cli_init import CliInitCommand
 from cli.internal.commands.deploy import DeployApkCommand
 from cli.internal.commands.deploy import DeployConfigCommand
 from cli.internal.commands.deploy import DeployOtaCommand
+from cli.internal.commands.init import InitCommand
 from cli.internal.commands.login import LoginCommand
 from cli.internal.commands.logout import LogoutCommand
 from cli.internal.commands.register import RegisterApkCommand
@@ -30,6 +31,7 @@ from cli.internal.utils.analytics import MasonAnalytics
 from cli.internal.utils.constants import AUTH
 from cli.internal.utils.constants import ENDPOINTS
 from cli.internal.utils.constants import LOG_PROTOCOL_TRACE
+from cli.internal.utils.interactive import Interactivity
 from cli.internal.utils.mason_types import AliasedGroup
 from cli.internal.utils.remote import RequestHandler
 
@@ -46,7 +48,8 @@ class Config(object):
         auth_store=AUTH,
         endpoints_store=ENDPOINTS,
         api=None,
-        analytics=None
+        analytics=None,
+        interactivity=None
     ):
         logger = logger or logging.getLogger(__name__)
         api = api or MasonApi(RequestHandler(self), auth_store, endpoints_store)
@@ -56,12 +59,14 @@ class Config(object):
                 analytics = MagicMock()
             else:
                 analytics = MasonAnalytics(self)
+        interactivity = interactivity or Interactivity()
 
         self.logger = logger
         self.auth_store = auth_store
         self.endpoints_store = endpoints_store
         self.api = api
         self.analytics = analytics
+        self.interactivity = interactivity
 
 
 pass_config = click.make_pass_decorator(Config, ensure=True)
@@ -142,6 +147,22 @@ def cli(config, debug, verbose, api_key, id_token, access_token, no_color):
     """
 
     command = CliInitCommand(config, debug, verbose, no_color, api_key, id_token, access_token)
+    command.run()
+
+
+@cli.command()
+@pass_config
+def init(config):
+    """
+    Setup a Mason project in the current directory.
+
+    \b
+    Full docs: https://docs.bymason.com/mason-cli/#mason-init
+    """
+
+    config.skip_verify = False
+
+    command = InitCommand(config)
     command.run()
 
 
