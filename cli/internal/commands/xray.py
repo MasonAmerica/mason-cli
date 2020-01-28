@@ -1,21 +1,15 @@
 import abc
 import os
 import posixpath
-
-import click
-import re
-import six
 import sys
 import traceback
 
-from io import BytesIO
+import click
+import six
 
-from adb.adb_commands import AdbCommands
-from adb.android_pubkey import keygen
-
+from adb_shell import constants
 from adb_shell.adb_device import AdbDevice, _AdbTransactionInfo
 from adb_shell.auth.keygen import keygen
-from adb_shell import constants
 
 from cli.internal.commands.command import Command
 from cli.internal.utils.validation import validate_api_key
@@ -24,19 +18,19 @@ from cli.internal.utils.websocket import WsHandle, WSHandleShutdown, XRayProxySe
 try:
     from adb_shell.auth import sign_cryptography
 
-    rsa_signer = sign_cryptography.CryptographySigner
+    RSA_SIGNER = sign_cryptography.CryptographySigner
 except ImportError:
     try:
         from adb_shell.auth import sign_pythonrsa
 
-        rsa_signer = sign_pythonrsa.PythonRSASigner.FromRSAKeyPath
+        RSA_SIGNER = sign_pythonrsa.PythonRSASigner.FromRSAKeyPath
     except ImportError:
         try:
             from adb_shell import sign_pycryptodome
 
-            rsa_signer = sign_pycryptodome.PycryptodomeAuthSigner
+            RSA_SIGNER = sign_pycryptodome.PycryptodomeAuthSigner
         except ImportError:
-            rsa_signer = None
+            RSA_SIGNER = None
 
 
 @six.add_metaclass(abc.ABCMeta)
@@ -57,8 +51,8 @@ class XrayCommand(Command):
     def sanitized_args(args):
         if args is None:
             return []
-        else:
-            return list(args)
+
+        return list(args)
 
 
 class XrayLogcatCommand(XrayCommand):
@@ -203,7 +197,7 @@ class XRay(object):
 
         def on_running():
             try:
-                signer = rsa_signer(self._adbkey)
+                signer = RSA_SIGNER(self._adbkey)
                 if adb.connect(rsa_keys=[signer], auth_timeout_s=30, timeout_s=10):
                     func(adb, *args, **kwargs)
                     adb.close()
@@ -300,7 +294,7 @@ class XRay(object):
     def _shell(self, device, command):
         adb_info = _AdbTransactionInfo(None, None, 10, 20)
         if command:
-            if type(command) == list:
+            if isinstance(command, list):
                 command = ' '.join(command)
             output = device._streaming_command(b'shell', command.encode('utf8'), adb_info)
             for line in output:
@@ -372,14 +366,7 @@ class XRay(object):
     def install(self, local_path, replace_existing=True, grant_permissions=False, args=None):
         return self._run_in_reactor(self._install, local_path, args)
 
-    def _install(
-        self,
-        device,
-        local_path,
-        replace_existing=True,
-        grant_permissions=False,
-        args=None
-    ):
+    def _install(self, device, local_path, replace_existing=True, grant_permissions=False, args=None):
         destination_dir = '/data/local/tmp/'
         basename = os.path.basename(local_path)
         destination_path = posixpath.join(destination_dir, basename)

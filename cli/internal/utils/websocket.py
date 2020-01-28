@@ -23,7 +23,6 @@ from autobahn.twisted.websocket import WebSocketClientProtocol, WebSocketClientF
 from adb_shell.handle.base_handle import BaseHandle
 from adb_shell.exceptions import AdbCommandFailureException, TcpTimeoutException
 
-import cli.internal.commands.xray
 from cli.internal.utils.constants import LOG_PROTOCOL_TRACE
 
 txaio.use_twisted()
@@ -49,7 +48,7 @@ class XRayWebSocketProtocol(WebSocketClientProtocol):
         if isBinary:
             self.forward_message(payload)
         else:
-            if type(payload) == "str":
+            if isinstance(payload, str):
                 payload = payload.encode()
             if payload == MSG_DEVICE_OK:
                 self.factory.d.callback(MSG_DEVICE_OK)
