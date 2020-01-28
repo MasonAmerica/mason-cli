@@ -28,7 +28,6 @@ setup(
         'packaging',
         'pyaxmlparser>=0.3.22',
         'future',  # Needed for Python 2 compatibility
-        'adb @ https://github.com/MasonAmerica/python-adb/tarball/master#egg=adb-1.3.0.9',
         'adb_shell>=0.1.1',
         'twisted>=19.10.0',
         'autobahn>=19.11.1',
