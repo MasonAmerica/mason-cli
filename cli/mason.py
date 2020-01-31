@@ -171,10 +171,10 @@ def project(config, context):
     command.run()
 
 
-@register.command()
+@register.command('config')
 @click.argument('configs', type=click.Path(exists=True, dir_okay=False), nargs=-1, required=True)
 @pass_config
-def config(config, configs):
+def register_config(config, configs):
     """
     Register config artifacts.
 
@@ -196,10 +196,10 @@ def config(config, configs):
     command.run()
 
 
-@register.command()
+@register.command('apk')
 @click.argument('apks', type=click.Path(exists=True, dir_okay=False), nargs=-1, required=True)
 @pass_config
-def apk(config, apks):
+def register_apk(config, apks):
     """
     Register APK artifacts.
 
@@ -367,12 +367,12 @@ def deploy(config, assume_yes, push, no_https, skip_verify):
     config.no_https = no_https
 
 
-@deploy.command()
+@deploy.command('config')
 @click.argument('name')
 @click.argument('version', type=mason_types.Version())
 @click.argument('groups', nargs=-1, required=True)
 @pass_config
-def config(config, name, version, groups):  # noqa: F811
+def deploy_config(config, name, version, groups):
     """
     Deploy config artifacts.
 
@@ -403,12 +403,12 @@ def config(config, name, version, groups):  # noqa: F811
     command.run()
 
 
-@deploy.command()
+@deploy.command('apk')
 @click.argument('name')
 @click.argument('version', type=mason_types.Version())
 @click.argument('groups', nargs=-1, required=True)
 @pass_config
-def apk(config, name, version, groups):  # noqa: F811
+def deploy_apk(config, name, version, groups):
     """
     Deploy APK artifacts.
 
