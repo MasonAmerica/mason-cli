@@ -1,5 +1,5 @@
-from cli import __version__
 from cli.internal.commands.command import Command
+from cli.version import __version__
 
 
 class VersionCommand(Command):

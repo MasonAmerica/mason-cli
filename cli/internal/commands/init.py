@@ -5,9 +5,9 @@ import packaging.version
 import requests
 import time
 
-from cli import __version__
 from cli.internal.commands.command import Command
 from cli.internal.utils.store import Store
+from cli.version import __version__
 
 
 class InitCommand(Command):
@@ -79,16 +79,16 @@ class InitCommand(Command):
             remote_version = packaging.version.parse(r.text)
             if remote_version > current_version:
                 self.config.logger.info(inspect.cleandoc("""
-                        ==================== NOTICE ====================
-                        A newer version (v{}) of the Mason CLI is available.
-        
-                        Download the latest version:
-                        https://github.com/MasonAmerica/mason-cli/releases/latest
-        
-                        And check out our installation guide:
-                        http://docs.bymason.com/mason-cli/#install
-                        ==================== NOTICE ====================
-                    """.format(remote_version)))
+                    ==================== NOTICE ====================
+                    A newer version (v{}) of the Mason CLI is available.
+
+                    Download the latest version:
+                    https://github.com/MasonAmerica/mason-cli/releases/latest
+
+                    And check out our installation guide:
+                    http://docs.bymason.com/mason-cli/#install
+                    ==================== NOTICE ====================
+                """.format(remote_version)))
                 self.config.logger.info('')
         else:
             self.config.logger.debug('Failed to check for updates: {}'.format(r))

@@ -1,19 +1,21 @@
 import abc
 import os
 import posixpath
-import sys
 import traceback
 
 import click
 import six
-
+import sys
 from adb_shell import constants
-from adb_shell.adb_device import AdbDevice, _AdbTransactionInfo
+from adb_shell.adb_device import AdbDevice
+from adb_shell.adb_device import _AdbTransactionInfo
 from adb_shell.auth.keygen import keygen
 
 from cli.internal.commands.command import Command
 from cli.internal.utils.validation import validate_api_key
-from cli.internal.utils.websocket import WsHandle, WSHandleShutdown, XRayProxyServer
+from cli.internal.utils.websocket import WSHandleShutdown
+from cli.internal.utils.websocket import WsHandle
+from cli.internal.utils.websocket import XRayProxyServer
 
 try:
     from adb_shell.auth import sign_cryptography
@@ -211,18 +213,26 @@ class XRay(object):
 
         return handle.run(on_running)
 
-
     def shell(self, command):
         self._run_in_reactor(self._shell, command)
 
-    def _interactive_shell(self, device, adb_info, cmd=None, delim=None, strip_cmd=True, strip_delim=True):
-        """Retrieves stdout of the current InteractiveShell and sends a shell command if provided
+    def _interactive_shell(
+        self,
+        device,
+        adb_info,
+        cmd=None,
+        delim=None,
+        strip_cmd=True,
+        strip_delim=True
+    ):
+        """
+        Retrieves stdout of the current InteractiveShell and sends a shell command if provided.
 
         Args:
           conn: Instance of AdbConnection
           cmd: Optional. Command to run on the target.
-          delim: Optional. Delimiter to look for in the output to know when to stop expecting more output
-          (usually the shell prompt)
+          delim: Optional. Delimiter to look for in the output to know when to stop expecting more
+                 output (usually the shell prompt).
         Returns:
           The stdout from the shell command.
         """
@@ -231,7 +241,8 @@ class XRay(object):
             delim = delim.encode('utf-8')
 
         # Delimiter may be shell@hammerhead:/ $
-        # The user or directory could change, making the delimiter somthing like root@hammerhead:/data/local/tmp $
+        # The user or directory could change, making the delimiter somthing like
+        # root@hammerhead:/data/local/tmp $
         # Handle a partial delimiter to search on and clean up
         if delim:
             user_pos = delim.find(b'@')
@@ -246,11 +257,8 @@ class XRay(object):
         else:
             partial_delim = None
 
-        original_cmd = ''
-
         try:
             if cmd:
-                original_cmd = str(cmd)
                 cmd += '\r'  # Required. Send a carriage return right after the cmd
                 cmd = cmd.encode('utf8')
 
@@ -258,7 +266,8 @@ class XRay(object):
                 device._write(cmd, adb_info)
 
                 if delim:
-                    # Expect multiple WRTE cmds until the delim (usually terminal prompt) is detected
+                    # Expect multiple WRTE cmds until the delim (usually terminal prompt) is
+                    # detected.
 
                     cmd, data = device._read_until([constants.WRTE], adb_info)
                     if type(data) == bytes:
@@ -277,7 +286,8 @@ class XRay(object):
 
             else:
 
-                # No cmd provided means we should just expect a single line from the terminal. Use this sparingly
+                # No cmd provided means we should just expect a single line from the terminal.
+                # Use this sparingly.
                 cmd, data = device._read_until([constants.WRTE, constants.CLSE], adb_info)
 
                 if cmd == b'WRTE':
@@ -289,7 +299,6 @@ class XRay(object):
         except Exception as e:
             self._logger.error("InteractiveShell exception (most likely timeout): {}".format(e))
             traceback.print_exc()
-
 
     def _shell(self, device, command):
         adb_info = _AdbTransactionInfo(None, None, 10, 20)
@@ -316,7 +325,8 @@ class XRay(object):
                     elif cmd == 'exit':
                         break
                     else:
-                        output = self._interactive_shell(device, adb_info, cmd, delim=terminal_prompt)
+                        output = self._interactive_shell(
+                            device, adb_info, cmd, delim=terminal_prompt)
                         for line in output:
                             sys.stdout.write(line.decode('utf-8'))
             except EOFError:
@@ -366,7 +376,14 @@ class XRay(object):
     def install(self, local_path, replace_existing=True, grant_permissions=False, args=None):
         return self._run_in_reactor(self._install, local_path, args)
 
-    def _install(self, device, local_path, replace_existing=True, grant_permissions=False, args=None):
+    def _install(
+        self,
+        device,
+        local_path,
+        replace_existing=True,
+        grant_permissions=False,
+        args=None
+    ):
         destination_dir = '/data/local/tmp/'
         basename = os.path.basename(local_path)
         destination_path = posixpath.join(destination_dir, basename)

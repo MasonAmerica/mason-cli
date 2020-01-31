@@ -32,6 +32,19 @@ test_py3:
     - branches
     - tags
 
+lint:
+  stage: test
+  tags:
+    - mason-deploy
+  image: python:3
+  script:
+    - pip3 install flake8
+    - flake8
+  only:
+    - merge_requests
+    - branches
+    - tags
+
 build_linux:
   stage: build
   tags:

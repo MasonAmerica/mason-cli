@@ -6,11 +6,11 @@ import unittest
 from click.testing import CliRunner
 from mock import MagicMock
 
-from cli import __version__
 from cli.internal.utils.remote import ApiError
 from cli.internal.utils.store import Store
 from cli.mason import Config
 from cli.mason import cli
+from cli.version import __version__
 from tests import __tests_root__
 
 

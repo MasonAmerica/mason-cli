@@ -372,7 +372,7 @@ def deploy(config, assume_yes, push, no_https, skip_verify):
 @click.argument('version', type=mason_types.Version())
 @click.argument('groups', nargs=-1, required=True)
 @pass_config
-def config(config, name, version, groups):
+def config(config, name, version, groups):  # noqa: F811
     """
     Deploy config artifacts.
 
@@ -408,7 +408,7 @@ def config(config, name, version, groups):
 @click.argument('version', type=mason_types.Version())
 @click.argument('groups', nargs=-1, required=True)
 @pass_config
-def apk(config, name, version, groups):
+def apk(config, name, version, groups):  # noqa: F811
     """
     Deploy APK artifacts.
 

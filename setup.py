@@ -11,7 +11,7 @@ with open(os.path.join(root, "VERSION"), "r") as f:
 
 # Write version.py
 with open(os.path.join(root, "cli/version.py"), "w") as f:
-    f.write("__version__ = '{}'".format(version))
+    f.write("__version__ = '{}'\n".format(version))
 
 setup(
     name='mason-cli',
