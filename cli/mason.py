@@ -172,7 +172,7 @@ def project(config, context):
 
 
 @register.command()
-@click.argument('configs', type=click.Path(exists=True), nargs=-1, required=True)
+@click.argument('configs', type=click.Path(exists=True, dir_okay=False), nargs=-1, required=True)
 @pass_config
 def config(config, configs):
     """
@@ -197,7 +197,7 @@ def config(config, configs):
 
 
 @register.command()
-@click.argument('apks', type=click.Path(exists=True), nargs=-1, required=True)
+@click.argument('apks', type=click.Path(exists=True, dir_okay=False), nargs=-1, required=True)
 @pass_config
 def apk(config, apks):
     """
@@ -307,7 +307,7 @@ def build(config, block, turbo, mason_version, project, version):
 @click.option('--mason-version', hidden=True, help='Pick a specific Mason OS version.')
 @click.option('--skip-verify', '-s', is_flag=True, default=False, hidden=True,
               help='Don\'t require confirmation.')
-@click.argument('configs', type=click.Path(exists=True), nargs=-1, required=True)
+@click.argument('configs', type=click.Path(exists=True, dir_okay=False), nargs=-1, required=True)
 @pass_config
 def stage(config, assume_yes, block, turbo, mason_version, skip_verify, configs):
     """
