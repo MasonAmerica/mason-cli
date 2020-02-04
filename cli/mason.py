@@ -29,6 +29,7 @@ from cli.internal.utils import mason_types
 from cli.internal.utils.constants import AUTH
 from cli.internal.utils.constants import ENDPOINTS
 from cli.internal.utils.constants import LOG_PROTOCOL_TRACE
+from cli.internal.utils.mason_types import AliasedGroup
 from cli.internal.utils.remote import RequestHandler
 
 
@@ -97,7 +98,7 @@ def _handle_set_level(ctx, param, value):
     logger.setLevel(x)
 
 
-@click.group()
+@click.group(cls=AliasedGroup)
 @click.option('--version', '-V', is_flag=True, is_eager=True, expose_value=False,
               callback=_version_callback,
               help='Show the version and exit.')
@@ -129,7 +130,7 @@ def cli(config, debug, verbose, api_key, id_token, access_token, no_color):
     command.run()
 
 
-@cli.group()
+@cli.group(cls=AliasedGroup)
 @click.option('--assume-yes', '--yes', '-y', is_flag=True, default=False,
               help='Don\'t require confirmation.')
 @click.option('--skip-verify', '-s', is_flag=True, default=False, hidden=True,
@@ -221,7 +222,7 @@ def register_apk(config, apks):
     command.run()
 
 
-@register.group()
+@register.group(cls=AliasedGroup)
 def media():
     """
     Register media artifacts.
@@ -341,7 +342,7 @@ def stage(config, assume_yes, block, turbo, mason_version, skip_verify, configs)
     command.run()
 
 
-@cli.group()
+@cli.group(cls=AliasedGroup)
 @click.option('--assume-yes', '--yes', '-y', is_flag=True, default=False,
               help='Don\'t require confirmation.')
 @click.option('--push', '-p', is_flag=True, default=False,
@@ -475,7 +476,7 @@ def ota(config, name, version, groups):
     command.run()
 
 
-@cli.group()
+@cli.group(cls=AliasedGroup)
 @click.argument('device')
 @pass_config
 def xray(config, device):
