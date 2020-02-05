@@ -18,6 +18,8 @@ class CliTest(unittest.TestCase):
     def setUp(self):
         self.runner = CliRunner()
 
+        os.environ['TEST_MODE'] = 'TRUE'
+
     def test__version__command_prints_info(self):
         result = self.runner.invoke(cli, ['version'])
 

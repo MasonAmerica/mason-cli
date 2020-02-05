@@ -59,6 +59,7 @@ class DeployConfigCommand(DeployCommand):
     def __init__(self, config, name, version, groups):
         super(DeployConfigCommand, self).__init__(config, 'config', name, version, groups)
 
+    @Command.log('deploy config')
     def run(self):
         self._maybe_inject_version()
         self.deploy_artifact()
@@ -79,6 +80,7 @@ class DeployApkCommand(DeployCommand):
     def __init__(self, config, name, version, groups):
         super(DeployApkCommand, self).__init__(config, 'apk', name, version, groups)
 
+    @Command.log('deploy apk')
     def run(self):
         self._maybe_inject_version()
         self.deploy_artifact()
@@ -99,5 +101,6 @@ class DeployOtaCommand(DeployCommand):
     def __init__(self, config, name, version, groups):
         super(DeployOtaCommand, self).__init__(config, 'ota', name, version, groups)
 
+    @Command.log('deploy ota')
     def run(self):
         self.deploy_artifact()

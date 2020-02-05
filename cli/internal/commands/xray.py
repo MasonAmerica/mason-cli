@@ -62,6 +62,7 @@ class XrayLogcatCommand(XrayCommand):
         super(XrayLogcatCommand, self).__init__(config)
         self.args = args
 
+    @Command.log('xray logcat')
     def run(self):
         def call():
             self.xray.logcat(self.sanitized_args(self.args))
@@ -74,6 +75,7 @@ class XrayShellCommand(XrayCommand):
         super(XrayShellCommand, self).__init__(config)
         self.args = args
 
+    @Command.log('xray shell')
     def run(self):
         def call():
             self.xray.shell(self.sanitized_args(self.args))
@@ -87,6 +89,7 @@ class XrayPushCommand(XrayCommand):
         self.local = local
         self.remote = remote
 
+    @Command.log('xray push')
     def run(self):
         def call():
             self.xray.push(self.local, self.remote)
@@ -100,6 +103,7 @@ class XrayPullCommand(XrayCommand):
         self.remote = remote
         self.local = local
 
+    @Command.log('xray pull')
     def run(self):
         def call():
             self.xray.pull(self.remote, self.local)
@@ -112,6 +116,7 @@ class XrayInstallCommand(XrayCommand):
         super(XrayInstallCommand, self).__init__(config)
         self.local = local
 
+    @Command.log('xray install')
     def run(self):
         def call():
             self.xray.install(self.local)
@@ -124,6 +129,7 @@ class XrayUninstallCommand(XrayCommand):
         super(XrayUninstallCommand, self).__init__(config)
         self.package = package
 
+    @Command.log('xray uninstall')
     def run(self):
         def call():
             self.xray.uninstall(self.package)
@@ -136,6 +142,7 @@ class XrayDesktopCommand(XrayCommand):
         super(XrayDesktopCommand, self).__init__(config)
         self.port = port
 
+    @Command.log('xray desktop')
     def run(self):
         def call():
             self.xray.desktop(self.port)

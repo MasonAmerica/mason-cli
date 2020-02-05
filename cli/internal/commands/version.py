@@ -6,6 +6,7 @@ class VersionCommand(Command):
     def __init__(self, config):
         self.config = config
 
+    @Command.log('version')
     def run(self):
         self.config.logger.info('Mason CLI v{}'.format(__version__))
         self.config.logger.info('Copyright (C) 2019 Mason America (https://bymason.com)')

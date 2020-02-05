@@ -22,6 +22,7 @@ class StageCommand(Command):
         self.mason_version = mason_version
         self.working_dir = working_dir
 
+    @Command.log('stage')
     def run(self):
         for num, file in enumerate(self.config_files):
             register_command = RegisterConfigCommand(self.config, [file], self.working_dir)

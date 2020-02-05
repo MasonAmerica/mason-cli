@@ -52,6 +52,7 @@ class RegisterConfigCommand(RegisterCommand):
         self.config_files = config_files
         self.working_dir = working_dir
 
+    @Command.log('register config')
     def run(self):
         configs = []
 
@@ -109,6 +110,7 @@ class RegisterApkCommand(RegisterCommand):
         super(RegisterApkCommand, self).__init__(config)
         self.apk_files = apk_files
 
+    @Command.log('register apk')
     def run(self):
         for num, file in enumerate(self.apk_files):
             self.register_artifact(file, Apk.parse(self.config, file))
@@ -125,6 +127,7 @@ class RegisterMediaCommand(RegisterCommand):
         self.version = version
         self.media_file = media_file
 
+    @Command.log('register media')
     def run(self):
         self._maybe_inject_version()
         self.register_artifact(
@@ -158,6 +161,7 @@ class RegisterProjectCommand(RegisterCommand):
         self.context_file = context_file
         self.working_dir = working_dir
 
+    @Command.log('register project')
     def run(self):
         # Needs to be a local import to prevent recursion
         from cli.internal.commands.stage import StageCommand

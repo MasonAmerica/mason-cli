@@ -9,6 +9,7 @@ class LoginCommand(Command):
         self.username = username
         self.password = password
 
+    @Command.log('login')
     def run(self):
         self.config.logger.debug('Authenticating ' + self.username)
         self._login()

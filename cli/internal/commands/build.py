@@ -38,6 +38,7 @@ class BuildCommand(Command):
 
         validate_credentials(config)
 
+    @Command.log('build')
     def run(self):
         self.config.logger.debug('Starting build for {}:{}...'.format(self.project, self.version))
 

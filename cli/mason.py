@@ -26,6 +26,7 @@ from cli.internal.commands.xray import XrayPushCommand
 from cli.internal.commands.xray import XrayShellCommand
 from cli.internal.commands.xray import XrayUninstallCommand
 from cli.internal.utils import mason_types
+from cli.internal.utils.analytics import MasonAnalytics
 from cli.internal.utils.constants import AUTH
 from cli.internal.utils.constants import ENDPOINTS
 from cli.internal.utils.constants import LOG_PROTOCOL_TRACE
@@ -39,14 +40,28 @@ class Config(object):
     and other flags.
     """
 
-    def __init__(self, logger=None, auth_store=AUTH, endpoints_store=ENDPOINTS, api=None):
+    def __init__(
+        self,
+        logger=None,
+        auth_store=AUTH,
+        endpoints_store=ENDPOINTS,
+        api=None,
+        analytics=None
+    ):
         logger = logger or logging.getLogger(__name__)
         api = api or MasonApi(RequestHandler(self), auth_store, endpoints_store)
+        if not analytics:
+            if os.environ.get('TEST_MODE'):
+                from mock import MagicMock
+                analytics = MagicMock()
+            else:
+                analytics = MasonAnalytics(self)
 
         self.logger = logger
         self.auth_store = auth_store
         self.endpoints_store = endpoints_store
         self.api = api
+        self.analytics = analytics
 
 
 pass_config = click.make_pass_decorator(Config, ensure=True)
