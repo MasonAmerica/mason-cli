@@ -17,13 +17,19 @@ class MasonAnalytics:
         self.instance = self._random_string()
         self.session = Store('session', {})
 
+        self.ci = None
+        self.environment = None
+
     def log_event(self, command=None, exception=None):
+        self._compute_environment()
+
         headers = {
             'Content-Type': 'application/json'
         }
         payload = {
             'property': 'mason-cli',
             'event': 'invoke',
+            'environment': self.environment,
             'cli': {
                 'version': __version__,
                 'command': command,
@@ -33,7 +39,7 @@ class MasonAnalytics:
                 'exception': exception.__class__.__name__ if exception else None,
                 'flags': list({k: v for k, v in
                                click.get_current_context().params.items() if v}.keys()),
-                'ci': True if os.getenv("CI") else False
+                'ci': self.ci
             }
         }
 
@@ -42,6 +48,20 @@ class MasonAnalytics:
             self.handler.post(url, headers=headers, json=payload)
         except Exception as e:
             self.config.logger.debug(e)
+
+    def _compute_environment(self):
+        if self.ci and self.environment:
+            return
+
+        self.ci = True if os.getenv("CI") else False
+
+        sample_url = self.config.endpoints_store['deploy_url']
+        if 'development' in sample_url:
+            self.environment = 'development'
+        elif 'staging' in sample_url:
+            self.environment = 'staging'
+        else:
+            self.environment = 'production'
 
     def _sanitized_session(self):
         current_time = int(time.time())
