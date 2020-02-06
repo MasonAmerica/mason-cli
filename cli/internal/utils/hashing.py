@@ -1,7 +1,7 @@
 import hashlib
 
 
-def hash_file(filename, type_of_hash, as_hex):
+def hash_file(filename, type_of_hash, as_hex=True):
     """
     Hash a file using SHA1 or MD5
     :param filename:

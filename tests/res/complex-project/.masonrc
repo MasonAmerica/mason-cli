@@ -6,5 +6,15 @@
   "apps": [
     "test-path/v1.apk",
     "built-apks"
+  ],
+  "bootanimations": [
+    {
+      "name": "anim-1",
+      "file": "anims/bootanimation.zip"
+    },
+    {
+      "name": "anim-2",
+      "file": "anims/bootanimation2.zip"
+    }
   ]
 }

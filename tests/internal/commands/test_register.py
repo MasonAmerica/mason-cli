@@ -196,3 +196,43 @@ class RegisterCommandTest(unittest.TestCase):
                 'version_code': 1
             }]
         })
+
+    def test_project_registers_updated_complex_config(self):
+        self.config.endpoints_store.__getitem__ = MagicMock(return_value='https://google.com')
+        self.config.api.get_build = MagicMock(return_value={'data': {'status': 'COMPLETED'}})
+        self.config.api.get_latest_artifact = MagicMock(return_value={'version': '41'})
+        complex_project = os.path.join(__tests_root__, 'res/complex-project')
+        working_dir = tempfile.mkdtemp()
+        config_file = os.path.join(working_dir, 'config3.yml')
+        command = RegisterProjectCommand(self.config, complex_project, working_dir)
+
+        command.run()
+        with open(config_file, 'r') as f:
+            yml = yaml.safe_load(f)
+
+        self.assertDictEqual(yml, {
+            'os': {
+                'name': 'project-id3',
+                'version': 42,
+                'configurations': {'mason-management': {'disable_keyguard': True}}
+            },
+            'apps': [{
+                'name': 'Testy Testeron',
+                'package_name': 'com.example.app1',
+                'version_code': 1
+            }, {
+                'name': 'Dummy app',
+                'package_name': 'com.example.unittestapp1',
+                'version_code': 1
+            }, {
+                'name': 'Testy Testeron',
+                'package_name': 'com.example.app2',
+                'version_code': 41
+            }],
+            'media': {
+                'bootanimation': {
+                    'name': 'anim-1',
+                    'version': 42
+                }
+            }
+        })

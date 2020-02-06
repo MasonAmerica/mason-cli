@@ -28,15 +28,16 @@ class RegisterCommand(Command):
         if not self.config.skip_verify:
             click.confirm('Continue register?', default=True, abort=True)
 
-        self.config.logger.debug('File SHA1: {}'.format(hash_file(binary, 'sha1', True)))
-        self.config.logger.debug('File MD5: {}'.format(hash_file(binary, 'md5', True)))
+        self.config.logger.debug('File SHA1: {}'.format(hash_file(binary, 'sha1')))
+        self.config.logger.debug('File MD5: {}'.format(hash_file(binary, 'md5')))
 
         try:
             self.config.api.upload_artifact(binary, artifact)
             self.config.logger.info("{} '{}' registered.".format(
                 artifact.get_type().capitalize(), artifact.get_name()))
         except ApiError as e:
-            if getattr(self.config, 'force', None) and e.message and 'already exists' in e.message:
+            is_in_project_mode = getattr(self.config, 'project_mode', None)
+            if is_in_project_mode and e.message and 'already exists' in e.message:
                 self.config.logger.info("{} '{}' already registered, ignoring.".format(
                     artifact.get_type().capitalize(), artifact.get_name()))
                 pass
@@ -130,13 +131,23 @@ class RegisterMediaCommand(RegisterCommand):
             self.media_file,
             Media.parse(self.config, self.name, self.type, self.version, self.media_file))
 
+        return {
+            'name': self.name,
+            'version': self.version
+        }
+
     def _maybe_inject_version(self):
         if self.version != 'latest':
             return
 
         latest_media = self.config.api.get_latest_artifact(self.name, 'media')
         if latest_media:
-            self.version = int(latest_media.get('version')) + 1
+            is_in_project_mode = getattr(self.config, 'project_mode', None)
+            checksum = latest_media.get('checksum') or {}
+            if is_in_project_mode and checksum.get('sha1') == hash_file(self.media_file, 'sha1'):
+                self.version = int(latest_media.get('version'))
+            else:
+                self.version = int(latest_media.get('version')) + 1
         else:
             self.version = 1
 
@@ -156,13 +167,22 @@ class RegisterProjectCommand(RegisterCommand):
 
         raw_config_files = self._validated_files(context.get('configs') or 'mason.yml', 'yml')
         apk_files = self._validated_files(context.get('apps'), 'apk')
+        raw_boot_animations = self._validated_media(context.get('bootanimations'))
+
+        self.config.project_mode = True
+        RegisterApkCommand(self.config, apk_files).run()
+
+        boot_animations = []
+        for anim in raw_boot_animations:
+            self.config.logger.info('')
+            result = RegisterMediaCommand(
+                self.config, anim.get('name'), 'bootanimation', 'latest', anim.get('file')).run()
+            boot_animations.append(result)
+        self.config.project_mode = False
+
         config_files = []
         for raw_config_file in raw_config_files:
-            config_files.append(self._rewritten_config(raw_config_file, apk_files))
-
-        self.config.force = True
-        RegisterApkCommand(self.config, apk_files).run()
-        self.config.force = False
+            config_files.append(self._rewritten_config(raw_config_file, apk_files, boot_animations))
 
         self.config.logger.info('')
         StageCommand(self.config, config_files, True, True, None, self.working_dir).run()
@@ -178,15 +198,19 @@ class RegisterProjectCommand(RegisterCommand):
         return masonrc
 
     def _validated_file(self, path):
-        if os.path.isabs(path):
-            file = path
-        else:
-            file = os.path.abspath(os.path.join(self.context_file, path))
+        file = self._expanded_path(path)
 
         if not os.path.isfile(file):
             self.config.logger.error('Project resource does not exist: {}'.format(file))
             raise click.Abort()
 
+        return file
+
+    def _expanded_path(self, path):
+        if os.path.isabs(path):
+            file = path
+        else:
+            file = os.path.abspath(os.path.join(self.context_file, path))
         return file
 
     def _validated_files(self, paths, extension):
@@ -198,6 +222,7 @@ class RegisterProjectCommand(RegisterCommand):
         files = []
 
         for file in paths:
+            file = self._expanded_path(file)
             if os.path.isdir(file):
                 sub_paths = list(map(lambda sub: os.path.join(file, sub), os.listdir(file)))
                 sub_paths = list(filter(lambda f: f.endswith('.{}'.format(extension)), sub_paths))
@@ -207,6 +232,24 @@ class RegisterProjectCommand(RegisterCommand):
 
         return files
 
+    def _validated_media(self, media):
+        if not media:
+            return []
+
+        if type(media) == dict:
+            return [{
+                'name': media.get('name'),
+                'file': self._validated_file(media.get('file'))
+            }]
+        elif type(media) == list:
+            new_media = []
+            for medium in media:
+                new_media.extend(self._validated_media(medium))
+            return new_media
+        else:
+            self.config.logger.error('Invalid media {}'.format(media))
+            raise click.Abort()
+
     def _parse_context(self, masonrc):
         with open(masonrc, 'r') as f:
             context = yaml.safe_load(f)
@@ -215,11 +258,12 @@ class RegisterProjectCommand(RegisterCommand):
                 raise click.Abort()
         return context
 
-    def _rewritten_config(self, raw_config_file, apk_files):
+    def _rewritten_config(self, raw_config_file, apk_files, boot_animations):
         raw_config = OSConfig.parse(self.config, raw_config_file).ecosystem
         config = copy.deepcopy(raw_config)
         apps = raw_config.get('apps') or []
         apks = list(map(lambda apk: Apk.parse(self.config, apk), apk_files))
+        media = raw_config.get('media') or {}
 
         config['from'] = raw_config_file
         for apk in apks:
@@ -231,6 +275,11 @@ class RegisterProjectCommand(RegisterCommand):
                 if package_name == app.get('package_name'):
                     app['version_code'] = int(version)
                     break
+        for boot_animation in boot_animations:
+            name = boot_animation.get('name')
+            version = boot_animation.get('version')
+            if self._has_boot_animation_presence(media, name):
+                config.get('media').get('bootanimation')['version'] = version
 
         config_file = os.path.join(self.working_dir, os.path.basename(raw_config_file))
         with open(config_file, 'w') as f:
@@ -246,3 +295,12 @@ class RegisterProjectCommand(RegisterCommand):
             "App '{}' declared in project context not found in project "
             "configuration.".format(package_name))
         raise click.Abort()
+
+    def _has_boot_animation_presence(self, media, name):
+        anim = media.get('bootanimation')
+        if anim and anim.get('name') == name:
+            return True
+
+        self.config.logger.debug(
+            "Boot animation '{}' declared in project context not found in project "
+            "configuration.".format(name))

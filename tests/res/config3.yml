@@ -13,3 +13,6 @@ apps:
   - name: Testy Testeron
     package_name: com.example.app2
     version_code: latest
+media:
+  bootanimation:
+    name: anim-1

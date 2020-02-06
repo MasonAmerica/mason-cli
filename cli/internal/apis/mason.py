@@ -62,7 +62,7 @@ class MasonApi:
         self.handler.put(signed_url, binary, headers=headers)
 
     def _register_signed_url(self, customer, signed_url, binary, artifact):
-        sha1 = hash_file(binary, 'sha1', True)
+        sha1 = hash_file(binary, 'sha1')
         headers = {
             'Content-Type': 'application/json',
             'Authorization': 'Bearer {}'.format(self.auth_store['id_token'])

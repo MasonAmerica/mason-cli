@@ -603,6 +603,7 @@ class CliTest(unittest.TestCase):
 
     def test__register_project__app_not_present_fails(self):
         no_app_project = os.path.join(__tests_root__, 'res/no-app-project')
+        apk_file = os.path.join(__tests_root__, 'res/no-app-project/v1.apk')
         api = MagicMock()
         config = Config(auth_store=self._initialized_auth_store(), api=api)
 
@@ -612,9 +613,18 @@ class CliTest(unittest.TestCase):
         self.assertIsInstance(result.exception, SystemExit)
         self.assertEqual(result.exit_code, 1)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
+            ------------ APK ------------
+            File Name: {}
+            File size: 1319297
+            Package: com.example.unittestapp1
+            Version Name: 1.0
+            Version Code: 1
+            -----------------------------
+            Continue register? [Y/n]: 
+            Apk 'com.example.unittestapp1' registered.
             error: App '{}' declared in project context not found in project configuration.
             Aborted!
-        """.format('com.example.unittestapp1')))
+        """.format(apk_file, 'com.example.unittestapp1')))
 
     def test__register_project__config_already_present_failed(self):
         simple_project = os.path.join(__tests_root__, 'res/simple-project')
@@ -748,9 +758,16 @@ class CliTest(unittest.TestCase):
         config_file2 = os.path.join(__tests_root__, 'res/complex-project/config3.yml')
         apk_file1 = os.path.join(__tests_root__, 'res/complex-project/test-path/v1.apk')
         apk_file2 = os.path.join(__tests_root__, 'res/complex-project/built-apks/built.apk')
+        boot_animation1 = os.path.join(
+            __tests_root__, 'res/complex-project/anims/bootanimation.zip')
+        boot_animation2 = os.path.join(
+            __tests_root__, 'res/complex-project/anims/bootanimation2.zip')
         api = MagicMock()
         api.get_build = MagicMock(return_value={'data': {'status': 'COMPLETED'}})
-        api.get_latest_artifact = MagicMock(return_value={'version': '41'})
+        api.get_latest_artifact = MagicMock(return_value={
+            'version': '41',
+            'checksum': {'sha1': 'e7788dca3a3797fd152825e600047e7cef870d98'}
+        })
         config = Config(
             auth_store=self._initialized_auth_store(),
             endpoints_store=self._initialized_endpoints_store(),
@@ -783,6 +800,26 @@ class CliTest(unittest.TestCase):
             Continue register? [Y/n]: 
             Apk 'com.example.unittestapp1' registered.
 
+            ----------- MEDIA -----------
+            File Name: {}
+            File size: 3156136
+            Name: anim-1
+            Version: 41
+            Type: bootanimation
+            -----------------------------
+            Continue register? [Y/n]: 
+            Media 'anim-1' registered.
+            
+            ----------- MEDIA -----------
+            File Name: {}
+            File size: 166
+            Name: anim-2
+            Version: 42
+            Type: bootanimation
+            -----------------------------
+            Continue register? [Y/n]: 
+            Media 'anim-2' registered.
+
             --------- OS Config ---------
             File Name: {}
             File size: 189
@@ -800,7 +837,7 @@ class CliTest(unittest.TestCase):
 
             --------- OS Config ---------
             File Name: {}
-            File size: 339
+            File size: 396
             Name: project-id3
             Version: 42
             -----------------------------
@@ -812,7 +849,9 @@ class CliTest(unittest.TestCase):
             https://platform.bymason.com/controller/projects/project-id3
 
             Build completed.
-        """.format(apk_file1, apk_file2, config_file1, config_file2)))
+        """.format(apk_file1, apk_file2,
+                   boot_animation1, boot_animation2,
+                   config_file1, config_file2)))
 
     def test__build__invalid_version_fails(self):
         result = self.runner.invoke(cli, ['build', 'project-id', 'invalid'])
