@@ -2,6 +2,7 @@ import abc
 from abc import abstractmethod
 
 import six
+import time
 
 
 @six.add_metaclass(abc.ABCMeta)
@@ -14,6 +15,7 @@ class Command:
     def log(name):
         def decorator(f):
             def wrapper(self, *args, **kwargs):
+                start = int(time.time())
                 error = None
                 try:
                     return f(self, *args, **kwargs)
@@ -21,7 +23,9 @@ class Command:
                     error = e
                     raise e
                 finally:
-                    self.config.analytics.log_event(command=name, exception=error)
+                    diff = int(time.time()) - start
+                    self.config.analytics.log_event(
+                        command=name, duration_seconds=diff, exception=error)
 
             return wrapper
 

@@ -20,7 +20,7 @@ class MasonAnalytics:
         self.ci = None
         self.environment = None
 
-    def log_event(self, command=None, exception=None):
+    def log_event(self, command=None, duration_seconds=None, exception=None):
         self._compute_environment()
 
         headers = {
@@ -39,7 +39,8 @@ class MasonAnalytics:
                 'exception': exception.__class__.__name__ if exception else None,
                 'flags': list({k: v for k, v in
                                click.get_current_context().params.items() if v}.keys()),
-                'ci': self.ci
+                'ci': self.ci,
+                'duration': duration_seconds
             }
         }
 
