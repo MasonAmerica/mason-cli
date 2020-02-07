@@ -26,7 +26,7 @@ class OSConfig(IArtifact):
     def parse(config, config_yaml):
         with open(config_yaml) as file:
             try:
-                ecosystem = yaml.load(file, Loader=yaml.SafeLoader)
+                ecosystem = yaml.safe_load(file)
             except yaml.YAMLError as err:
                 config.logger.error('Invalid configuration file: {}'.format(err))
                 raise click.Abort()
@@ -52,7 +52,7 @@ class OSConfig(IArtifact):
         self.config.logger.info('Version: {}'.format(self.version))
 
         self.config.logger.debug('Parsed config:')
-        self.config.logger.debug(yaml.dump(self.ecosystem))
+        self.config.logger.debug(yaml.safe_dump(self.ecosystem))
 
         self.config.logger.info('-----------------------------')
 

@@ -94,6 +94,6 @@ class StoreTest(unittest.TestCase):
             os.makedirs(os.path.dirname(self.store._file))
         with open(self.store._file, 'w') as f:
             if type(data) is dict:
-                yaml.dump(data, f)
+                yaml.safe_dump(data, f)
             else:
                 f.write(data)

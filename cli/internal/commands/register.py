@@ -59,6 +59,8 @@ class RegisterConfigCommand(RegisterCommand):
         for num, file in enumerate(self.config_files):
             config = OSConfig.parse(self.config, file)
             config = self._sanitize_config_for_upload(config)
+            self.config.analytics.log_config(config.ecosystem)
+
             self.register_artifact(config.binary, config)
 
             configs.append(config)
