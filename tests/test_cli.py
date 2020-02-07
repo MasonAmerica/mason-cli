@@ -159,6 +159,19 @@ class CliTest(unittest.TestCase):
         auth_store.restore()
         self.assertDictEqual(auth_store._fields, {})
 
+    def test__init__no_creds_fails(self):
+        api = MagicMock()
+        config = Config(auth_store=self._uninitialized_auth_store(), api=api)
+
+        result = self.runner.invoke(cli, ['init'], obj=config)
+
+        self.assertIsInstance(result.exception, SystemExit)
+        self.assertEqual(result.exit_code, 1)
+        self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
+            error: Not authenticated. Run 'mason login' to sign in.
+            Aborted!
+        """))
+
     def test__init__outside_home_dir_shows_warning(self):
         api = MagicMock()
         config = Config(auth_store=self._initialized_auth_store(), api=api)

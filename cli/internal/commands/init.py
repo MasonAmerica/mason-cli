@@ -8,12 +8,15 @@ import yaml
 
 from cli.internal.commands.command import Command
 from cli.internal.models.apk import Apk
+from cli.internal.utils.validation import validate_credentials
 
 
 class InitCommand(Command):
     def __init__(self, config, working_dir=None):
         self.config = config
         self.working_dir = os.path.abspath(working_dir or os.getcwd())
+
+        validate_credentials(config)
 
     @Command.log('init')
     def run(self):
