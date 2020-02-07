@@ -141,6 +141,24 @@ class CliTest(unittest.TestCase):
         auth_store.restore()
         self.assertDictEqual(auth_store._fields, {})
 
+    def test__cli__api_key_envar_updates_creds(self):
+        with self.runner.isolated_filesystem():
+            auth_store = Store('fake-auth', {}, os.path.abspath(''), False)
+            auth_store['api_key'] = 'Foobar'
+        config = Config(auth_store=auth_store)
+
+        os.environ['MASON_API_KEY'] = 'New foobar'
+        result = self.runner.invoke(cli, ['version'], obj=config)
+        del os.environ['MASON_API_KEY']
+
+        self.assertIsNone(result.exception)
+        self.assertEqual(result.exit_code, 0)
+
+        self.assertDictEqual(auth_store._fields, {'api_key': 'New foobar'})
+        auth_store.clear()
+        auth_store.restore()
+        self.assertDictEqual(auth_store._fields, {})
+
     def test__init__outside_home_dir_shows_warning(self):
         api = MagicMock()
         config = Config(auth_store=self._initialized_auth_store(), api=api)

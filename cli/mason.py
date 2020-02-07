@@ -145,6 +145,8 @@ def cli(config, debug, verbose, api_key, id_token, access_token, no_color):
     Full docs: https://docs.bymason.com/
     """
 
+    api_key = api_key or os.environ.get('MASON_API_KEY') or os.environ.get('MASON_TOKEN')
+
     command = CliInitCommand(config, debug, verbose, no_color, api_key, id_token, access_token)
     command.run()
 
