@@ -14,7 +14,6 @@ from cli.internal.commands.init import InitCommand
 from cli.internal.commands.login import LoginCommand
 from cli.internal.commands.logout import LogoutCommand
 from cli.internal.commands.register import RegisterApkCommand
-from cli.internal.commands.register import RegisterConfigCommand
 from cli.internal.commands.register import RegisterMediaCommand
 from cli.internal.commands.register import RegisterProjectCommand
 from cli.internal.commands.stage import StageCommand
@@ -209,9 +208,14 @@ def project(config, context):
 
 
 @register.command('config')
+@click.option('--await', 'block', is_flag=True, default=False,
+              help='Wait synchronously for the build to finish before continuing.')
+@click.option('--turbo/--no-turbo', is_flag=True, default=True,
+              help='Enable fast Mason config builds (beta).')
+@click.option('--mason-version', hidden=True, help='Pick a specific Mason OS version.')
 @click.argument('configs', type=click.Path(exists=True, dir_okay=False), nargs=-1, required=True)
 @pass_config
-def register_config(config, configs):
+def register_config(config, block, turbo, mason_version, configs):
     """
     Register config artifacts.
 
@@ -229,7 +233,7 @@ def register_config(config, configs):
     Full docs: https://docs.bymason.com/mason-cli/#mason-register-config
     """
 
-    command = RegisterConfigCommand(config, configs)
+    command = StageCommand(config, configs, block, turbo, mason_version)
     command.run()
 
 
@@ -296,7 +300,7 @@ def bootanimation(config, name, version, media):
     command.run()
 
 
-@cli.command()
+@cli.command(hidden=True)
 @click.option('--await', 'block', is_flag=True, default=False,
               help='Wait synchronously for the build to finish before continuing.')
 @click.option('--turbo/--no-turbo', is_flag=True, default=True,
@@ -330,11 +334,14 @@ def build(config, block, turbo, mason_version, project, version):
     Full docs: https://docs.bymason.com/mason-cli/#mason-build
     """
 
+    config.logger.warning('`mason build` is deprecated as '
+                          '`mason register config` now starts a build by default.')
+
     command = BuildCommand(config, project, version, block, turbo, mason_version)
     command.run()
 
 
-@cli.command()
+@cli.command(hidden=True)
 @click.option('--assume-yes', '--yes', '-y', is_flag=True, default=False,
               help='Don\'t require confirmation.')
 @click.option('--await', 'block', is_flag=True, default=False,
@@ -373,6 +380,8 @@ def stage(config, assume_yes, block, turbo, mason_version, skip_verify, configs)
         config.logger.warning('--skip-verify is deprecated. Use --assume-yes instead.')
 
     config.skip_verify = assume_yes or skip_verify
+
+    config.logger.warning('`mason stage` is deprecated, use `mason register config` instead.')
 
     command = StageCommand(config, configs, block, turbo, mason_version)
     command.run()

@@ -471,6 +471,10 @@ class CliTest(unittest.TestCase):
             -----------------------------
             Continue register? [Y/n]: 
             Config 'project-id' registered.
+
+            Build queued.
+            You can see the status of your build at
+            https://platform.bymason.com/controller/projects/project-id
         """.format(config_file)))
 
     def test__register_config__rewritten_file_is_registered(self):
@@ -492,6 +496,10 @@ class CliTest(unittest.TestCase):
             -----------------------------
             Continue register? [Y/n]: 
             Config 'project-id4' registered.
+
+            Build queued.
+            You can see the status of your build at
+            https://platform.bymason.com/controller/projects/project-id4
         """.format(config_file)))
 
     def test__register_config__files_are_registered(self):
@@ -516,6 +524,10 @@ class CliTest(unittest.TestCase):
             Continue register? [Y/n]: 
             Config 'project-id' registered.
 
+            Build queued.
+            You can see the status of your build at
+            https://platform.bymason.com/controller/projects/project-id
+
             --------- OS Config ---------
             File Name: {}
             File size: 171
@@ -524,7 +536,42 @@ class CliTest(unittest.TestCase):
             -----------------------------
             Continue register? [Y/n]: 
             Config 'project-id2' registered.
+
+            Build queued.
+            You can see the status of your build at
+            https://platform.bymason.com/controller/projects/project-id2
         """.format(config_file1, config_file2)))
+
+    def test__register_config__config_is_registered_and_awaits_build_completion(self):
+        config_file = os.path.join(__tests_root__, 'res/config.yml')
+        api = MagicMock()
+        api.get_build = MagicMock(return_value={'data': {'status': 'COMPLETED'}})
+        config = Config(
+            auth_store=self._initialized_auth_store(),
+            endpoints_store=self._initialized_endpoints_store(),
+            api=api
+        )
+
+        result = self.runner.invoke(cli, ['register', 'config', '--await', config_file], obj=config)
+
+        self.assertIsNone(result.exception)
+        self.assertEqual(result.exit_code, 0)
+        self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
+            --------- OS Config ---------
+            File Name: {}
+            File size: 184
+            Name: project-id
+            Version: 1
+            -----------------------------
+            Continue register? [Y/n]: 
+            Config 'project-id' registered.
+
+            Build queued.
+            You can see the status of your build at
+            https://platform.bymason.com/controller/projects/project-id
+
+            Build completed.
+        """.format(config_file)))
 
     def test__register_apk__no_files_fails(self):
         result = self.runner.invoke(cli, ['register', 'apk'])
@@ -1095,6 +1142,7 @@ class CliTest(unittest.TestCase):
         self.assertIsInstance(result.exception, SystemExit)
         self.assertEqual(result.exit_code, 1)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
+            warning: `mason build` is deprecated as `mason register config` now starts a build by default.
             error: Not authenticated. Run 'mason login' to sign in.
             Aborted!
         """))
@@ -1112,6 +1160,7 @@ class CliTest(unittest.TestCase):
         self.assertIsNone(result.exception)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
+            warning: `mason build` is deprecated as `mason register config` now starts a build by default.
             Build queued.
             You can see the status of your build at
             https://platform.bymason.com/controller/projects/project-id
@@ -1131,6 +1180,7 @@ class CliTest(unittest.TestCase):
         self.assertIsNone(result.exception)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
+            warning: `mason build` is deprecated as `mason register config` now starts a build by default.
             Build queued.
             You can see the status of your build at
             https://platform.bymason.com/controller/projects/project-id
@@ -1160,6 +1210,7 @@ class CliTest(unittest.TestCase):
         self.assertIsInstance(result.exception, SystemExit)
         self.assertEqual(result.exit_code, 1)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
+            warning: `mason stage` is deprecated, use `mason register config` instead.
             error: Not authenticated. Run 'mason login' to sign in.
             Aborted!
         """))
@@ -1174,6 +1225,7 @@ class CliTest(unittest.TestCase):
         self.assertIsInstance(result.exception, SystemExit)
         self.assertEqual(result.exit_code, 1)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
+            warning: `mason stage` is deprecated, use `mason register config` instead.
             --------- OS Config ---------
             File Name: {}
             File size: 184
@@ -1198,6 +1250,7 @@ class CliTest(unittest.TestCase):
         self.assertIsNone(result.exception)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
+            warning: `mason stage` is deprecated, use `mason register config` instead.
             --------- OS Config ---------
             File Name: {}
             File size: 184
@@ -1227,6 +1280,7 @@ class CliTest(unittest.TestCase):
         self.assertIsNone(result.exception)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
+            warning: `mason stage` is deprecated, use `mason register config` instead.
             --------- OS Config ---------
             File Name: {}
             File size: 184
