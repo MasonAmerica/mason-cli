@@ -95,10 +95,19 @@ class RequestHandler:
             if 'itemized' in err_result:
                 for item in err_result['itemized']:
                     if item['code'] == '8f92ccpl':
+                        try:
+                            project_id = item['message'].split(' project ', 1)[1] \
+                                .split(' was not ')[0]
+                        except Exception as e:
+                            self.config.logger.debug(e)
+                            project_id = ''
+
+                        base_url = self.config.endpoints_store['console_projects_url']
+                        url = base_url + '/_create?name={}'.format(project_id)
+
                         self.config.logger.error(item['message'])
-                        self.config.logger.info(
-                            'Create a new project: '
-                            'https://platform.bymason.com/controller/projects')
+                        self.config.logger.info('Create a new project: {}'.format(url))
+
                         raise ApiError()
                     else:
                         self.config.logger.error(

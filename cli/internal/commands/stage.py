@@ -13,14 +13,14 @@ class StageCommand(Command):
         block,
         turbo,
         mason_version,
-        working_dir=tempfile.mkdtemp()
+        working_dir=None
     ):
         self.config = config
         self.config_files = config_files
         self.block = block
         self.turbo = turbo
         self.mason_version = mason_version
-        self.working_dir = working_dir
+        self.working_dir = working_dir or tempfile.mkdtemp()
 
     @Command.log('stage')
     def run(self):

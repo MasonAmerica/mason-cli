@@ -16,5 +16,6 @@ ENDPOINTS = Store('endpoints', {
     'builder_url': 'https://platform.bymason.com/api/tracker/builder',
     'deploy_url': 'https://platform.bymason.com/api/deploy',
     'xray_url': 'wss://api.bymason.com/v1/global/xray',
-    'config_version': 1
+    'analytics_url': 'https://platform.development.masonamerica.net/api/v1/analytics/log',
+    'console_projects_url': 'https://platform.bymason.com/controller/projects'
 })

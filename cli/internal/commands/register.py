@@ -47,10 +47,10 @@ class RegisterCommand(Command):
 
 
 class RegisterConfigCommand(RegisterCommand):
-    def __init__(self, config, config_files, working_dir=tempfile.mkdtemp()):
+    def __init__(self, config, config_files, working_dir=None):
         super(RegisterConfigCommand, self).__init__(config)
         self.config_files = config_files
-        self.working_dir = working_dir
+        self.working_dir = working_dir or tempfile.mkdtemp()
 
     @Command.log('register config')
     def run(self):
@@ -156,10 +156,10 @@ class RegisterMediaCommand(RegisterCommand):
 
 
 class RegisterProjectCommand(RegisterCommand):
-    def __init__(self, config, context_file, working_dir=tempfile.mkdtemp()):
+    def __init__(self, config, context_file, working_dir=None):
         super(RegisterProjectCommand, self).__init__(config)
         self.context_file = context_file
-        self.working_dir = working_dir
+        self.working_dir = working_dir or tempfile.mkdtemp()
 
     @Command.log('register project')
     def run(self):

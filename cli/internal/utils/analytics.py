@@ -44,7 +44,7 @@ class MasonAnalytics:
             }
         }
 
-        url = "https://platform.development.masonamerica.net/api/v1/analytics/log"
+        url = self.config.endpoints_store['analytics_url']
         try:
             self.handler.post(url, headers=headers, json=payload)
         except Exception as e:
