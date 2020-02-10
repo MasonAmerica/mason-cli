@@ -142,7 +142,7 @@ def cli(config, debug, verbose, api_key, id_token, access_token, no_color):
     Platform.
 
     \b
-    Full docs: https://docs.bymason.com/
+    Full docs: https://docs.bymason.com/cli
     """
 
     api_key = api_key or os.environ.get('MASON_API_KEY') or os.environ.get('MASON_TOKEN')
@@ -168,7 +168,7 @@ def init(config):
 
 
 @cli.group(cls=AliasedGroup)
-@click.option('--assume-yes', '--yes', '-y', is_flag=True, default=False,
+@click.option('assume_yes', '-y', '--yes', '--assume-yes', is_flag=True, default=False,
               help='Don\'t require confirmation.')
 @click.option('--skip-verify', '-s', is_flag=True, default=False, hidden=True,
               help='Don\'t require confirmation.')
@@ -187,11 +187,11 @@ def register(config, assume_yes, skip_verify):
     config.skip_verify = assume_yes or skip_verify
 
 
-@register.command()
+@register.command('project')
 @click.argument('context', type=click.Path(exists=True, file_okay=False), required=True,
                 default='.')
 @pass_config
-def project(config, context):
+def register_project(config, context):
     """
     Register whole projects.
 
@@ -264,8 +264,8 @@ def register_apk(config, apks):
     command.run()
 
 
-@register.group(cls=AliasedGroup)
-def media():
+@register.group('media', cls=AliasedGroup)
+def register_media():
     """
     Register media artifacts.
 
@@ -276,12 +276,12 @@ def media():
     pass
 
 
-@media.command()
+@register_media.command('bootanimation')
 @click.argument('name')
 @click.argument('version', type=mason_types.Version())
 @click.argument('media', type=click.Path(exists=True, dir_okay=False))
 @pass_config
-def bootanimation(config, name, version, media):
+def register_media_bootanimation(config, name, version, media):
     """
     Register media artifacts.
 
@@ -292,7 +292,7 @@ def bootanimation(config, name, version, media):
 
     \b
     For example, register a boot animation:
-      $ mason register media bootanimation mason-test 1 bootanimation.zip
+      $ mason register media bootanimation anim-name latest bootanimation.zip
 
     \b
     Full docs: https://docs.bymason.com/mason-cli/#mason-register-media-bootanimation
@@ -433,15 +433,15 @@ def deploy_config(config, name, version, groups):
     For example, this registered configuration:
       os:
         name: mason-test
-        version: 1
+        version: latest
 
     \b
     can be deployed to the "development" group with:
-      $ mason deploy config mason-test 1 development
+      $ mason deploy config mason-test latest development
 
     \b
     or deployed to multiple groups:
-      $ mason deploy config mason-test 1 group1 group2 group3
+      $ mason deploy config mason-test latest group1 group2 group3
 
     \b
     Full docs: https://docs.bymason.com/mason-cli/#mason-deploy-config
@@ -466,19 +466,13 @@ def deploy_apk(config, name, version, groups):
       GROUP(S) to deploy the APK to.
 
     \b
-    For example, this registered APK:
-      apps:
-        - name: App Name
-          package_name: com.test.app
-          version_code: 1
-
-    \b
+    For example, the registered APK "com.test.app"
     can be deployed to the "development" group with:
-      $ mason deploy apk com.test.app 1 development
+      $ mason deploy apk com.test.app latest development
 
     \b
     or deployed to multiple groups:
-      $ mason deploy apk com.test.app 1 group1 group2 group3
+      $ mason deploy apk com.test.app latest group1 group2 group3
 
     \b
     Full docs: https://docs.bymason.com/mason-cli/#mason-deploy-apk
@@ -488,12 +482,12 @@ def deploy_apk(config, name, version, groups):
     command.run()
 
 
-@deploy.command()
+@deploy.command('ota')
 @click.argument('name')
 @click.argument('version')
 @click.argument('groups', nargs=-1, required=True)
 @pass_config
-def ota(config, name, version, groups):
+def deploy_ota(config, name, version, groups):
     """
     Deploy ota artifacts.
 
@@ -540,12 +534,12 @@ def xray(config, device):
     config.device = device
 
 
-@xray.command(context_settings=dict(
+@xray.command('logcat', context_settings=dict(
     ignore_unknown_options=True,
 ))
 @click.argument('args', nargs=-1, type=click.UNPROCESSED)
 @pass_config
-def logcat(config, args):
+def xray_logcat(config, args):
     """
     View streaming logs from the device.
 
@@ -561,12 +555,12 @@ def logcat(config, args):
     command.run()
 
 
-@xray.command(context_settings=dict(
+@xray.command('shell', context_settings=dict(
     ignore_unknown_options=True,
 ))
 @click.argument('command', nargs=-1, type=click.UNPROCESSED)
 @pass_config
-def shell(config, command):
+def xray_shell(config, command):
     """
     Open a shell and run commands on the device.
 
@@ -582,11 +576,11 @@ def shell(config, command):
     command.run()
 
 
-@xray.command()
+@xray.command('push')
 @click.argument('local', type=click.Path(exists=True, file_okay=True, readable=True))
 @click.argument('remote', required=False)
 @pass_config
-def push(config, local, remote):
+def xray_push(config, local, remote):
     """
     Push files to the device.
 
@@ -603,11 +597,11 @@ def push(config, local, remote):
     command.run()
 
 
-@xray.command()
+@xray.command('pull')
 @click.argument('remote')
 @click.argument('local', type=click.Path(dir_okay=True), required=False)
 @pass_config
-def pull(config, remote, local):
+def xray_pull(config, remote, local):
     """
     Pull files from the device.
 
@@ -624,10 +618,10 @@ def pull(config, remote, local):
     command.run()
 
 
-@xray.command()
+@xray.command('install')
 @click.argument('apk', type=click.Path(exists=True, file_okay=True, readable=True))
 @pass_config
-def install(config, apk):
+def xray_install(config, apk):
     """
     Install an APK to the device.
 
@@ -643,10 +637,10 @@ def install(config, apk):
     command.run()
 
 
-@xray.command()
+@xray.command('uninstall')
 @click.argument('package')
 @pass_config
-def uninstall(config, package):
+def xray_uninstall(config, package):
     """
     Uninstall an app from the device.
 
@@ -662,10 +656,10 @@ def uninstall(config, package):
     command.run()
 
 
-@xray.command()
+@xray.command('desktop')
 @click.option('--port', '-p', help='local port for VNC clients')
 @pass_config
-def desktop(config, port):
+def xray_desktop(config, port):
     """
     Open a VNC connection to the device.
 
