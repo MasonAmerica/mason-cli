@@ -38,16 +38,12 @@ class BuildCommand(Command):
 
         validate_credentials(config)
 
-    @Command.log('build')
+    @Command.helper('build')
     def run(self):
         self.config.logger.debug('Starting build for {}:{}...'.format(self.project, self.version))
 
-        try:
-            build = self.config.api.start_build(
-                self.project, self.version, self.turbo, self.mason_version)
-        except ApiError as e:
-            e.exit(self.config)
-            return
+        build = self.config.api.start_build(
+            self.project, self.version, self.turbo, self.mason_version)
 
         console_hostname = self.urlparse(self.config.endpoints_store['deploy_url']).hostname
         self.config.logger.info(inspect.cleandoc("""
@@ -70,8 +66,7 @@ class BuildCommand(Command):
                 build = self.config.api.get_build(build.get('data').get('submittedAt'))
             except ApiError as e:
                 self.config.logger.error('Build status check failed.')
-                e.exit(self.config)
-                return
+                raise e
 
             if build.get('data').get('status') == 'COMPLETED':
                 self.config.logger.info('Build completed.')

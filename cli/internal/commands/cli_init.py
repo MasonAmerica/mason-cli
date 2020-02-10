@@ -20,7 +20,7 @@ class CliInitCommand(Command):
         self.id_token = id_token
         self.access_token = access_token
 
-    @Command.log('cli')
+    @Command.helper('cli')
     def run(self):
         self._update_logging()
         self._update_creds()

@@ -42,8 +42,7 @@ class RegisterCommand(Command):
                     artifact.get_type().capitalize(), artifact.get_name()))
                 pass
             else:
-                e.exit(self.config)
-                return
+                raise e
 
 
 class RegisterConfigCommand(RegisterCommand):
@@ -52,7 +51,7 @@ class RegisterConfigCommand(RegisterCommand):
         self.config_files = config_files
         self.working_dir = working_dir or tempfile.mkdtemp()
 
-    @Command.log('register config')
+    @Command.helper('register config')
     def run(self):
         configs = []
 
@@ -74,11 +73,8 @@ class RegisterConfigCommand(RegisterCommand):
         raw_config = copy.deepcopy(config.ecosystem)
 
         raw_config.pop('from', None)
-        try:
-            self._maybe_inject_config_version(config, raw_config)
-            self._maybe_inject_app_versions(raw_config)
-        except ApiError as e:
-            e.exit(self.config)
+        self._maybe_inject_config_version(config, raw_config)
+        self._maybe_inject_app_versions(raw_config)
 
         config_file = os.path.join(self.working_dir, os.path.basename(config.binary))
         with open(config_file, 'w') as f:
@@ -112,7 +108,7 @@ class RegisterApkCommand(RegisterCommand):
         super(RegisterApkCommand, self).__init__(config)
         self.apk_files = apk_files
 
-    @Command.log('register apk')
+    @Command.helper('register apk')
     def run(self):
         for num, file in enumerate(self.apk_files):
             self.register_artifact(file, Apk.parse(self.config, file))
@@ -129,7 +125,7 @@ class RegisterMediaCommand(RegisterCommand):
         self.version = version
         self.media_file = media_file
 
-    @Command.log('register media')
+    @Command.helper('register media')
     def run(self):
         self._maybe_inject_version()
         self.register_artifact(
@@ -163,7 +159,7 @@ class RegisterProjectCommand(RegisterCommand):
         self.context_file = context_file
         self.working_dir = working_dir or tempfile.mkdtemp()
 
-    @Command.log('register project')
+    @Command.helper('register project')
     def run(self):
         # Needs to be a local import to prevent recursion
         from cli.internal.commands.stage import StageCommand

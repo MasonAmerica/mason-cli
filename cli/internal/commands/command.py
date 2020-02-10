@@ -4,6 +4,8 @@ from abc import abstractmethod
 import six
 import time
 
+from cli.internal.utils.remote import ApiError
+
 
 @six.add_metaclass(abc.ABCMeta)
 class Command:
@@ -12,13 +14,16 @@ class Command:
         pass
 
     @staticmethod
-    def log(name):
+    def helper(name):
         def decorator(f):
             def wrapper(self, *args, **kwargs):
                 start = int(time.time())
                 error = None
                 try:
                     return f(self, *args, **kwargs)
+                except ApiError as e:
+                    error = e
+                    e.exit(self.config)
                 except BaseException as e:
                     error = e
                     raise e

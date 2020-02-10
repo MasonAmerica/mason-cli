@@ -1,5 +1,4 @@
 from cli.internal.commands.command import Command
-from cli.internal.utils.remote import ApiError
 
 
 class LoginCommand(Command):
@@ -9,7 +8,7 @@ class LoginCommand(Command):
         self.username = username
         self.password = password
 
-    @Command.log('login')
+    @Command.helper('login')
     def run(self):
         self.config.logger.debug('Authenticating ' + self.username)
         self._login()
@@ -19,11 +18,7 @@ class LoginCommand(Command):
         if self.api_key:
             self.config.auth_store['api_key'] = self.api_key
 
-        try:
-            user = self.config.api.login(self.username, self.password)
-        except ApiError as e:
-            e.exit(self.config)
-            return
+        user = self.config.api.login(self.username, self.password)
 
         self.config.auth_store['id_token'] = user.get('id_token')
         self.config.auth_store['access_token'] = user.get('access_token')

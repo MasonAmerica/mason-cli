@@ -4,7 +4,6 @@ import click
 import six
 
 from cli.internal.commands.command import Command
-from cli.internal.utils.remote import ApiError
 from cli.internal.utils.validation import validate_credentials
 
 
@@ -28,13 +27,9 @@ class DeployCommand(Command):
         if not self.config.skip_verify:
             click.confirm('Continue deploy?', default=True, abort=True)
 
-        try:
-            self.config.api.deploy_artifact(
-                self.type, self.name, self.version, group, self.config.push, self.config.no_https)
-            self.config.logger.info("{} '{}' deployed.".format(self.type.capitalize(), self.name))
-        except ApiError as e:
-            e.exit(self.config)
-            return
+        self.config.api.deploy_artifact(
+            self.type, self.name, self.version, group, self.config.push, self.config.no_https)
+        self.config.logger.info("{} '{}' deployed.".format(self.type.capitalize(), self.name))
 
     def _log_details(self, group):
         self.config.logger.info('---------- DEPLOY -----------')
@@ -59,7 +54,7 @@ class DeployConfigCommand(DeployCommand):
     def __init__(self, config, name, version, groups):
         super(DeployConfigCommand, self).__init__(config, 'config', name, version, groups)
 
-    @Command.log('deploy config')
+    @Command.helper('deploy config')
     def run(self):
         self._maybe_inject_version()
         self.deploy_artifact()
@@ -80,7 +75,7 @@ class DeployApkCommand(DeployCommand):
     def __init__(self, config, name, version, groups):
         super(DeployApkCommand, self).__init__(config, 'apk', name, version, groups)
 
-    @Command.log('deploy apk')
+    @Command.helper('deploy apk')
     def run(self):
         self._maybe_inject_version()
         self.deploy_artifact()
@@ -101,6 +96,6 @@ class DeployOtaCommand(DeployCommand):
     def __init__(self, config, name, version, groups):
         super(DeployOtaCommand, self).__init__(config, 'ota', name, version, groups)
 
-    @Command.log('deploy ota')
+    @Command.helper('deploy ota')
     def run(self):
         self.deploy_artifact()

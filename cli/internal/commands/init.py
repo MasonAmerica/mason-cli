@@ -18,7 +18,7 @@ class InitCommand(Command):
 
         validate_credentials(config)
 
-    @Command.log('init')
+    @Command.helper('init')
     def run(self):
         self._print_details()
         self._validate_dir()
