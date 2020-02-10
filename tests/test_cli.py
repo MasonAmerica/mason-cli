@@ -906,17 +906,19 @@ class CliTest(unittest.TestCase):
             Aborted!
         """.format(apk_file)))
 
-    def test__register_project__app_not_present_fails(self):
+    def test__register_project__app_not_present_is_ignored(self):
         no_app_project = os.path.join(__tests_root__, 'res/no-app-project')
+        config_file = os.path.join(__tests_root__, 'res/no-app-project/mason.yml')
         apk_file = os.path.join(__tests_root__, 'res/no-app-project/v1.apk')
         api = MagicMock()
+        api.get_build = MagicMock(return_value={'data': {'status': 'COMPLETED'}})
         config = Config(auth_store=self._initialized_auth_store(), api=api)
 
         with self._cd(no_app_project):
             result = self.runner.invoke(cli, ['register', 'project'], obj=config)
 
-        self.assertIsInstance(result.exception, SystemExit)
-        self.assertEqual(result.exit_code, 1)
+        self.assertIsNone(result.exception)
+        self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             ------------ APK ------------
             File Name: {}
@@ -927,9 +929,22 @@ class CliTest(unittest.TestCase):
             -----------------------------
             Continue register? [Y/n]: 
             Apk 'com.example.unittestapp1' registered.
-            error: App '{}' declared in project context not found in project configuration.
-            Aborted!
-        """.format(apk_file, 'com.example.unittestapp1')))
+
+            --------- OS Config ---------
+            File Name: {}
+            File size: 184
+            Name: project-id
+            Version: 1
+            -----------------------------
+            Continue register? [Y/n]: 
+            Config 'project-id' registered.
+
+            Build queued.
+            You can see the status of your build at
+            https://platform.bymason.com/controller/projects/project-id
+
+            Build completed.
+        """.format(apk_file, config_file)))
 
     def test__register_project__config_already_present_failed(self):
         simple_project = os.path.join(__tests_root__, 'res/simple-project')

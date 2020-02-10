@@ -275,12 +275,13 @@ class RegisterProjectCommand(RegisterCommand):
         for apk in apks:
             package_name = apk.get_name()
             version = apk.get_version()
-            self._validate_app_presence(package_name, apps)
 
-            for app in config.get('apps'):
-                if package_name == app.get('package_name'):
-                    app['version_code'] = int(version)
-                    break
+            if self._has_app_presence(package_name, apps):
+                for app in config.get('apps'):
+                    if package_name == app.get('package_name'):
+                        app['version_code'] = int(version)
+                        break
+
         for boot_animation in boot_animations:
             name = boot_animation.get('name')
             version = boot_animation.get('version')
@@ -292,15 +293,14 @@ class RegisterProjectCommand(RegisterCommand):
             f.write(yaml.safe_dump(config))
         return config_file
 
-    def _validate_app_presence(self, package_name, apps):
+    def _has_app_presence(self, package_name, apps):
         for app in apps:
             if package_name == app.get('package_name'):
-                return
+                return True
 
-        self.config.logger.error(
+        self.config.logger.debug(
             "App '{}' declared in project context not found in project "
             "configuration.".format(package_name))
-        raise click.Abort()
 
     def _has_boot_animation_presence(self, media, name):
         anim = media.get('bootanimation')
