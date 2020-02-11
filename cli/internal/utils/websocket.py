@@ -338,6 +338,5 @@ class WsHandle(XRayBaseClient, BaseHandle):
 
     def close(self, reason=None):
         if self._opened:
-            self._logger.debug("close")
             self._opened = False
             self.shutdown(reason)
