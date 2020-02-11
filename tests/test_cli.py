@@ -464,6 +464,30 @@ class CliTest(unittest.TestCase):
             Aborted!
         """))
 
+    def test__register_config__latest_non_existent_boot_animation_fails(self):
+        # noinspection PyUnusedLocal
+        def version_finder(name, type):
+            if type == 'apk':
+                return {'version': '12'}
+
+        config_file = os.path.join(__tests_root__, 'res/config4.yml')
+        api = MagicMock()
+        api.get_latest_artifact = MagicMock(side_effect=version_finder)
+        config = Config(
+            auth_store=self._initialized_auth_store(),
+            endpoints_store=self._initialized_endpoints_store(),
+            api=api
+        )
+
+        result = self.runner.invoke(cli, ['register', 'config', config_file], obj=config)
+
+        self.assertIsInstance(result.exception, SystemExit)
+        self.assertEqual(result.exit_code, 1)
+        self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
+            error: Boot animation 'anim' not found, register it first.
+            Aborted!
+        """))
+
     def test__register_config__negative_confirmation_aborts(self):
         config_file = os.path.join(__tests_root__, 'res/config.yml')
         api = MagicMock()
@@ -521,7 +545,7 @@ class CliTest(unittest.TestCase):
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             --------- OS Config ---------
             File Name: {}
-            File size: 262
+            File size: 317
             Name: project-id4
             Version: 42
             -----------------------------
@@ -1371,7 +1395,7 @@ class CliTest(unittest.TestCase):
             Aborted!
         """))
 
-    def test__deploy_config__non_existant_latest_config_fails(self):
+    def test__deploy_config__non_existent_latest_config_fails(self):
         api = MagicMock()
         api.get_latest_artifact = MagicMock(return_value=None)
         config = Config(auth_store=self._initialized_auth_store(), api=api)
@@ -1513,7 +1537,7 @@ class CliTest(unittest.TestCase):
             Aborted!
         """))
 
-    def test__deploy_apk__non_existant_latest_apk_fails(self):
+    def test__deploy_apk__non_existent_latest_apk_fails(self):
         api = MagicMock()
         api.get_latest_artifact = MagicMock(return_value=None)
         config = Config(auth_store=self._initialized_auth_store(), api=api)

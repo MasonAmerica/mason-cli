@@ -75,6 +75,7 @@ class RegisterConfigCommand(RegisterCommand):
         raw_config.pop('from', None)
         self._maybe_inject_config_version(config, raw_config)
         self._maybe_inject_app_versions(raw_config)
+        self._maybe_inject_media_versions(raw_config)
 
         config_file = os.path.join(self.working_dir, os.path.basename(config.binary))
         with open(config_file, 'w') as f:
@@ -101,6 +102,19 @@ class RegisterConfigCommand(RegisterCommand):
                     self.config.logger.error("Apk '{}' not found, register it first.".format(
                         app.get('package_name')))
                     raise click.Abort()
+
+    def _maybe_inject_media_versions(self, raw_config):
+        media = raw_config.get('media') or {}
+        boot_anim = media.get('bootanimation') or {}
+
+        if boot_anim.get('version') == 'latest':
+            latest_anim = self.config.api.get_latest_artifact(boot_anim.get('name'), 'media')
+            if latest_anim:
+                boot_anim['version'] = int(latest_anim.get('version'))
+            else:
+                self.config.logger.error("Boot animation '{}' not found, register it first.".format(
+                    boot_anim.get('name')))
+                raise click.Abort()
 
 
 class RegisterApkCommand(RegisterCommand):

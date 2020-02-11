@@ -76,13 +76,19 @@ class RegisterCommandTest(unittest.TestCase):
                 'name': 'Testy Testeron',
                 'package_name': 'com.example.app2',
                 'version_code': 41
-            }]
+            }],
+            'media': {
+                'bootanimation': {
+                    'name': 'anim',
+                    'version': 41
+                }
+            }
         })
 
     def test_config_registers_new_rewritten_config_successfully(self):
         # noinspection PyUnusedLocal
         def version_finder(name, type):
-            if type == 'apk':
+            if type == 'apk' or type == 'media':
                 return {'version': '12'}
 
         self.config.api.get_latest_artifact = MagicMock(side_effect=version_finder)
@@ -109,7 +115,13 @@ class RegisterCommandTest(unittest.TestCase):
                 'name': 'Testy Testeron',
                 'package_name': 'com.example.app2',
                 'version_code': 12
-            }]
+            }],
+            'media': {
+                'bootanimation': {
+                    'name': 'anim',
+                    'version': 12
+                }
+            }
         })
 
     def test_apk_registers_successfully(self):
