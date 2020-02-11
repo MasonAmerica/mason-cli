@@ -32,6 +32,14 @@ MSG_DEVICE_FAIL = b'device:fail'
 MSG_CLIENT_OK = b'client:ok'
 MSG_CLIENT_FAIL = b'client:fail'
 
+HTTP_STATUS_CODES = {
+    '400': 'The service could not understand the request.',
+    '401': 'Authorization required.',
+    '403': 'Access to the requested device is denied.',
+    '404': 'The requested device was not found.',
+    '429': 'An X-Ray session is already active on this device.',
+}
+
 
 class XRayWebSocketProtocol(WebSocketClientProtocol):
 
@@ -66,6 +74,17 @@ class XRayWebSocketProtocol(WebSocketClientProtocol):
             else:
                 self.logger.debug("[T<<<] %s", payload)
         super(XRayWebSocketProtocol, self).sendMessage(payload, isBinary)
+
+    def failHandshake(self, reason):
+        # This is kind of absurd but it's the only way to handle HTTP status
+        # codes with Autobahn
+        if reason.startswith("WebSocket connection upgrade failed ("):
+            status = reason.split("(")[1].split(" ")[0]
+            if status in HTTP_STATUS_CODES:
+                self.logger.error(HTTP_STATUS_CODES[status])
+            else:
+                self.logger.error(reason)
+        super().failHandshake(reason)
 
 
 class XRayWebSocketProtocolFIFO(XRayWebSocketProtocol):
@@ -215,7 +234,7 @@ class XRayBaseClient(object):
         pass
 
     def _eb(self, reason):
-        self.close(reason)
+        self.shutdown(reason)
 
     def shutdown(self, reason):
         if reactor.running:
