@@ -117,7 +117,7 @@ def _handle_set_level(ctx, param, value):
     logger.setLevel(x)
 
 
-@click.group(cls=AliasedGroup)
+@click.group(cls=AliasedGroup, context_settings={'help_option_names': ['-h', '--help']})
 @click.option('--version', '-V', is_flag=True, is_eager=True, expose_value=False,
               callback=_version_callback,
               help='Show the version and exit.')
