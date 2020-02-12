@@ -10,6 +10,7 @@ from adb_shell import constants
 from adb_shell.adb_device import AdbDevice
 from adb_shell.adb_device import _AdbTransactionInfo
 from adb_shell.auth.keygen import keygen
+from adb_shell.exceptions import TcpTimeoutException
 
 from cli.internal.commands.command import Command
 from cli.internal.utils.validation import validate_api_key
@@ -159,6 +160,7 @@ class XRay(object):
         self._url = config.endpoints_store['xray_url'] + "/{}/{}"
         self._logger = config.logger
         self._adbkey = os.path.join(click.get_app_dir('Mason CLI'), 'adbkey')
+        self._awaiting_auth = False
 
     def _find_backspace_runs(self, stdout_bytes, start_pos):
         first_backspace_pos = stdout_bytes[start_pos:].find(b'\x08')
@@ -204,19 +206,31 @@ class XRay(object):
         handle = self._connect_adb()
         adb = AdbDevice(handle)
 
+        def auth_cb(device):
+            self._awaiting_auth = True
+            self._logger.info("Waiting for connection to be accepted on the device..")
+
         def on_running():
             try:
                 signer = RSA_SIGNER(self._adbkey)
-                if adb.connect(rsa_keys=[signer], auth_timeout_s=30, timeout_s=10):
+                if adb.connect(rsa_keys=[signer], auth_timeout_s=30, timeout_s=10, auth_cb=auth_cb):
                     func(adb, *args, **kwargs)
-                    adb.close()
+
             except WSHandleShutdown:
-                return
+                pass
+
+            except TcpTimeoutException:
+                if self._awaiting_auth:
+                    self._logger.error("Connection was not accepted on the device "
+                                       "within 30 seconds.")
+                else:
+                    self._logger.error("Connection to the device timed out")
 
             except Exception as exc:
-                self._logger.error("error bleh: %s" % exc)
-                traceback.print_exc()
                 raise click.Abort(exc)
+
+            finally:
+                adb.close()
 
         return handle.run(on_running)
 
