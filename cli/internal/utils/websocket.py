@@ -20,6 +20,7 @@ from twisted.logger import globalLogPublisher, STDLibLogObserver, FilteringLogOb
 import txaio
 
 from autobahn.twisted.websocket import WebSocketClientProtocol, WebSocketClientFactory, connectWS
+from autobahn.websocket.protocol import WebSocketProtocol
 from adb_shell.handle.base_handle import BaseHandle
 from adb_shell.exceptions import AdbCommandFailureException, TcpTimeoutException
 
@@ -64,8 +65,10 @@ class XRayWebSocketProtocol(WebSocketClientProtocol):
     def onClose(self, wasClean, code, reason):
         self.factory.running = False
         super(XRayWebSocketProtocol, self).onClose(wasClean, code, reason)
-        if code != 1006:
-            self.logger.info("Connection closed: [%d] %s", code, reason)
+        if code == WebSocketProtocol.CLOSE_STATUS_CODE_TRY_AGAIN_LATER:
+            self.logger.error("No response from the device, it may not be connected to the network")
+        elif code != 1006:
+            self.logger.error(reason)
 
     def sendMessage(self, payload, isBinary=False):
         if self.logger.isEnabledFor(LOG_PROTOCOL_TRACE):
