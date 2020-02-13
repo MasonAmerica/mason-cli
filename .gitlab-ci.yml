@@ -124,6 +124,7 @@ deploy:
   script:
     - apk add --no-cache git curl jq
     - git remote add github https://$GITHUB_USERNAME:$GITHUB_TOKEN@github.com/MasonAmerica/mason-cli.git
+    - git fetch --unshallow origin
     - git push github $CI_COMMIT_TAG
     - git checkout -b master
     - git push -u github master --force
