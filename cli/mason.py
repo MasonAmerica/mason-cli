@@ -184,7 +184,7 @@ def register(config, assume_yes, skip_verify):
     if skip_verify:
         config.logger.warning('--skip-verify is deprecated. Use --assume-yes instead.')
 
-    config.skip_verify = assume_yes or skip_verify
+    config.skip_verify = assume_yes or 'CI' in os.environ or skip_verify
 
 
 @register.command('project')
@@ -410,7 +410,7 @@ def deploy(config, assume_yes, push, no_https, skip_verify):
     if skip_verify:
         config.logger.warning('--skip-verify is deprecated. Use --assume-yes instead.')
 
-    config.skip_verify = assume_yes or skip_verify
+    config.skip_verify = assume_yes or 'CI' in os.environ or skip_verify
     config.push = push
     config.no_https = no_https
 

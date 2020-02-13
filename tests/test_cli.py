@@ -20,6 +20,7 @@ class CliTest(unittest.TestCase):
         self.runner = CliRunner()
 
         os.environ['_MASON_CLI_TEST_MODE'] = 'TRUE'
+        os.environ.pop('CI', None)  # Guarantee test stability
 
     def test__version__command_prints_info(self):
         result = self.runner.invoke(cli, ['version'])
