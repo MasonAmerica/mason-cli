@@ -213,7 +213,8 @@ class XRay(object):
         def on_running():
             try:
                 signer = RSA_SIGNER(self._adbkey)
-                if adb.connect(rsa_keys=[signer], auth_timeout_s=30, timeout_s=10, auth_cb=auth_cb):
+                if adb.connect(rsa_keys=[signer], auth_timeout_s=30,
+                               timeout_s=10, auth_callback=auth_cb):
                     func(adb, *args, **kwargs)
 
             except WSHandleShutdown:
