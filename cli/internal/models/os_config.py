@@ -18,9 +18,9 @@ class OSConfig(IArtifact):
 
         if type(ecosystem) is dict:
             self.user_binary = self.ecosystem.get('from') or self.binary
-            self.os = self.ecosystem.get('os', {})
-            self.name = str(self.os.get('name', None))
-            self.version = str(self.os.get('version', None))
+            self.os = self.ecosystem.get('os') or {}
+            self.name = str(self.os.get('name'))
+            self.version = str(self.os.get('version'))
 
     @staticmethod
     def parse(config, config_yaml):

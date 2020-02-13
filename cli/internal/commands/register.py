@@ -94,7 +94,7 @@ class RegisterConfigCommand(RegisterCommand):
 
     def _maybe_inject_app_versions(self, raw_config):
         for app in raw_config.get('apps') or []:
-            if app.get('version_code') == 'latest':
+            if app and app.get('version_code') == 'latest':
                 latest_apk = self.config.api.get_latest_artifact(app.get('package_name'), 'apk')
                 if latest_apk:
                     app['version_code'] = int(latest_apk.get('version'))
@@ -238,6 +238,9 @@ class RegisterProjectCommand(RegisterCommand):
         files = []
 
         for file in paths:
+            if not file:
+                continue
+
             file = self._expanded_path(file)
             if os.path.isdir(file):
                 sub_paths = list(map(lambda sub: os.path.join(file, sub), os.listdir(file)))
@@ -305,7 +308,7 @@ class RegisterProjectCommand(RegisterCommand):
 
     def _has_app_presence(self, package_name, apps):
         for app in apps:
-            if package_name == app.get('package_name'):
+            if app and package_name == app.get('package_name'):
                 return True
 
         self.config.logger.debug(
