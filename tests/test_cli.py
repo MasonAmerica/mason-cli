@@ -536,6 +536,7 @@ class CliTest(unittest.TestCase):
         config_file = os.path.join(__tests_root__, 'res/config4.yml')
         api = MagicMock()
         api.get_latest_artifact = MagicMock(return_value={'version': '41'})
+        api.get_highest_artifact = MagicMock(return_value={'version': '41'})
         config = Config(auth_store=self._initialized_auth_store(), api=api)
 
         result = self.runner.invoke(cli, ['register', 'config', config_file], obj=config)
@@ -841,7 +842,7 @@ class CliTest(unittest.TestCase):
     def test__register_media__latest_file_is_registered(self):
         media_file = os.path.join(__tests_root__, 'res/bootanimation.zip')
         api = MagicMock()
-        api.get_latest_artifact = MagicMock(return_value={'version': '41'})
+        api.get_highest_artifact = MagicMock(return_value={'version': '41'})
         config = Config(auth_store=self._initialized_auth_store(), api=api)
 
         result = self.runner.invoke(cli, [
@@ -1108,7 +1109,8 @@ class CliTest(unittest.TestCase):
             __tests_root__, 'res/complex-project/anims/bootanimation2.zip')
         api = MagicMock()
         api.get_build = MagicMock(return_value={'data': {'status': 'COMPLETED'}})
-        api.get_latest_artifact = MagicMock(return_value={
+        api.get_latest_artifact = MagicMock(return_value={'version': '41'})
+        api.get_highest_artifact = MagicMock(return_value={
             'version': '41',
             'checksum': {'sha1': 'e7788dca3a3797fd152825e600047e7cef870d98'}
         })

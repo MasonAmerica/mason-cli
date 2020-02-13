@@ -34,7 +34,8 @@ setup(
         'autobahn>=19.11.1',
         'service_identity',
         'pyopenssl>=19.1.0',
-        'pyasn1>=0.4.7'
+        'pyasn1>=0.4.7',
+        'tonyg-rfc3339'
     ],
     entry_points={
         'console_scripts': [

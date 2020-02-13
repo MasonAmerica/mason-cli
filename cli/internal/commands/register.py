@@ -86,7 +86,7 @@ class RegisterConfigCommand(RegisterCommand):
 
     def _maybe_inject_config_version(self, config, raw_config):
         if config.get_version() == 'latest':
-            latest_config = self.config.api.get_latest_artifact(config.get_name(), 'config')
+            latest_config = self.config.api.get_highest_artifact(config.get_name(), 'config')
             if latest_config:
                 raw_config['os']['version'] = int(latest_config.get('version')) + 1
             else:
@@ -155,7 +155,7 @@ class RegisterMediaCommand(RegisterCommand):
         if self.version != 'latest':
             return
 
-        latest_media = self.config.api.get_latest_artifact(self.name, 'media')
+        latest_media = self.config.api.get_highest_artifact(self.name, 'media')
         if latest_media:
             is_in_project_mode = getattr(self.config, 'project_mode', None)
             checksum = latest_media.get('checksum') or {}

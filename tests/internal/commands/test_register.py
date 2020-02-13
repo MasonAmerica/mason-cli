@@ -53,6 +53,7 @@ class RegisterCommandTest(unittest.TestCase):
 
     def test_config_registers_rewritten_config_successfully(self):
         self.config.api.get_latest_artifact = MagicMock(return_value={'version': '41'})
+        self.config.api.get_highest_artifact = MagicMock(return_value={'version': '41'})
         input_config_file = os.path.join(__tests_root__, 'res/config4.yml')
         working_dir = tempfile.mkdtemp()
         config_file = os.path.join(working_dir, 'config4.yml')
@@ -92,6 +93,7 @@ class RegisterCommandTest(unittest.TestCase):
                 return {'version': '12'}
 
         self.config.api.get_latest_artifact = MagicMock(side_effect=version_finder)
+        self.config.api.get_highest_artifact = MagicMock(side_effect=version_finder)
         input_config_file = os.path.join(__tests_root__, 'res/config4.yml')
         working_dir = tempfile.mkdtemp()
         config_file = os.path.join(working_dir, 'config4.yml')
@@ -146,7 +148,7 @@ class RegisterCommandTest(unittest.TestCase):
             media_file, Media.parse(self.config, 'Boot anim', 'bootanimation', '1', media_file))
 
     def test_latest_media_registers_successfully(self):
-        self.config.api.get_latest_artifact = MagicMock(return_value={'version': '41'})
+        self.config.api.get_highest_artifact = MagicMock(return_value={'version': '41'})
         media_file = os.path.join(__tests_root__, 'res/bootanimation.zip')
         command = RegisterMediaCommand(
             self.config, 'Boot Anim', 'bootanimation', 'latest', media_file)
@@ -157,7 +159,7 @@ class RegisterCommandTest(unittest.TestCase):
             media_file, Media.parse(self.config, 'Boot anim', 'bootanimation', '42', media_file))
 
     def test_latest_non_existant_media_registers_successfully(self):
-        self.config.api.get_latest_artifact = MagicMock(return_value=None)
+        self.config.api.get_highest_artifact = MagicMock(return_value=None)
         media_file = os.path.join(__tests_root__, 'res/bootanimation.zip')
         command = RegisterMediaCommand(
             self.config, 'Boot Anim', 'bootanimation', 'latest', media_file)
@@ -213,6 +215,7 @@ class RegisterCommandTest(unittest.TestCase):
         self.config.endpoints_store.__getitem__ = MagicMock(return_value='https://google.com')
         self.config.api.get_build = MagicMock(return_value={'data': {'status': 'COMPLETED'}})
         self.config.api.get_latest_artifact = MagicMock(return_value={'version': '41'})
+        self.config.api.get_highest_artifact = MagicMock(return_value={'version': '41'})
         complex_project = os.path.join(__tests_root__, 'res/complex-project')
         working_dir = tempfile.mkdtemp()
         config_file = os.path.join(working_dir, 'config3.yml')

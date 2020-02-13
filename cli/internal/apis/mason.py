@@ -1,5 +1,7 @@
 import base64
 
+from rfc3339 import parse_datetime
+
 from cli.internal.utils.hashing import hash_file
 from cli.internal.utils.remote import ApiError
 
@@ -30,8 +32,18 @@ class MasonApi:
         return self._deploy_artifact(customer, type, name, version, group, push, no_https)
 
     def get_latest_artifact(self, name, type):
+        def sort(artifact):
+            return parse_datetime(artifact.get('createdAt')).strftime('%s')
+
         customer = self._get_validated_customer()
-        return self._get_latest_artifact(customer, name, type)
+        return self._find_artifact(customer, name, type, sort)
+
+    def get_highest_artifact(self, name, type):
+        def sort(artifact):
+            return int(artifact.get('version'))
+
+        customer = self._get_validated_customer()
+        return self._find_artifact(customer, name, type, sort)
 
     def start_build(self, project, version, fast_build, mason_version):
         customer = self._get_validated_customer()
@@ -124,7 +136,7 @@ class MasonApi:
             customer, type_, name, version)
         return self.handler.get(url, headers=headers)
 
-    def _get_latest_artifact(self, customer, name, type_):
+    def _find_artifact(self, customer, name, type_, sort):
         headers = {
             'Content-Type': 'application/json',
             'Authorization': 'Bearer {}'.format(self.auth_store['id_token'])
@@ -137,8 +149,7 @@ class MasonApi:
         if not type(result) == list:
             return None
 
-        sorted_artifacts = sorted(
-            result, key=lambda artifact: int(artifact.get('version')), reverse=True)
+        sorted_artifacts = sorted(result, key=sort, reverse=True)
         for artifact in sorted_artifacts:
             if artifact.get('name') == name and artifact.get('type') == type_:
                 return self._get_artifact(customer, name, type_, artifact.get('version'))
