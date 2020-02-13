@@ -555,7 +555,7 @@ def xray_logcat(config, args):
     command.run()
 
 
-@xray.command('shell', context_settings=dict(
+@xray.command('shell', hidden=True, context_settings=dict(
     ignore_unknown_options=True,
 ))
 @click.argument('command', nargs=-1, type=click.UNPROCESSED)
@@ -656,7 +656,7 @@ def xray_uninstall(config, package):
     command.run()
 
 
-@xray.command('desktop')
+@xray.command('desktop', hidden=True)
 @click.option('--port', '-p', help='local port for VNC clients')
 @pass_config
 def xray_desktop(config, port):
