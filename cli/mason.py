@@ -578,7 +578,7 @@ def xray_shell(config, command):
 
 @xray.command('push')
 @click.argument('local', type=click.Path(exists=True, file_okay=True, readable=True))
-@click.argument('remote', required=False)
+@click.argument('remote')
 @pass_config
 def xray_push(config, local, remote):
     """

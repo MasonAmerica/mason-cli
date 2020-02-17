@@ -313,6 +313,8 @@ class XRay(object):
         self._shell(device, 'logcat %s' % ' '.join(options))
 
     def push(self, local, remote):
+        if remote.endswith("/"):
+            remote += os.path.basename(local)
         self._run_in_reactor(self._push, local, remote)
 
     def _push(self, device, local, remote):
