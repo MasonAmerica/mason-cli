@@ -1,14 +1,16 @@
 import abc
 import os
 import posixpath
+import sys
+import threading
 import traceback
 
 import click
 import six
-import sys
 from adb_shell import constants
 from adb_shell.adb_device import AdbDevice
 from adb_shell.adb_device import _AdbTransactionInfo
+from adb_shell.adb_message import AdbMessage
 from adb_shell.auth.keygen import keygen
 from adb_shell.exceptions import TcpTimeoutException
 
@@ -238,89 +240,40 @@ class XRay(object):
     def shell(self, command):
         self._run_in_reactor(self._shell, command)
 
-    def _interactive_shell(
-        self,
-        device,
-        adb_info,
-        cmd=None,
-        delim=None,
-        strip_cmd=True,
-        strip_delim=True
-    ):
-        """
-        Retrieves stdout of the current InteractiveShell and sends a shell command if provided.
+    def _interactive_shell(self, device, adb_info):
+        device._open(b'shell:', adb_info)
 
-        Args:
-          conn: Instance of AdbConnection
-          cmd: Optional. Command to run on the target.
-          delim: Optional. Delimiter to look for in the output to know when to stop expecting more
-                 output (usually the shell prompt).
-        Returns:
-          The stdout from the shell command.
-        """
+        def writer():
+            while True:
+                try:
+                    cmd = input()
+                    cmd += '\r'  # Required. Send a carriage return right after the cmd
+                    cmd = cmd.encode('utf8')
 
-        if delim is not None and not isinstance(delim, bytes):
-            delim = delim.encode('utf-8')
+                    # Send the cmd raw
+                    msg = AdbMessage(constants.WRTE, adb_info.local_id, adb_info.remote_id, cmd)
+                    device._send(msg, adb_info)
+                except EOFError:
+                    break
 
-        # Delimiter may be shell@hammerhead:/ $
-        # The user or directory could change, making the delimiter somthing like
-        # root@hammerhead:/data/local/tmp $
-        # Handle a partial delimiter to search on and clean up
-        if delim:
-            user_pos = delim.find(b'@')
-            dir_pos = delim.rfind(b':/')
-            if user_pos != -1 and dir_pos != -1:
-                partial_delim = delim[user_pos:dir_pos + 1]  # e.g. @hammerhead:
-            else:
-                partial_delim = delim
+        input_thread = threading.Thread(target=writer)
+        input_thread.daemon = True
+        input_thread.start()
 
-            partial_delim = partial_delim[:-2]
-
-        else:
-            partial_delim = None
-
-        try:
-            if cmd:
-                cmd += '\r'  # Required. Send a carriage return right after the cmd
-                cmd = cmd.encode('utf8')
-
-                # Send the cmd raw
-                device._write(cmd, adb_info)
-
-                if delim:
-                    # Expect multiple WRTE cmds until the delim (usually terminal prompt) is
-                    # detected.
-
-                    cmd, data = device._read_until([constants.WRTE], adb_info)
-                    if type(data) == bytes:
-                        yield data
-
-                    while partial_delim not in data:
-                        cmd, data = device._read_until([constants.WRTE], adb_info)
-                        yield data
-
-                else:
-                    # Otherwise, expect only a single WRTE
-                    cmd, data = device._read_until([constants.WRTE], adb_info)
-
-                    # WRTE cmd from device will follow with stdout data
-                    yield data
-
-            else:
-
-                # No cmd provided means we should just expect a single line from the terminal.
-                # Use this sparingly.
-                cmd, data = device._read_until([constants.WRTE, constants.CLSE], adb_info)
-
-                if cmd == b'WRTE':
-                    # WRTE cmd from device will follow with stdout data
-                    yield data
-                else:
-                    self._logger.error("Unhandled cmd: {}".format(cmd))
-
-        except Exception as e:
-            self._logger.error("InteractiveShell exception (most likely timeout): {}".format(e))
-            traceback.print_exc()
+        while True:
+            try:
+                cmd, data = device._read_until([constants.OKAY, constants.WRTE,
+                                                constants.CLSE], adb_info)
+                if type(data) == bytes:
+                    sys.stdout.write(data.decode('utf-8'))
+                    sys.stdout.flush()
+            except TcpTimeoutException:
+                pass
+            except WSHandleShutdown:
+                break
+            except Exception:
+                traceback.print_exc()
+                break
 
     def _shell(self, device, command):
         adb_info = _AdbTransactionInfo(None, None, 10, 20)
@@ -332,27 +285,7 @@ class XRay(object):
                 sys.stdout.write(line.decode('utf-8'))
 
         else:
-            # Retrieve the initial terminal prompt to use as a delimiter for future reads
-            device._open(b'shell:', adb_info)
-            terminal_prompt = next(self._interactive_shell(device, adb_info))
-            sys.stdout.write(terminal_prompt.decode('utf-8'))
-
-            # Accept user input in a loop and write that into the interactive shells stdin,
-            # then print output
-            try:
-                while True:
-                    cmd = input(' ')
-                    if not cmd:
-                        continue
-                    elif cmd == 'exit':
-                        break
-                    else:
-                        output = self._interactive_shell(
-                            device, adb_info, cmd, delim=terminal_prompt)
-                        for line in output:
-                            sys.stdout.write(line.decode('utf-8'))
-            except EOFError:
-                pass
+            self._interactive_shell(device, adb_info)
 
     def _with_progressbar(self, label, func, *args, **kwargs):
         with click.progressbar(length=0, label=label) as progress:
