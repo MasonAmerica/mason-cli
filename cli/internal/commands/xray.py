@@ -298,8 +298,7 @@ class XRay(object):
                 progress.update(bytes_written - self._cur_bytes)
                 self._cur_bytes = bytes_written
 
-            output = func(progress_callback=callback, *args, **kwargs)
-            self._logger.info(output)
+            return func(progress_callback=callback, *args, **kwargs)
 
     def logcat(self, options=None):
         try:
