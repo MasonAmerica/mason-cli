@@ -153,10 +153,23 @@ class XrayDesktopCommand(XrayCommand):
         self.invoke(call)
 
 
+class XrayADBProxyCommand(XrayCommand):
+    def __init__(self, config, port):
+        super(XrayADBProxyCommand, self).__init__(config)
+        self.port = port
+
+    @Command.helper('xray adbproxy')
+    def run(self):
+        def call():
+            self.xray.adbproxy(self.port)
+
+        self.invoke(call)
+
+
 class XRay(object):
     def __init__(self, device, config):
         self._device = device
-        self._apikey = config.auth_store['api_key']
+        self._auth = {'Authorization': 'Basic {}'.format(config.auth_store['api_key'])}
         self._progress = None
         self._cur_bytes = 0
         self._url = config.endpoints_store['xray_url'] + "/{}/{}"
@@ -177,16 +190,21 @@ class XRay(object):
         if not os.path.isfile(self._adbkey):
             self._keygen()
 
-        auth = {'Authorization': 'Basic {}'.format(self._apikey)}
-        return WsHandle(self._logger, self._get_url('adb'), timeout_ms=5000, header=auth)
+        return WsHandle(self._logger, self._get_url('adb'), timeout_ms=5000, header=self._auth)
+
+    def adbproxy(self, port=None):
+        if port is None:
+            port = 5555
+
+        XRayProxyServer(self._logger, self._get_url('adb'), port, timeout_ms=5000,
+                        header=self._auth).run()
 
     def desktop(self, port=None):
         if port is None:
             port = 5558
 
-        auth = {'Authorization': 'Basic {}'.format(self._apikey)}
         XRayProxyServer(self._logger, self._get_url('vnc'), port, timeout_ms=5000,
-                        header=auth).run()
+                        header=self._auth).run()
 
     def _run_in_reactor(self, func, *args, **kwargs):
         handle = self._connect_adb()

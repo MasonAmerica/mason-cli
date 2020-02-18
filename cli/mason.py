@@ -18,6 +18,7 @@ from cli.internal.commands.register import RegisterMediaCommand
 from cli.internal.commands.register import RegisterProjectCommand
 from cli.internal.commands.stage import StageCommand
 from cli.internal.commands.version import VersionCommand
+from cli.internal.commands.xray import XrayADBProxyCommand
 from cli.internal.commands.xray import XrayDesktopCommand
 from cli.internal.commands.xray import XrayInstallCommand
 from cli.internal.commands.xray import XrayLogcatCommand
@@ -668,6 +669,21 @@ def xray_desktop(config, port):
     """
 
     command = XrayDesktopCommand(config, port)
+    command.run()
+
+
+@xray.command('adbproxy')
+@click.option('--port', '-p', help='local port for ADB clients')
+@pass_config
+def xray_adbproxy(config, port):
+    """
+    Open an ADB connection to the device for native client connections
+
+    \b
+    Full docs: https://docs.bymason.com/mason-cli/#mason-xray-adbproxy
+    """
+
+    command = XrayADBProxyCommand(config, port)
     command.run()
 
 
