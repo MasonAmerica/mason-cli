@@ -4,7 +4,6 @@ import os
 import posixpath
 import sys
 import threading
-import traceback
 
 import click
 import six
@@ -256,6 +255,7 @@ class XRay(object):
                     msg = AdbMessage(constants.WRTE, adb_info.local_id, adb_info.remote_id, cmd)
                     device._send(msg, adb_info)
                 except EOFError:
+                    device.close()
                     break
 
         input_thread = threading.Thread(target=writer)
@@ -272,9 +272,6 @@ class XRay(object):
             except TcpTimeoutException:
                 pass
             except WSHandleShutdown:
-                break
-            except Exception:
-                traceback.print_exc()
                 break
 
     def _shell(self, device, command):
