@@ -1,3 +1,4 @@
+# pylint: disable=protected-access
 import abc
 import os
 import posixpath
@@ -8,17 +9,10 @@ import traceback
 import click
 import six
 from adb_shell import constants
-from adb_shell.adb_device import AdbDevice
-from adb_shell.adb_device import _AdbTransactionInfo
+from adb_shell.adb_device import AdbDevice, _AdbTransactionInfo
 from adb_shell.adb_message import AdbMessage
 from adb_shell.auth.keygen import keygen
 from adb_shell.exceptions import TcpTimeoutException
-
-from cli.internal.commands.command import Command
-from cli.internal.utils.validation import validate_api_key
-from cli.internal.utils.websocket import WSHandleShutdown
-from cli.internal.utils.websocket import WsHandle
-from cli.internal.utils.websocket import XRayProxyServer
 
 try:
     from adb_shell.auth import sign_cryptography
@@ -36,6 +30,12 @@ except ImportError:
             RSA_SIGNER = sign_pycryptodome.PycryptodomeAuthSigner
         except ImportError:
             RSA_SIGNER = None
+
+from cli.internal.commands.command import Command
+from cli.internal.utils.validation import validate_api_key
+from cli.internal.utils.websocket import WSHandleShutdown
+from cli.internal.utils.websocket import WsHandle
+from cli.internal.utils.websocket import XRayProxyServer
 
 
 @six.add_metaclass(abc.ABCMeta)
@@ -164,22 +164,6 @@ class XRay(object):
         self._adbkey = os.path.join(click.get_app_dir('Mason CLI'), 'adbkey')
         self._awaiting_auth = False
 
-    def _find_backspace_runs(self, stdout_bytes, start_pos):
-        first_backspace_pos = stdout_bytes[start_pos:].find(b'\x08')
-        if first_backspace_pos == -1:
-            return -1, 0
-
-        end_backspace_pos = (start_pos + first_backspace_pos) + 1
-        while True:
-            if chr(stdout_bytes[end_backspace_pos]) == '\b':
-                end_backspace_pos += 1
-            else:
-                break
-
-        num_backspaces = end_backspace_pos - (start_pos + first_backspace_pos)
-
-        return (start_pos + first_backspace_pos), num_backspaces
-
     def _get_url(self, service):
         return self._url.format(self._device, service)
 
@@ -262,9 +246,9 @@ class XRay(object):
 
         while True:
             try:
-                cmd, data = device._read_until([constants.OKAY, constants.WRTE,
-                                                constants.CLSE], adb_info)
-                if type(data) == bytes:
+                _, data = device._read_until([constants.OKAY, constants.WRTE,
+                                              constants.CLSE], adb_info)
+                if isinstance(data, bytes):
                     sys.stdout.write(data.decode('utf-8'))
                     sys.stdout.flush()
             except TcpTimeoutException:
@@ -330,16 +314,11 @@ class XRay(object):
         return self._with_progressbar(remote, device.pull, remote, dest_file=str(dest_file))
 
     def install(self, local_path, replace_existing=True, grant_permissions=False, args=None):
-        return self._run_in_reactor(self._install, local_path, args)
+        return self._run_in_reactor(self._install, local_path,
+                                    replace_existing=replace_existing,
+                                    grant_permissions=grant_permissions)
 
-    def _install(
-        self,
-        device,
-        local_path,
-        replace_existing=True,
-        grant_permissions=False,
-        args=None
-    ):
+    def _install(self, device, local_path, replace_existing=True, grant_permissions=False):
         destination_dir = '/data/local/tmp/'
         basename = os.path.basename(local_path)
         destination_path = posixpath.join(destination_dir, basename)

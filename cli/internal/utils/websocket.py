@@ -44,6 +44,11 @@ HTTP_STATUS_CODES = {
 
 class XRayWebSocketProtocol(WebSocketClientProtocol):
 
+    def __init__(self):
+        super(XRayWebSocketProtocol, self).__init__()
+        self.factory = None
+        self.logger = None
+
     def forward_message(self, payload):
         self.factory.local_proto.transport.write(payload)
 
