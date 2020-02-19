@@ -38,6 +38,7 @@ HTTP_STATUS_CODES = {
     '401': 'Authorization required.',
     '403': 'Access to the requested device is denied.',
     '404': 'The requested device was not found.',
+    '410': 'X-Ray is not supported on this device.',
     '429': 'An X-Ray session is already active on this device.',
 }
 
