@@ -518,12 +518,13 @@ def deploy_ota(config, name, version, groups):
     command.run()
 
 
-@cli.group(cls=AliasedGroup)
-@click.argument('device')
+@cli.group(invoke_without_command=True, cls=AliasedGroup)
+@click.argument('device', required=True, default='')
 @pass_config
-def xray(config, device):
+@click.pass_context
+def xray(ctx, config, device):
     """
-    Use XRay to connect with services on the device.
+    Use X-Ray to connect with services on the device.
 
     \b
       DEVICE to connect with (full device identifier).
@@ -532,7 +533,32 @@ def xray(config, device):
     Full docs: https://docs.bymason.com/mason-cli/#mason-xray
     """
 
+    if not device:
+        config.logger.info(xray.get_help(ctx))
+        ctx.exit()
+    if not ctx.invoked_subcommand:
+        raise click.MissingParameter(param_type='command', ctx=ctx)
+    actual_sub_command = xray.get_command(ctx, ctx.invoked_subcommand)
+    help_sub_command = xray.get_command(ctx, device)
+    if help_sub_command and actual_sub_command.name in ('-h', '--help'):
+        config.logger.info(help_sub_command.get_help(ctx))
+        ctx.exit()
+
     config.device = device
+
+
+@xray.command('-h', hidden=True, add_help_option=False)
+@pass_config
+@click.pass_context
+def xray_help_command_short_form_hack(ctx, config):
+    raise click.BadArgumentUsage('No such command "{}".'.format(config.device), ctx=ctx.parent)
+
+
+@xray.command('--help', hidden=True, add_help_option=False)
+@pass_config
+@click.pass_context
+def xray_help_command_long_form_hack(ctx, config):
+    raise click.BadArgumentUsage('No such command "{}".'.format(config.device), ctx=ctx.parent)
 
 
 @xray.command('logcat', context_settings=dict(
