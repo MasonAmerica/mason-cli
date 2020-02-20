@@ -10,6 +10,7 @@ from cli.internal.commands.cli_init import CliInitCommand
 from cli.internal.commands.deploy import DeployApkCommand
 from cli.internal.commands.deploy import DeployConfigCommand
 from cli.internal.commands.deploy import DeployOtaCommand
+from cli.internal.commands.help import HelpCommand
 from cli.internal.commands.init import InitCommand
 from cli.internal.commands.login import LoginCommand
 from cli.internal.commands.logout import LogoutCommand
@@ -753,6 +754,21 @@ def version(config):
     """Display the Mason CLI version."""
 
     command = VersionCommand(config)
+    command.run()
+
+
+@cli.command()
+@click.argument('command', nargs=-1)
+@pass_config
+def help(config, command):
+    """
+    Display help information.
+
+    \b
+      COMMAND the name of the command.
+    """
+
+    command = HelpCommand(config, command)
     command.run()
 
 
