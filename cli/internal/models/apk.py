@@ -9,6 +9,7 @@ import click
 from pyaxmlparser import APK
 
 from cli.internal.models.artifacts import IArtifact
+from cli.internal.utils.ui import section
 from cli.internal.utils.validation import validate_artifact_version
 
 # Disable pyaxmlparser logs since it spits out unnecessary warnings
@@ -77,20 +78,22 @@ class Apk(IArtifact):
                     raise click.Abort()
 
     def log_details(self):
-        self.config.logger.info('------------ APK ------------')
-        self.config.logger.info('File Name: {}'.format(self.binary))
-        self.config.logger.info('File size: {}'.format(os.path.getsize(self.binary)))
-        self.config.logger.info('Package: {}'.format(self.apkf.package))
-        self.config.logger.info('Version Name: {}'.format(self.apkf.get_androidversion_name()))
-        self.config.logger.info('Version Code: {}'.format(self.apkf.get_androidversion_code()))
-        self.config.logger.debug(self.get_details())
-        self.config.logger.info('-----------------------------')
+        with section(self.config, self.get_pretty_type()):
+            self.config.logger.info('File path: {}'.format(self.binary))
+            self.config.logger.debug('File size: {}'.format(os.path.getsize(self.binary)))
+            self.config.logger.info('Package name: {}'.format(self.apkf.package))
+            self.config.logger.info('Version name: {}'.format(self.apkf.get_androidversion_name()))
+            self.config.logger.info('Version code: {}'.format(self.apkf.get_androidversion_code()))
+            self.config.logger.debug(self.get_details())
 
     def get_content_type(self):
         return 'application/vnd.android.package-archive'
 
     def get_type(self):
         return 'apk'
+
+    def get_pretty_type(self):
+        return 'App'
 
     def get_sub_type(self):
         return

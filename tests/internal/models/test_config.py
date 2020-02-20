@@ -25,6 +25,9 @@ class ConfigTest(unittest.TestCase):
     def test_config_type(self):
         self.assertEqual(self.test_config.get_type(), 'config')
 
+    def test_config_pretty_type(self):
+        self.assertEqual(self.test_config.get_pretty_type(), 'OS Config')
+
     def test_config_sub_type(self):
         self.assertIsNone(self.test_config.get_sub_type())
 

@@ -22,6 +22,9 @@ class MediaTest(unittest.TestCase):
     def test_media_type(self):
         self.assertEqual(self.media.get_type(), 'media')
 
+    def test_media_pretty_type(self):
+        self.assertEqual(self.media.get_pretty_type(), 'Boot animation')
+
     def test_media_sub_type(self):
         self.assertEqual(self.media.get_sub_type(), 'bootanimation')
 

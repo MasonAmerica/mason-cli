@@ -4,6 +4,7 @@ import click
 import six
 
 from cli.internal.commands.command import Command
+from cli.internal.utils.ui import section
 from cli.internal.utils.validation import validate_credentials
 
 
@@ -25,29 +26,26 @@ class DeployCommand(Command):
     def _deploy_to_group(self, group):
         self._log_details(group)
         if not self.config.skip_verify:
-            click.confirm('Continue deploy?', default=True, abort=True)
+            click.confirm('Continue deployment?', default=True, abort=True)
 
         self.config.api.deploy_artifact(
             self.type, self.name, self.version, group, self.config.push, self.config.no_https)
         self.config.logger.info("{} '{}' deployed.".format(self.type.capitalize(), self.name))
 
     def _log_details(self, group):
-        self.config.logger.info('---------- DEPLOY -----------')
+        with section(self.config, 'Deployment'):
+            self.config.logger.info('Name: {}'.format(self.name))
+            self.config.logger.info('Type: {}'.format(self.type))
+            self.config.logger.info('Version: {}'.format(self.version))
+            self.config.logger.info('Group: {}'.format(group))
+            self.config.logger.info('Push: {}'.format(self.config.push))
 
-        self.config.logger.info('Name: {}'.format(self.name))
-        self.config.logger.info('Type: {}'.format(self.type))
-        self.config.logger.info('Version: {}'.format(self.version))
-        self.config.logger.info('Group: {}'.format(group))
-        self.config.logger.info('Push: {}'.format(self.config.push))
-
-        if self.config.no_https:
-            self.config.logger.info('')
-            self.config.logger.info('***WARNING***')
-            self.config.logger.info('--no-https enabled: this deployment will be delivered to '
-                                    'devices over HTTP.')
-            self.config.logger.info('***WARNING***')
-
-        self.config.logger.info('-----------------------------')
+            if self.config.no_https:
+                self.config.logger.info('')
+                self.config.logger.info('***WARNING***')
+                self.config.logger.info('--no-https enabled: this deployment will be delivered to '
+                                        'devices over HTTP.')
+                self.config.logger.info('***WARNING***')
 
 
 class DeployConfigCommand(DeployCommand):

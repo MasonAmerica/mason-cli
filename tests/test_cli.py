@@ -435,13 +435,12 @@ class CliTest(unittest.TestCase):
         self.assertIsInstance(result.exception, SystemExit)
         self.assertEqual(result.exit_code, 1)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
-            --------- OS Config ---------
-            File Name: {}
-            File size: 184
+            ------------ OS Config ------------
+            File path: {}
             Name: project-id
             Version: 1
-            -----------------------------
-            Continue register? [Y/n]: 
+            -----------------------------------
+            Continue registration? [Y/n]: 
             error: Artifact already exists and cannot be overwritten
             Aborted!
         """.format(config_file)))
@@ -499,13 +498,12 @@ class CliTest(unittest.TestCase):
         self.assertIsInstance(result.exception, SystemExit)
         self.assertEqual(result.exit_code, 1)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
-            --------- OS Config ---------
-            File Name: {}
-            File size: 184
+            ------------ OS Config ------------
+            File path: {}
             Name: project-id
             Version: 1
-            -----------------------------
-            Continue register? [Y/n]: n
+            -----------------------------------
+            Continue registration? [Y/n]: n
             Aborted!
         """.format(config_file)))
 
@@ -519,14 +517,13 @@ class CliTest(unittest.TestCase):
         self.assertIsNone(result.exception)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
-            --------- OS Config ---------
-            File Name: {}
-            File size: 184
+            ------------ OS Config ------------
+            File path: {}
             Name: project-id
             Version: 1
-            -----------------------------
-            Continue register? [Y/n]: 
-            Config 'project-id' registered.
+            -----------------------------------
+            Continue registration? [Y/n]: 
+            OS Config 'project-id' registered.
 
             Build queued.
             You can see the status of your build at
@@ -545,14 +542,13 @@ class CliTest(unittest.TestCase):
         self.assertIsNone(result.exception)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
-            --------- OS Config ---------
-            File Name: {}
-            File size: 317
+            ------------ OS Config ------------
+            File path: {}
             Name: project-id4
             Version: 42
-            -----------------------------
-            Continue register? [Y/n]: 
-            Config 'project-id4' registered.
+            -----------------------------------
+            Continue registration? [Y/n]: 
+            OS Config 'project-id4' registered.
 
             Build queued.
             You can see the status of your build at
@@ -572,27 +568,25 @@ class CliTest(unittest.TestCase):
         self.assertIsNone(result.exception)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
-            --------- OS Config ---------
-            File Name: {}
-            File size: 184
+            ------------ OS Config ------------
+            File path: {}
             Name: project-id
             Version: 1
-            -----------------------------
-            Continue register? [Y/n]: 
-            Config 'project-id' registered.
+            -----------------------------------
+            Continue registration? [Y/n]: 
+            OS Config 'project-id' registered.
 
             Build queued.
             You can see the status of your build at
             https://platform.bymason.com/controller/projects/project-id
 
-            --------- OS Config ---------
-            File Name: {}
-            File size: 171
+            ------------ OS Config ------------
+            File path: {}
             Name: project-id2
             Version: 2
-            -----------------------------
-            Continue register? [Y/n]: 
-            Config 'project-id2' registered.
+            -----------------------------------
+            Continue registration? [Y/n]: 
+            OS Config 'project-id2' registered.
 
             Build queued.
             You can see the status of your build at
@@ -614,14 +608,13 @@ class CliTest(unittest.TestCase):
         self.assertIsNone(result.exception)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
-            --------- OS Config ---------
-            File Name: {}
-            File size: 184
+            ------------ OS Config ------------
+            File path: {}
             Name: project-id
             Version: 1
-            -----------------------------
-            Continue register? [Y/n]: 
-            Config 'project-id' registered.
+            -----------------------------------
+            Continue registration? [Y/n]: 
+            OS Config 'project-id' registered.
 
             Build queued.
             You can see the status of your build at
@@ -668,14 +661,13 @@ class CliTest(unittest.TestCase):
         self.assertIsInstance(result.exception, SystemExit)
         self.assertEqual(result.exit_code, 1)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
-            ------------ APK ------------
-            File Name: {}
-            File size: 1319297
-            Package: com.example.unittestapp1
-            Version Name: 1.0
-            Version Code: 1
+            ------------ App ------------
+            File path: {}
+            Package name: com.example.unittestapp1
+            Version name: 1.0
+            Version code: 1
             -----------------------------
-            Continue register? [Y/n]: 
+            Continue registration? [Y/n]: 
             error: Artifact already exists and cannot be overwritten
             Aborted!
         """.format(apk_file)))
@@ -690,14 +682,13 @@ class CliTest(unittest.TestCase):
         self.assertIsInstance(result.exception, SystemExit)
         self.assertEqual(result.exit_code, 1)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
-            ------------ APK ------------
-            File Name: {}
-            File size: 1319297
-            Package: com.example.unittestapp1
-            Version Name: 1.0
-            Version Code: 1
+            ------------ App ------------
+            File path: {}
+            Package name: com.example.unittestapp1
+            Version name: 1.0
+            Version code: 1
             -----------------------------
-            Continue register? [Y/n]: n
+            Continue registration? [Y/n]: n
             Aborted!
         """.format(apk_file)))
 
@@ -711,15 +702,14 @@ class CliTest(unittest.TestCase):
         self.assertIsNone(result.exception)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
-            ------------ APK ------------
-            File Name: {}
-            File size: 1319297
-            Package: com.example.unittestapp1
-            Version Name: 1.0
-            Version Code: 1
+            ------------ App ------------
+            File path: {}
+            Package name: com.example.unittestapp1
+            Version name: 1.0
+            Version code: 1
             -----------------------------
-            Continue register? [Y/n]: 
-            Apk 'com.example.unittestapp1' registered.
+            Continue registration? [Y/n]: 
+            App 'com.example.unittestapp1' registered.
         """.format(apk_file)))
 
     def test__register_apk__files_are_registered(self):
@@ -733,25 +723,23 @@ class CliTest(unittest.TestCase):
         self.assertIsNone(result.exception)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
-            ------------ APK ------------
-            File Name: {}
-            File size: 1319297
-            Package: com.example.unittestapp1
-            Version Name: 1.0
-            Version Code: 1
+            ------------ App ------------
+            File path: {}
+            Package name: com.example.unittestapp1
+            Version name: 1.0
+            Version code: 1
             -----------------------------
-            Continue register? [Y/n]: 
-            Apk 'com.example.unittestapp1' registered.
+            Continue registration? [Y/n]: 
+            App 'com.example.unittestapp1' registered.
 
-            ------------ APK ------------
-            File Name: {}
-            File size: 1323413
-            Package: com.example.unittestapp1
-            Version Name: 1.0
-            Version Code: 1
+            ------------ App ------------
+            File path: {}
+            Package name: com.example.unittestapp1
+            Version name: 1.0
+            Version code: 1
             -----------------------------
-            Continue register? [Y/n]: 
-            Apk 'com.example.unittestapp1' registered.
+            Continue registration? [Y/n]: 
+            App 'com.example.unittestapp1' registered.
         """.format(apk_file1, apk_file2)))
 
     def test__register_media__no_files_fails(self):
@@ -805,14 +793,12 @@ class CliTest(unittest.TestCase):
         self.assertIsInstance(result.exception, SystemExit)
         self.assertEqual(result.exit_code, 1)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
-            ----------- MEDIA -----------
-            File Name: {}
-            File size: 3156136
+            ------------ Boot animation ------------
+            File path: {}
             Name: Anim name
             Version: 1
-            Type: bootanimation
-            -----------------------------
-            Continue register? [Y/n]: n
+            ----------------------------------------
+            Continue registration? [Y/n]: n
             Aborted!
         """.format(media_file)))
 
@@ -829,15 +815,13 @@ class CliTest(unittest.TestCase):
         self.assertIsNone(result.exception)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
-            ----------- MEDIA -----------
-            File Name: {}
-            File size: 3156136
+            ------------ Boot animation ------------
+            File path: {}
             Name: Anim name
             Version: 1
-            Type: bootanimation
-            -----------------------------
-            Continue register? [Y/n]: 
-            Media 'Anim name' registered.
+            ----------------------------------------
+            Continue registration? [Y/n]: 
+            Boot animation 'Anim name' registered.
         """.format(media_file)))
 
     def test__register_media__latest_file_is_registered(self):
@@ -854,15 +838,13 @@ class CliTest(unittest.TestCase):
         self.assertIsNone(result.exception)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
-            ----------- MEDIA -----------
-            File Name: {}
-            File size: 3156136
+            ------------ Boot animation ------------
+            File path: {}
             Name: Anim name
             Version: 42
-            Type: bootanimation
-            -----------------------------
-            Continue register? [Y/n]: 
-            Media 'Anim name' registered.
+            ----------------------------------------
+            Continue registration? [Y/n]: 
+            Boot animation 'Anim name' registered.
         """.format(media_file)))
 
     def test__register_project__no_context_fails(self):
@@ -921,14 +903,13 @@ class CliTest(unittest.TestCase):
         self.assertIsInstance(result.exception, SystemExit)
         self.assertEqual(result.exit_code, 1)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
-            ------------ APK ------------
-            File Name: {}
-            File size: 1319297
-            Package: com.example.unittestapp1
-            Version Name: 1.0
-            Version Code: 1
+            ------------ App ------------
+            File path: {}
+            Package name: com.example.unittestapp1
+            Version name: 1.0
+            Version code: 1
             -----------------------------
-            Continue register? [Y/n]: n
+            Continue registration? [Y/n]: n
             Aborted!
         """.format(apk_file)))
 
@@ -946,24 +927,22 @@ class CliTest(unittest.TestCase):
         self.assertIsNone(result.exception)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
-            ------------ APK ------------
-            File Name: {}
-            File size: 1319297
-            Package: com.example.unittestapp1
-            Version Name: 1.0
-            Version Code: 1
+            ------------ App ------------
+            File path: {}
+            Package name: com.example.unittestapp1
+            Version name: 1.0
+            Version code: 1
             -----------------------------
-            Continue register? [Y/n]: 
-            Apk 'com.example.unittestapp1' registered.
+            Continue registration? [Y/n]: 
+            App 'com.example.unittestapp1' registered.
 
-            --------- OS Config ---------
-            File Name: {}
-            File size: 184
+            ------------ OS Config ------------
+            File path: {}
             Name: project-id
             Version: 1
-            -----------------------------
-            Continue register? [Y/n]: 
-            Config 'project-id' registered.
+            -----------------------------------
+            Continue registration? [Y/n]: 
+            OS Config 'project-id' registered.
 
             Build queued.
             You can see the status of your build at
@@ -987,23 +966,21 @@ class CliTest(unittest.TestCase):
         self.assertIsInstance(result.exception, SystemExit)
         self.assertEqual(result.exit_code, 1)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
-            ------------ APK ------------
-            File Name: {}
-            File size: 1319297
-            Package: com.example.unittestapp1
-            Version Name: 1.0
-            Version Code: 1
+            ------------ App ------------
+            File path: {}
+            Package name: com.example.unittestapp1
+            Version name: 1.0
+            Version code: 1
             -----------------------------
-            Continue register? [Y/n]: 
-            Apk 'com.example.unittestapp1' already registered, ignoring.
+            Continue registration? [Y/n]: 
+            App 'com.example.unittestapp1' already registered, ignoring.
 
-            --------- OS Config ---------
-            File Name: {}
-            File size: 189
+            ------------ OS Config ------------
+            File path: {}
             Name: project-id2
             Version: 2
-            -----------------------------
-            Continue register? [Y/n]: 
+            -----------------------------------
+            Continue registration? [Y/n]: 
             error: Artifact already exists and cannot be overwritten
             Aborted!
         """.format(apk_file, config_file)))
@@ -1028,24 +1005,22 @@ class CliTest(unittest.TestCase):
         self.assertIsNone(result.exception)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
-            ------------ APK ------------
-            File Name: {}
-            File size: 1319297
-            Package: com.example.unittestapp1
-            Version Name: 1.0
-            Version Code: 1
+            ------------ App ------------
+            File path: {}
+            Package name: com.example.unittestapp1
+            Version name: 1.0
+            Version code: 1
             -----------------------------
-            Continue register? [Y/n]: 
-            Apk 'com.example.unittestapp1' already registered, ignoring.
+            Continue registration? [Y/n]: 
+            App 'com.example.unittestapp1' already registered, ignoring.
 
-            --------- OS Config ---------
-            File Name: {}
-            File size: 189
+            ------------ OS Config ------------
+            File path: {}
             Name: project-id2
             Version: 2
-            -----------------------------
-            Continue register? [Y/n]: 
-            Config 'project-id2' registered.
+            -----------------------------------
+            Continue registration? [Y/n]: 
+            OS Config 'project-id2' registered.
 
             Build queued.
             You can see the status of your build at
@@ -1072,24 +1047,22 @@ class CliTest(unittest.TestCase):
         self.assertIsNone(result.exception)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
-            ------------ APK ------------
-            File Name: {}
-            File size: 1319297
-            Package: com.example.unittestapp1
-            Version Name: 1.0
-            Version Code: 1
+            ------------ App ------------
+            File path: {}
+            Package name: com.example.unittestapp1
+            Version name: 1.0
+            Version code: 1
             -----------------------------
-            Continue register? [Y/n]: 
-            Apk 'com.example.unittestapp1' registered.
+            Continue registration? [Y/n]: 
+            App 'com.example.unittestapp1' registered.
 
-            --------- OS Config ---------
-            File Name: {}
-            File size: 189
+            ------------ OS Config ------------
+            File path: {}
             Name: project-id2
             Version: 2
-            -----------------------------
-            Continue register? [Y/n]: 
-            Config 'project-id2' registered.
+            -----------------------------------
+            Continue registration? [Y/n]: 
+            OS Config 'project-id2' registered.
 
             Build queued.
             You can see the status of your build at
@@ -1127,54 +1100,47 @@ class CliTest(unittest.TestCase):
         self.assertIsNone(result.exception)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
-            ------------ APK ------------
-            File Name: {}
-            File size: 1319297
-            Package: com.example.unittestapp1
-            Version Name: 1.0
-            Version Code: 1
+            ------------ App ------------
+            File path: {}
+            Package name: com.example.unittestapp1
+            Version name: 1.0
+            Version code: 1
             -----------------------------
-            Continue register? [Y/n]: 
-            Apk 'com.example.unittestapp1' registered.
+            Continue registration? [Y/n]: 
+            App 'com.example.unittestapp1' registered.
 
-            ------------ APK ------------
-            File Name: {}
-            File size: 1323413
-            Package: com.example.unittestapp1
-            Version Name: 1.0
-            Version Code: 1
+            ------------ App ------------
+            File path: {}
+            Package name: com.example.unittestapp1
+            Version name: 1.0
+            Version code: 1
             -----------------------------
-            Continue register? [Y/n]: 
-            Apk 'com.example.unittestapp1' registered.
+            Continue registration? [Y/n]: 
+            App 'com.example.unittestapp1' registered.
 
-            ----------- MEDIA -----------
-            File Name: {}
-            File size: 3156136
+            ------------ Boot animation ------------
+            File path: {}
             Name: anim-1
             Version: 41
-            Type: bootanimation
-            -----------------------------
-            Continue register? [Y/n]: 
-            Media 'anim-1' registered.
-            
-            ----------- MEDIA -----------
-            File Name: {}
-            File size: 166
+            ----------------------------------------
+            Continue registration? [Y/n]: 
+            Boot animation 'anim-1' registered.
+
+            ------------ Boot animation ------------
+            File path: {}
             Name: anim-2
             Version: 42
-            Type: bootanimation
-            -----------------------------
-            Continue register? [Y/n]: 
-            Media 'anim-2' registered.
+            ----------------------------------------
+            Continue registration? [Y/n]: 
+            Boot animation 'anim-2' registered.
 
-            --------- OS Config ---------
-            File Name: {}
-            File size: 189
+            ------------ OS Config ------------
+            File path: {}
             Name: project-id2
             Version: 2
-            -----------------------------
-            Continue register? [Y/n]: 
-            Config 'project-id2' registered.
+            -----------------------------------
+            Continue registration? [Y/n]: 
+            OS Config 'project-id2' registered.
 
             Build queued.
             You can see the status of your build at
@@ -1182,14 +1148,13 @@ class CliTest(unittest.TestCase):
 
             Build completed.
 
-            --------- OS Config ---------
-            File Name: {}
-            File size: 396
+            ------------ OS Config ------------
+            File path: {}
             Name: project-id3
             Version: 42
-            -----------------------------
-            Continue register? [Y/n]: 
-            Config 'project-id3' registered.
+            -----------------------------------
+            Continue registration? [Y/n]: 
+            OS Config 'project-id3' registered.
 
             Build queued.
             You can see the status of your build at
@@ -1299,13 +1264,12 @@ class CliTest(unittest.TestCase):
         self.assertEqual(result.exit_code, 1)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             warning: `mason stage` is deprecated, use `mason register config` instead.
-            --------- OS Config ---------
-            File Name: {}
-            File size: 184
+            ------------ OS Config ------------
+            File path: {}
             Name: project-id
             Version: 1
-            -----------------------------
-            Continue register? [Y/n]: n
+            -----------------------------------
+            Continue registration? [Y/n]: n
             Aborted!
         """.format(config_file)))
 
@@ -1324,14 +1288,13 @@ class CliTest(unittest.TestCase):
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             warning: `mason stage` is deprecated, use `mason register config` instead.
-            --------- OS Config ---------
-            File Name: {}
-            File size: 184
+            ------------ OS Config ------------
+            File path: {}
             Name: project-id
             Version: 1
-            -----------------------------
-            Continue register? [Y/n]: 
-            Config 'project-id' registered.
+            -----------------------------------
+            Continue registration? [Y/n]: 
+            OS Config 'project-id' registered.
 
             Build queued.
             You can see the status of your build at
@@ -1354,14 +1317,13 @@ class CliTest(unittest.TestCase):
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             warning: `mason stage` is deprecated, use `mason register config` instead.
-            --------- OS Config ---------
-            File Name: {}
-            File size: 184
+            ------------ OS Config ------------
+            File path: {}
             Name: project-id
             Version: 1
-            -----------------------------
-            Continue register? [Y/n]: 
-            Config 'project-id' registered.
+            -----------------------------------
+            Continue registration? [Y/n]: 
+            OS Config 'project-id' registered.
 
             Build queued.
             You can see the status of your build at
@@ -1427,14 +1389,14 @@ class CliTest(unittest.TestCase):
         self.assertIsInstance(result.exception, SystemExit)
         self.assertEqual(result.exit_code, 1)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
-            ---------- DEPLOY -----------
+            ------------ Deployment ------------
             Name: project-id
             Type: config
             Version: 1
             Group: group
             Push: False
-            -----------------------------
-            Continue deploy? [Y/n]: n
+            ------------------------------------
+            Continue deployment? [Y/n]: n
             Aborted!
         """))
 
@@ -1450,14 +1412,14 @@ class CliTest(unittest.TestCase):
         self.assertIsNone(result.exception)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
-            ---------- DEPLOY -----------
+            ------------ Deployment ------------
             Name: project-id
             Type: config
             Version: 1
             Group: group
             Push: False
-            -----------------------------
-            Continue deploy? [Y/n]: 
+            ------------------------------------
+            Continue deployment? [Y/n]: 
             Config 'project-id' deployed.
         """))
 
@@ -1474,14 +1436,14 @@ class CliTest(unittest.TestCase):
         self.assertIsNone(result.exception)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
-            ---------- DEPLOY -----------
+            ------------ Deployment ------------
             Name: project-id
             Type: config
             Version: 42
             Group: group
             Push: False
-            -----------------------------
-            Continue deploy? [Y/n]: 
+            ------------------------------------
+            Continue deployment? [Y/n]: 
             Config 'project-id' deployed.
         """))
 
@@ -1497,18 +1459,18 @@ class CliTest(unittest.TestCase):
         self.assertIsNone(result.exception)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
-            ---------- DEPLOY -----------
+            ------------ Deployment ------------
             Name: project-id
             Type: config
             Version: 1
             Group: group
             Push: False
-    
+
             ***WARNING***
             --no-https enabled: this deployment will be delivered to devices over HTTP.
             ***WARNING***
-            -----------------------------
-            Continue deploy? [Y/n]: 
+            ------------------------------------
+            Continue deployment? [Y/n]: 
             Config 'project-id' deployed.
         """))
 
@@ -1569,14 +1531,14 @@ class CliTest(unittest.TestCase):
         self.assertIsInstance(result.exception, SystemExit)
         self.assertEqual(result.exit_code, 1)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
-            ---------- DEPLOY -----------
+            ------------ Deployment ------------
             Name: com.example.app
             Type: apk
             Version: 1
             Group: group
             Push: False
-            -----------------------------
-            Continue deploy? [Y/n]: n
+            ------------------------------------
+            Continue deployment? [Y/n]: n
             Aborted!
         """))
 
@@ -1592,14 +1554,14 @@ class CliTest(unittest.TestCase):
         self.assertIsNone(result.exception)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
-            ---------- DEPLOY -----------
+            ------------ Deployment ------------
             Name: com.example.app
             Type: apk
             Version: 1
             Group: group
             Push: False
-            -----------------------------
-            Continue deploy? [Y/n]: 
+            ------------------------------------
+            Continue deployment? [Y/n]: 
             Apk 'com.example.app' deployed.
         """))
 
@@ -1616,14 +1578,14 @@ class CliTest(unittest.TestCase):
         self.assertIsNone(result.exception)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
-            ---------- DEPLOY -----------
+            ------------ Deployment ------------
             Name: com.example.app
             Type: apk
             Version: 42
             Group: group
             Push: False
-            -----------------------------
-            Continue deploy? [Y/n]: 
+            ------------------------------------
+            Continue deployment? [Y/n]: 
             Apk 'com.example.app' deployed.
         """))
 
@@ -1639,18 +1601,18 @@ class CliTest(unittest.TestCase):
         self.assertIsNone(result.exception)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
-            ---------- DEPLOY -----------
+            ------------ Deployment ------------
             Name: com.example.app
             Type: apk
             Version: 1
             Group: group
             Push: False
-    
+
             ***WARNING***
             --no-https enabled: this deployment will be delivered to devices over HTTP.
             ***WARNING***
-            -----------------------------
-            Continue deploy? [Y/n]: 
+            ------------------------------------
+            Continue deployment? [Y/n]: 
             Apk 'com.example.app' deployed.
         """))
 
@@ -1688,14 +1650,14 @@ class CliTest(unittest.TestCase):
         self.assertIsInstance(result.exception, SystemExit)
         self.assertEqual(result.exit_code, 1)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
-            ---------- DEPLOY -----------
+            ------------ Deployment ------------
             Name: mason-os
             Type: ota
             Version: 2.0.0
             Group: group
             Push: False
-            -----------------------------
-            Continue deploy? [Y/n]: n
+            ------------------------------------
+            Continue deployment? [Y/n]: n
             Aborted!
         """))
 
@@ -1711,14 +1673,14 @@ class CliTest(unittest.TestCase):
         self.assertIsNone(result.exception)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
-            ---------- DEPLOY -----------
+            ------------ Deployment ------------
             Name: mason-os
             Type: ota
             Version: 2.0.0
             Group: group
             Push: False
-            -----------------------------
-            Continue deploy? [Y/n]: 
+            ------------------------------------
+            Continue deployment? [Y/n]: 
             Ota 'mason-os' deployed.
         """))
 
@@ -1734,18 +1696,18 @@ class CliTest(unittest.TestCase):
         self.assertIsNone(result.exception)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
-            ---------- DEPLOY -----------
+            ------------ Deployment ------------
             Name: mason-os
             Type: ota
             Version: 2.0.0
             Group: group
             Push: False
-    
+
             ***WARNING***
             --no-https enabled: this deployment will be delivered to devices over HTTP.
             ***WARNING***
-            -----------------------------
-            Continue deploy? [Y/n]: 
+            ------------------------------------
+            Continue deployment? [Y/n]: 
             Ota 'mason-os' deployed.
         """))
 
@@ -1762,18 +1724,18 @@ class CliTest(unittest.TestCase):
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             warning: Unknown name 'invalid' for 'ota' deployments. Forcing it to 'mason-os'
-            ---------- DEPLOY -----------
+            ------------ Deployment ------------
             Name: mason-os
             Type: ota
             Version: 2.0.0
             Group: group
             Push: False
-    
+
             ***WARNING***
             --no-https enabled: this deployment will be delivered to devices over HTTP.
             ***WARNING***
-            -----------------------------
-            Continue deploy? [Y/n]: 
+            ------------------------------------
+            Continue deployment? [Y/n]: 
             Ota 'mason-os' deployed.
         """))
 

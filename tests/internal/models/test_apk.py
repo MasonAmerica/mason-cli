@@ -38,6 +38,9 @@ class ApkTest(unittest.TestCase):
     def test_apk_type(self):
         self.assertEqual(self.test_apk.get_type(), 'apk')
 
+    def test_apk_pretty_type(self):
+        self.assertEqual(self.test_apk.get_pretty_type(), 'App')
+
     def test_apk_sub_type(self):
         self.assertIsNone(self.test_apk.get_sub_type())
 

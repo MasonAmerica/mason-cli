@@ -4,6 +4,7 @@ import zipfile
 import click
 
 from cli.internal.models.artifacts import IArtifact
+from cli.internal.utils.ui import section
 
 
 class Media(IArtifact):
@@ -28,21 +29,22 @@ class Media(IArtifact):
     def validate(self):
         if self.type == 'bootanimation':
             self._validate_bootanimation()
+        else:
+            self.config.logger.error('Unknown media type: {}'.format(self.type))
+            raise click.Abort()
 
     def log_details(self):
-        self.config.logger.info('----------- MEDIA -----------')
-        self.config.logger.info('File Name: {}'.format(self.binary))
-        self.config.logger.info('File size: {}'.format(os.path.getsize(self.binary)))
-        self.config.logger.info('Name: {}'.format(self.name))
-        self.config.logger.info('Version: {}'.format(self.version))
-        self.config.logger.info('Type: {}'.format(self.type))
+        with section(self.config, self.get_pretty_type()):
+            self.config.logger.info('File path: {}'.format(self.binary))
+            self.config.logger.debug('File size: {}'.format(os.path.getsize(self.binary)))
+            self.config.logger.info('Name: {}'.format(self.name))
+            self.config.logger.info('Version: {}'.format(self.version))
 
-        if self.details:
-            self.config.logger.debug('Details: ')
-            lines = list(line for line in (l.strip() for l in self.details) if line)
-            for line in lines:
-                self.config.logger.debug(line)
-        self.config.logger.info('-----------------------------')
+            if self.details:
+                self.config.logger.debug('Details: ')
+                lines = list(line for line in (l.strip() for l in self.details) if line)
+                for line in lines:
+                    self.config.logger.debug(line)
 
     def get_content_type(self):
         if self.get_sub_type() == 'bootanimation':
@@ -50,6 +52,12 @@ class Media(IArtifact):
 
     def get_type(self):
         return 'media'
+
+    def get_pretty_type(self):
+        if self.get_sub_type() == 'bootanimation':
+            return 'Boot animation'
+        else:
+            return 'Media'
 
     def get_sub_type(self):
         return self.type

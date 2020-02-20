@@ -23,6 +23,10 @@ class IArtifact:
         pass
 
     @abstractmethod
+    def get_pretty_type(self):
+        pass
+
+    @abstractmethod
     def get_sub_type(self):
         pass
 

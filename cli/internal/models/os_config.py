@@ -4,6 +4,7 @@ import click
 import yaml
 
 from cli.internal.models.artifacts import IArtifact
+from cli.internal.utils.ui import section
 from cli.internal.utils.validation import validate_artifact_version
 
 
@@ -45,22 +46,23 @@ class OSConfig(IArtifact):
         validate_artifact_version(self.config, self.version, self.get_type())
 
     def log_details(self):
-        self.config.logger.info('--------- OS Config ---------')
-        self.config.logger.info('File Name: {}'.format(self.user_binary))
-        self.config.logger.info('File size: {}'.format(os.path.getsize(self.binary)))
-        self.config.logger.info('Name: {}'.format(self.name))
-        self.config.logger.info('Version: {}'.format(self.version))
+        with section(self.config, self.get_pretty_type()):
+            self.config.logger.info('File path: {}'.format(self.user_binary))
+            self.config.logger.debug('File size: {}'.format(os.path.getsize(self.binary)))
+            self.config.logger.info('Name: {}'.format(self.name))
+            self.config.logger.info('Version: {}'.format(self.version))
 
-        self.config.logger.debug('Parsed config:')
-        self.config.logger.debug(yaml.safe_dump(self.ecosystem))
-
-        self.config.logger.info('-----------------------------')
+            self.config.logger.debug('Parsed config:')
+            self.config.logger.debug(yaml.safe_dump(self.ecosystem))
 
     def get_content_type(self):
         return 'text/x-yaml'
 
     def get_type(self):
         return 'config'
+
+    def get_pretty_type(self):
+        return 'OS Config'
 
     def get_sub_type(self):
         return

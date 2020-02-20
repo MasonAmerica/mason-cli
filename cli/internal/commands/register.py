@@ -26,7 +26,7 @@ class RegisterCommand(Command):
     def register_artifact(self, binary, artifact):
         artifact.log_details()
         if not self.config.skip_verify:
-            click.confirm('Continue register?', default=True, abort=True)
+            click.confirm('Continue registration?', default=True, abort=True)
 
         self.config.logger.debug('File SHA1: {}'.format(hash_file(binary, 'sha1')))
         self.config.logger.debug('File MD5: {}'.format(hash_file(binary, 'md5')))
@@ -34,12 +34,12 @@ class RegisterCommand(Command):
         try:
             self.config.api.upload_artifact(binary, artifact)
             self.config.logger.info("{} '{}' registered.".format(
-                artifact.get_type().capitalize(), artifact.get_name()))
+                artifact.get_pretty_type(), artifact.get_name()))
         except ApiError as e:
             is_in_project_mode = getattr(self.config, 'project_mode', None)
             if is_in_project_mode and e.message and 'already exists' in e.message:
                 self.config.logger.info("{} '{}' already registered, ignoring.".format(
-                    artifact.get_type().capitalize(), artifact.get_name()))
+                    artifact.get_pretty_type(), artifact.get_name()))
                 pass
             else:
                 raise e
