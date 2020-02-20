@@ -25,6 +25,7 @@ from cli.internal.commands.xray import XrayInstallCommand
 from cli.internal.commands.xray import XrayLogcatCommand
 from cli.internal.commands.xray import XrayPullCommand
 from cli.internal.commands.xray import XrayPushCommand
+from cli.internal.commands.xray import XrayScreencapCommand
 from cli.internal.commands.xray import XrayShellCommand
 from cli.internal.commands.xray import XrayUninstallCommand
 from cli.internal.utils import mason_types
@@ -711,6 +712,21 @@ def xray_adbproxy(config, port):
     """
 
     command = XrayADBProxyCommand(config, port)
+    command.run()
+
+
+@xray.command('screencap')
+@click.option('--outputfile', '-o', help='output filename (automatic if not specified)')
+@pass_config
+def xray_screencap(config, outputfile):
+    """
+    Capture a screenshot from the device
+
+    \b
+    Full docs: https://docs.bymason.com/mason-cli/#mason-xray-screencap
+    """
+
+    command = XrayScreencapCommand(config, outputfile)
     command.run()
 
 

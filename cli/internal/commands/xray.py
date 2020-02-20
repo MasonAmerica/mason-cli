@@ -7,6 +7,9 @@ import threading
 
 import click
 import six
+
+from time import gmtime, strftime
+
 from adb_shell import constants
 from adb_shell.adb_device import AdbDevice, _AdbTransactionInfo
 from adb_shell.adb_message import AdbMessage
@@ -161,6 +164,19 @@ class XrayADBProxyCommand(XrayCommand):
     def run(self):
         def call():
             self.xray.adbproxy(self.port)
+
+        self.invoke(call)
+
+
+class XrayScreencapCommand(XrayCommand):
+    def __init__(self, config, outputfile):
+        super(XrayScreencapCommand, self).__init__(config)
+        self.outputfile = outputfile
+
+    @Command.helper('xray screencap')
+    def run(self):
+        def call():
+            self.xray.screencap(self.outputfile)
 
         self.invoke(call)
 
@@ -362,3 +378,17 @@ class XRay(object):
         cmd.append('"%s"' % package)
 
         self._shell(device, cmd)
+
+    def screencap(self, outputfile=None):
+        return self._run_in_reactor(self._screencap, outputfile)
+
+    def _screencap(self, device, outputfile=None):
+        if outputfile is None:
+            outputfile = "screencap-%s-%s.png" % (self._device, strftime("%Y%m%d%H%M%S", gmtime()))
+
+        rpath = "/data/local/tmp/%s" % outputfile
+        self._shell(device, ['/system/bin/screencap', '-p', rpath])
+        self._pull(device, rpath)
+        self._shell(device, ['rm', rpath])
+
+        self._logger.info("Screen captured to %s" % outputfile)
