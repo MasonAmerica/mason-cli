@@ -1,9 +1,9 @@
 import contextlib
 import json
 import os
+import sys
 
 import click
-import sys
 import yaml
 
 from cli.internal.commands.command import Command

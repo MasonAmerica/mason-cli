@@ -28,7 +28,6 @@ setup(
         'six',
         'packaging',
         'pyaxmlparser>=0.3.22',
-        'future',  # Needed for Python 2 compatibility
         'adb_shell>=0.1.2',
         'twisted>=19.10.0',
         'autobahn>=19.11.1',

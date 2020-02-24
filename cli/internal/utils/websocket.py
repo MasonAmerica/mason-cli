@@ -3,26 +3,26 @@ import select
 import socket
 from abc import abstractmethod
 from binascii import hexlify
-
-try:
-    # noinspection PyCompatibility
-    from urllib.parse import urlparse
-except ImportError:
-    # noinspection PyCompatibility,PyUnresolvedReferences
-    from urlparse import urlparse
-
-from twisted.internet import defer, reactor, protocol, ssl
-from twisted.internet.defer import setDebugging
-from twisted.logger import globalLogPublisher, STDLibLogObserver, FilteringLogObserver, \
-    LogLevelFilterPredicate, \
-    LogLevel
+from urllib.parse import urlparse
 
 import txaio
-
-from autobahn.twisted.websocket import WebSocketClientProtocol, WebSocketClientFactory, connectWS
-from autobahn.websocket.protocol import WebSocketProtocol
+from adb_shell.exceptions import AdbCommandFailureException
+from adb_shell.exceptions import TcpTimeoutException
 from adb_shell.handle.base_handle import BaseHandle
-from adb_shell.exceptions import AdbCommandFailureException, TcpTimeoutException
+from autobahn.twisted.websocket import WebSocketClientFactory
+from autobahn.twisted.websocket import WebSocketClientProtocol
+from autobahn.twisted.websocket import connectWS
+from autobahn.websocket.protocol import WebSocketProtocol
+from twisted.internet import defer
+from twisted.internet import protocol
+from twisted.internet import reactor
+from twisted.internet import ssl
+from twisted.internet.defer import setDebugging
+from twisted.logger import FilteringLogObserver
+from twisted.logger import LogLevel
+from twisted.logger import LogLevelFilterPredicate
+from twisted.logger import STDLibLogObserver
+from twisted.logger import globalLogPublisher
 
 from cli.internal.utils.constants import LOG_PROTOCOL_TRACE
 

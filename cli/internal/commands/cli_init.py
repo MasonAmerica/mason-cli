@@ -1,9 +1,9 @@
 import inspect
+import time
 
 import click_log
 import packaging.version
 import requests
-import time
 
 from cli.internal.commands.command import Command
 from cli.internal.utils.store import Store

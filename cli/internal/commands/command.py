@@ -1,8 +1,8 @@
 import abc
+import time
 from abc import abstractmethod
 
 import six
-import time
 
 from cli.internal.utils.remote import ApiError
 

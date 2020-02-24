@@ -2,9 +2,9 @@ import copy
 import os
 import random
 import string
+import time
 
 import click
-import time
 
 from cli.internal.utils.remote import RequestHandler
 from cli.internal.utils.store import Store

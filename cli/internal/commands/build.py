@@ -1,18 +1,12 @@
 import inspect
+import time
+from urllib.parse import urlparse
 
 import click
-import time
 
 from cli.internal.commands.command import Command
 from cli.internal.utils.remote import ApiError
 from cli.internal.utils.validation import validate_credentials
-
-try:
-    # noinspection PyCompatibility
-    from urllib.parse import urlparse
-except ImportError:
-    # noinspection PyCompatibility,PyUnresolvedReferences
-    from urlparse import urlparse
 
 
 class BuildCommand(Command):

@@ -4,14 +4,14 @@ import os
 import posixpath
 import sys
 import threading
+from time import gmtime
+from time import strftime
 
 import click
 import six
-
-from time import gmtime, strftime
-
 from adb_shell import constants
-from adb_shell.adb_device import AdbDevice, _AdbTransactionInfo
+from adb_shell.adb_device import AdbDevice
+from adb_shell.adb_device import _AdbTransactionInfo
 from adb_shell.adb_message import AdbMessage
 from adb_shell.auth.keygen import keygen
 from adb_shell.exceptions import TcpTimeoutException
