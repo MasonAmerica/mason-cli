@@ -20,6 +20,7 @@ from cli.internal.commands.register import RegisterProjectCommand
 from cli.internal.commands.stage import StageCommand
 from cli.internal.commands.version import VersionCommand
 from cli.internal.commands.xray import XrayADBProxyCommand
+from cli.internal.commands.xray import XrayBugreportCommand
 from cli.internal.commands.xray import XrayDesktopCommand
 from cli.internal.commands.xray import XrayInstallCommand
 from cli.internal.commands.xray import XrayLogcatCommand
@@ -688,6 +689,20 @@ def xray_screencap(config, outputfile):
     """
 
     command = XrayScreencapCommand(config, outputfile)
+    command.run()
+
+
+@xray.command('bugreport')
+@pass_config
+def xray_bugreport(config):
+    """
+    Collect a bugreport from the device
+
+    \b
+    Full docs: https://docs.bymason.com/mason-cli/#mason-xray-bugreport
+    """
+
+    command = XrayBugreportCommand(config)
     command.run()
 
 

@@ -183,6 +183,18 @@ class XrayScreencapCommand(XrayCommand):
         self.invoke(call)
 
 
+class XrayBugreportCommand(XrayCommand):
+    def __init__(self, config: Config):
+        super(XrayBugreportCommand, self).__init__(config)
+
+    @Command.helper('xray bugreport')
+    def run(self):
+        def call():
+            self.xray.bugreport()
+
+        self.invoke(call)
+
+
 class XRay(object):
     def __init__(self, device, config: Config):
         self._device = device
@@ -259,7 +271,9 @@ class XRay(object):
     def shell(self, command):
         self._run_in_reactor(self._shell, command)
 
-    def _interactive_shell(self, device, adb_info):
+    def _interactive_shell(self, device):
+        adb_info = _AdbTransactionInfo(None, None, 10, 20)
+
         device._open(b'shell:', adb_info)
 
         def writer():
@@ -292,17 +306,20 @@ class XRay(object):
             except WSHandleShutdown:
                 break
 
+    def _noninteractive_shell(self, device, command, timeout_s=10, total_timeout_s=20):
+        adb_info = _AdbTransactionInfo(None, None, timeout_s, total_timeout_s)
+
+        if isinstance(command, list):
+            command = ' '.join(command)
+        return device._streaming_command(b'shell', command.encode('utf8'), adb_info)
+
     def _shell(self, device, command):
-        adb_info = _AdbTransactionInfo(None, None, 10, 20)
         if command:
-            if isinstance(command, list):
-                command = ' '.join(command)
-            output = device._streaming_command(b'shell', command.encode('utf8'), adb_info)
+            output = self._noninteractive_shell(device, command)
             for line in output:
                 sys.stdout.write(line.decode('utf-8'))
-
         else:
-            self._interactive_shell(device, adb_info)
+            self._interactive_shell(device)
 
     def _with_progressbar(self, label, func, *args, **kwargs):
         with click.progressbar(length=0, label=label) as progress:
@@ -394,3 +411,23 @@ class XRay(object):
         self._shell(device, ['rm', rpath])
 
         self._logger.info("Screen captured to %s" % outputfile)
+
+    def _bugreport(self, device):
+        self._logger.info("Collecting bugreport, this may take a minute..")
+        output = self._noninteractive_shell(device, ['/system/bin/bugreportz'], timeout_s=300)
+        zpath = None
+        for line in output:
+            if isinstance(line, bytes):
+                data = line.decode('utf-8').strip()
+                if data.startswith("OK:"):
+                    zpath = data.split(":")[1]
+
+        if zpath is None:
+            self._logger.error("Failed to capture bug report!")
+            return
+
+        self._pull(device, zpath)
+        self._logger.info("Bug report saved to %s" % os.path.basename(zpath))
+
+    def bugreport(self):
+        return self._run_in_reactor(self._bugreport)
