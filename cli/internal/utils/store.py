@@ -5,7 +5,7 @@ import yaml
 
 
 class Store(object):
-    def __init__(self, name, fields, dir=None, restore=True):
+    def __init__(self, name: str, fields: dict, dir=None, restore=True):
         self._file = os.path.join(dir or click.get_app_dir('Mason CLI'), name + '.yml')
         self._defaults = fields
         self._fields = {}
@@ -27,10 +27,10 @@ class Store(object):
                     for (k, v) in yml.items():
                         self._fields[k] = v
 
-    def __getitem__(self, item):
+    def __getitem__(self, item: str):
         return self._fields.get(item, self._defaults.get(item, None))
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key: str, value):
         self._fields[key] = value
 
     def clear(self):

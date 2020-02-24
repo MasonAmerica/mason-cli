@@ -3,6 +3,7 @@ import abc
 import click
 import six
 
+from cli.config import Config
 from cli.internal.commands.command import Command
 from cli.internal.utils.ui import section
 from cli.internal.utils.validation import validate_credentials
@@ -10,7 +11,7 @@ from cli.internal.utils.validation import validate_credentials
 
 @six.add_metaclass(abc.ABCMeta)
 class DeployCommand(Command):
-    def __init__(self, config, type, name, version, groups):
+    def __init__(self, config: Config, type: str, name: str, version: str, groups: list):
         self.config = config
         self.type = type
         self.name = name
@@ -23,7 +24,7 @@ class DeployCommand(Command):
         for group in self.groups:
             self._deploy_to_group(group)
 
-    def _deploy_to_group(self, group):
+    def _deploy_to_group(self, group: str):
         self._log_details(group)
         if not self.config.skip_verify:
             click.confirm('Continue deployment?', default=True, abort=True)
@@ -32,7 +33,7 @@ class DeployCommand(Command):
             self.type, self.name, self.version, group, self.config.push, self.config.no_https)
         self.config.logger.info("{} '{}' deployed.".format(self.type.capitalize(), self.name))
 
-    def _log_details(self, group):
+    def _log_details(self, group: str):
         with section(self.config, 'Deployment'):
             self.config.logger.info('Name: {}'.format(self.name))
             self.config.logger.info('Type: {}'.format(self.type))
@@ -49,7 +50,7 @@ class DeployCommand(Command):
 
 
 class DeployConfigCommand(DeployCommand):
-    def __init__(self, config, name, version, groups):
+    def __init__(self, config: Config, name: str, version: str, groups: list):
         super(DeployConfigCommand, self).__init__(config, 'config', name, version, groups)
 
     @Command.helper('deploy config')
@@ -70,7 +71,7 @@ class DeployConfigCommand(DeployCommand):
 
 
 class DeployApkCommand(DeployCommand):
-    def __init__(self, config, name, version, groups):
+    def __init__(self, config: Config, name: str, version: str, groups: list):
         super(DeployApkCommand, self).__init__(config, 'apk', name, version, groups)
 
     @Command.helper('deploy apk')
@@ -91,7 +92,7 @@ class DeployApkCommand(DeployCommand):
 
 
 class DeployOtaCommand(DeployCommand):
-    def __init__(self, config, name, version, groups):
+    def __init__(self, config: Config, name: str, version: str, groups: list):
         super(DeployOtaCommand, self).__init__(config, 'ota', name, version, groups)
 
     @Command.helper('deploy ota')

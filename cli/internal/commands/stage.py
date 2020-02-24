@@ -1,5 +1,6 @@
 import tempfile
 
+from cli.config import Config
 from cli.internal.commands.build import BuildCommand
 from cli.internal.commands.command import Command
 from cli.internal.commands.register import RegisterConfigCommand
@@ -8,11 +9,11 @@ from cli.internal.commands.register import RegisterConfigCommand
 class StageCommand(Command):
     def __init__(
         self,
-        config,
-        config_files,
-        block,
-        turbo,
-        mason_version,
+        config: Config,
+        config_files: list,
+        block: bool,
+        turbo: bool,
+        mason_version: str,
         working_dir=None
     ):
         self.config = config

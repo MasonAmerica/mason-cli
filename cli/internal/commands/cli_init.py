@@ -7,11 +7,21 @@ import requests
 
 from cli.internal.commands.command import Command
 from cli.internal.utils.store import Store
+from cli.mason import Config
 from cli.version import __version__
 
 
 class CliInitCommand(Command):
-    def __init__(self, config, debug, verbose, no_color, api_key, id_token, access_token):
+    def __init__(
+        self,
+        config: Config,
+        debug: bool,
+        verbose: bool,
+        no_color: bool,
+        api_key: str,
+        id_token: str,
+        access_token: str
+    ):
         self.config = config
         self.debug = debug
         self.verbose = verbose

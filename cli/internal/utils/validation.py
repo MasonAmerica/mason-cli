@@ -1,19 +1,21 @@
 import click
 
+from cli.config import Config
 
-def validate_credentials(config):
+
+def validate_credentials(config: Config):
     if not config.auth_store['id_token'] or not config.auth_store['access_token']:
         config.logger.error('Not authenticated. Run \'mason login\' to sign in.')
         raise click.Abort()
 
 
-def validate_api_key(config):
+def validate_api_key(config: Config):
     if not config.auth_store['api_key']:
         config.logger.error('Not authenticated. Run \'mason login\' to sign in.')
         raise click.Abort()
 
 
-def validate_artifact_version(config, version, type):
+def validate_artifact_version(config: Config, version, type: str):
     if version == 'latest':
         return
 

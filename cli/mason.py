@@ -4,7 +4,7 @@ import os
 import click
 import click_log
 
-from cli.internal.apis.mason import MasonApi
+from cli.config import Config
 from cli.internal.commands.build import BuildCommand
 from cli.internal.commands.cli_init import CliInitCommand
 from cli.internal.commands.deploy import DeployApkCommand
@@ -29,52 +29,13 @@ from cli.internal.commands.xray import XrayScreencapCommand
 from cli.internal.commands.xray import XrayShellCommand
 from cli.internal.commands.xray import XrayUninstallCommand
 from cli.internal.utils import mason_types
-from cli.internal.utils.analytics import MasonAnalytics
-from cli.internal.utils.constants import AUTH
-from cli.internal.utils.constants import ENDPOINTS
 from cli.internal.utils.constants import LOG_PROTOCOL_TRACE
-from cli.internal.utils.interactive import Interactivity
 from cli.internal.utils.mason_types import AliasedGroup
-from cli.internal.utils.remote import RequestHandler
-
-
-class Config(object):
-    """
-    Global config object, utilized to set verbosity of logging events
-    and other flags.
-    """
-
-    def __init__(
-        self,
-        logger=None,
-        auth_store=AUTH,
-        endpoints_store=ENDPOINTS,
-        api=None,
-        analytics=None,
-        interactivity=None
-    ):
-        logger = logger or logging.getLogger(__name__)
-        api = api or MasonApi(RequestHandler(self), auth_store, endpoints_store)
-        if not analytics:
-            if os.environ.get('_MASON_CLI_TEST_MODE'):
-                from mock import MagicMock
-                analytics = MagicMock()
-            else:
-                analytics = MasonAnalytics(self)
-        interactivity = interactivity or Interactivity()
-
-        self.logger = logger
-        self.auth_store = auth_store
-        self.endpoints_store = endpoints_store
-        self.api = api
-        self.analytics = analytics
-        self.interactivity = interactivity
-
 
 pass_config = click.make_pass_decorator(Config, ensure=True)
 
 
-def install_logger(logger, level):
+def install_logger(logger: logging.Logger, level):
     logger.setLevel(level)
     click_log.ClickHandler._use_stderr = False
     click_log.basic_config(logger)

@@ -1,8 +1,9 @@
+from cli.config import Config
 from cli.internal.commands.command import Command
 
 
 class LogoutCommand(Command):
-    def __init__(self, config):
+    def __init__(self, config: Config):
         self.config = config
 
     @Command.helper('logout')

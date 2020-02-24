@@ -14,7 +14,7 @@ class Command:
         pass
 
     @staticmethod
-    def helper(name):
+    def helper(name: str):
         def decorator(f):
             def wrapper(self, *args, **kwargs):
                 start = int(time.time())

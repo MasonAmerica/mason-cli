@@ -1,10 +1,11 @@
 import click
 
 from cli.internal.commands.command import Command
+from cli.mason import Config
 
 
 class HelpCommand(Command):
-    def __init__(self, config, commands):
+    def __init__(self, config: Config, commands: list):
         self.config = config
         self.commands = commands
 

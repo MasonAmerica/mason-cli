@@ -4,6 +4,7 @@ from urllib.parse import urlparse
 
 import click
 
+from cli.config import Config
 from cli.internal.commands.command import Command
 from cli.internal.utils.remote import ApiError
 from cli.internal.utils.validation import validate_credentials
@@ -12,12 +13,12 @@ from cli.internal.utils.validation import validate_credentials
 class BuildCommand(Command):
     def __init__(
         self,
-        config,
-        project,
-        version,
-        block,
-        turbo,
-        mason_version,
+        config: Config,
+        project: str,
+        version: str,
+        block: bool,
+        turbo: bool,
+        mason_version: str,
         time=time,
         urlparse=urlparse
     ):

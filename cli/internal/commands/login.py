@@ -1,8 +1,9 @@
+from cli.config import Config
 from cli.internal.commands.command import Command
 
 
 class LoginCommand(Command):
-    def __init__(self, config, api_key, username, password):
+    def __init__(self, config: Config, api_key: str, username: str, password: str):
         self.config = config
         self.api_key = api_key
         self.username = username

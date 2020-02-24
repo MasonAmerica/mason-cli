@@ -1,9 +1,10 @@
+from cli.config import Config
 from cli.internal.commands.command import Command
 from cli.version import __version__
 
 
 class VersionCommand(Command):
-    def __init__(self, config):
+    def __init__(self, config: Config):
         self.config = config
 
     @Command.helper('version')

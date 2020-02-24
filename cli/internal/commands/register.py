@@ -7,8 +7,10 @@ import click
 import six
 import yaml
 
+from cli.config import Config
 from cli.internal.commands.command import Command
 from cli.internal.models.apk import Apk
+from cli.internal.models.artifacts import IArtifact
 from cli.internal.models.media import Media
 from cli.internal.models.os_config import OSConfig
 from cli.internal.utils.hashing import hash_file
@@ -18,12 +20,12 @@ from cli.internal.utils.validation import validate_credentials
 
 @six.add_metaclass(abc.ABCMeta)
 class RegisterCommand(Command):
-    def __init__(self, config):
+    def __init__(self, config: Config):
         self.config = config
 
         validate_credentials(config)
 
-    def register_artifact(self, binary, artifact):
+    def register_artifact(self, binary, artifact: IArtifact):
         artifact.log_details()
         if not self.config.skip_verify:
             click.confirm('Continue registration?', default=True, abort=True)
@@ -46,7 +48,7 @@ class RegisterCommand(Command):
 
 
 class RegisterConfigCommand(RegisterCommand):
-    def __init__(self, config, config_files, working_dir=None):
+    def __init__(self, config: Config, config_files: list, working_dir=None):
         super(RegisterConfigCommand, self).__init__(config)
         self.config_files = config_files
         self.working_dir = working_dir or tempfile.mkdtemp()
@@ -69,7 +71,7 @@ class RegisterConfigCommand(RegisterCommand):
 
         return configs
 
-    def _sanitize_config_for_upload(self, config):
+    def _sanitize_config_for_upload(self, config: OSConfig):
         raw_config = copy.deepcopy(config.ecosystem)
 
         raw_config.pop('from', None)
@@ -84,7 +86,7 @@ class RegisterConfigCommand(RegisterCommand):
         rewritten_config.user_binary = config.user_binary
         return rewritten_config
 
-    def _maybe_inject_config_version(self, config, raw_config):
+    def _maybe_inject_config_version(self, config: OSConfig, raw_config: dict):
         if config.get_version() == 'latest':
             latest_config = self.config.api.get_highest_artifact(config.get_name(), 'config')
             if latest_config:
@@ -92,7 +94,7 @@ class RegisterConfigCommand(RegisterCommand):
             else:
                 raw_config['os']['version'] = 1
 
-    def _maybe_inject_app_versions(self, raw_config):
+    def _maybe_inject_app_versions(self, raw_config: dict):
         for app in raw_config.get('apps') or []:
             if app and app.get('version_code') == 'latest':
                 latest_apk = self.config.api.get_latest_artifact(app.get('package_name'), 'apk')
@@ -103,7 +105,7 @@ class RegisterConfigCommand(RegisterCommand):
                         app.get('package_name')))
                     raise click.Abort()
 
-    def _maybe_inject_media_versions(self, raw_config):
+    def _maybe_inject_media_versions(self, raw_config: dict):
         media = raw_config.get('media') or {}
         boot_anim = media.get('bootanimation') or {}
 
@@ -118,7 +120,7 @@ class RegisterConfigCommand(RegisterCommand):
 
 
 class RegisterApkCommand(RegisterCommand):
-    def __init__(self, config, apk_files):
+    def __init__(self, config: Config, apk_files: list):
         super(RegisterApkCommand, self).__init__(config)
         self.apk_files = apk_files
 
@@ -132,7 +134,7 @@ class RegisterApkCommand(RegisterCommand):
 
 
 class RegisterMediaCommand(RegisterCommand):
-    def __init__(self, config, name, type, version, media_file):
+    def __init__(self, config: Config, name: str, type: str, version: str, media_file):
         super(RegisterMediaCommand, self).__init__(config)
         self.name = name
         self.type = type
@@ -168,7 +170,7 @@ class RegisterMediaCommand(RegisterCommand):
 
 
 class RegisterProjectCommand(RegisterCommand):
-    def __init__(self, config, context_file, working_dir=None):
+    def __init__(self, config: Config, context_file, working_dir=None):
         super(RegisterProjectCommand, self).__init__(config)
         self.context_file = context_file
         self.working_dir = working_dir or tempfile.mkdtemp()

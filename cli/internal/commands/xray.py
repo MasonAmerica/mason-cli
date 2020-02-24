@@ -16,6 +16,8 @@ from adb_shell.adb_message import AdbMessage
 from adb_shell.auth.keygen import keygen
 from adb_shell.exceptions import TcpTimeoutException
 
+from cli.config import Config
+
 try:
     from adb_shell.auth import sign_cryptography
 
@@ -42,7 +44,7 @@ from cli.internal.utils.websocket import XRayProxyServer
 
 @six.add_metaclass(abc.ABCMeta)
 class XrayCommand(Command):
-    def __init__(self, config):
+    def __init__(self, config: Config):
         self.config = config
         self.xray = XRay(config.device, config)
 
@@ -63,7 +65,7 @@ class XrayCommand(Command):
 
 
 class XrayLogcatCommand(XrayCommand):
-    def __init__(self, config, args):
+    def __init__(self, config: Config, args):
         super(XrayLogcatCommand, self).__init__(config)
         self.args = args
 
@@ -76,7 +78,7 @@ class XrayLogcatCommand(XrayCommand):
 
 
 class XrayShellCommand(XrayCommand):
-    def __init__(self, config, args):
+    def __init__(self, config: Config, args):
         super(XrayShellCommand, self).__init__(config)
         self.args = args
 
@@ -89,7 +91,7 @@ class XrayShellCommand(XrayCommand):
 
 
 class XrayPushCommand(XrayCommand):
-    def __init__(self, config, local, remote):
+    def __init__(self, config: Config, local, remote):
         super(XrayPushCommand, self).__init__(config)
         self.local = local
         self.remote = remote
@@ -103,7 +105,7 @@ class XrayPushCommand(XrayCommand):
 
 
 class XrayPullCommand(XrayCommand):
-    def __init__(self, config, remote, local):
+    def __init__(self, config: Config, remote, local):
         super(XrayPullCommand, self).__init__(config)
         self.remote = remote
         self.local = local
@@ -117,7 +119,7 @@ class XrayPullCommand(XrayCommand):
 
 
 class XrayInstallCommand(XrayCommand):
-    def __init__(self, config, local):
+    def __init__(self, config: Config, local):
         super(XrayInstallCommand, self).__init__(config)
         self.local = local
 
@@ -130,7 +132,7 @@ class XrayInstallCommand(XrayCommand):
 
 
 class XrayUninstallCommand(XrayCommand):
-    def __init__(self, config, package):
+    def __init__(self, config: Config, package):
         super(XrayUninstallCommand, self).__init__(config)
         self.package = package
 
@@ -143,7 +145,7 @@ class XrayUninstallCommand(XrayCommand):
 
 
 class XrayDesktopCommand(XrayCommand):
-    def __init__(self, config, port):
+    def __init__(self, config: Config, port):
         super(XrayDesktopCommand, self).__init__(config)
         self.port = port
 
@@ -156,7 +158,7 @@ class XrayDesktopCommand(XrayCommand):
 
 
 class XrayADBProxyCommand(XrayCommand):
-    def __init__(self, config, port):
+    def __init__(self, config: Config, port):
         super(XrayADBProxyCommand, self).__init__(config)
         self.port = port
 
@@ -169,7 +171,7 @@ class XrayADBProxyCommand(XrayCommand):
 
 
 class XrayScreencapCommand(XrayCommand):
-    def __init__(self, config, outputfile):
+    def __init__(self, config: Config, outputfile):
         super(XrayScreencapCommand, self).__init__(config)
         self.outputfile = outputfile
 
@@ -182,7 +184,7 @@ class XrayScreencapCommand(XrayCommand):
 
 
 class XRay(object):
-    def __init__(self, device, config):
+    def __init__(self, device, config: Config):
         self._device = device
         self._auth = {'Authorization': 'Basic {}'.format(config.auth_store['api_key'])}
         self._progress = None
