@@ -1,6 +1,7 @@
 import os
 import tempfile
 import unittest
+from concurrent.futures.thread import ThreadPoolExecutor
 
 from mock import MagicMock
 
@@ -13,6 +14,7 @@ class StageCommandTest(unittest.TestCase):
     def setUp(self):
         self.config = MagicMock()
         self.config.endpoints_store.__getitem__ = MagicMock(return_value='https://google.com')
+        self.config.executor = ThreadPoolExecutor()
 
     def test_registers_and_uploads_config(self):
         input_config_file = os.path.join(__tests_root__, 'res/config.yml')

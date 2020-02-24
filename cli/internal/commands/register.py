@@ -2,6 +2,7 @@ import abc
 import copy
 import os
 import tempfile
+from threading import Lock
 
 import click
 import six
@@ -73,11 +74,21 @@ class RegisterConfigCommand(RegisterCommand):
 
     def _sanitize_config_for_upload(self, config: OSConfig):
         raw_config = copy.deepcopy(config.ecosystem)
-
         raw_config.pop('from', None)
-        self._maybe_inject_config_version(config, raw_config)
-        self._maybe_inject_app_versions(raw_config)
-        self._maybe_inject_media_versions(raw_config)
+
+        lock = Lock()
+        rewrite_ops = []
+
+        rewrite_ops.append(self.config.executor.submit(
+            self._maybe_inject_config_version, lock, config, raw_config))
+        for app in raw_config.get('apps') or []:
+            rewrite_ops.append(self.config.executor.submit(
+                self._maybe_inject_app_version, lock, app))
+        rewrite_ops.append(self.config.executor.submit(
+            self._maybe_inject_media_versions, lock, raw_config))
+
+        for op in rewrite_ops:
+            op.result()
 
         config_file = os.path.join(self.working_dir, os.path.basename(config.binary))
         with open(config_file, 'w') as f:
@@ -86,37 +97,43 @@ class RegisterConfigCommand(RegisterCommand):
         rewritten_config.user_binary = config.user_binary
         return rewritten_config
 
-    def _maybe_inject_config_version(self, config: OSConfig, raw_config: dict):
-        if config.get_version() == 'latest':
-            latest_config = self.config.api.get_highest_artifact(config.get_name(), 'config')
+    def _maybe_inject_config_version(self, lock: Lock, config: OSConfig, raw_config: dict):
+        if config.get_version() != 'latest':
+            return
+
+        latest_config = self.config.api.get_highest_artifact(config.get_name(), 'config')
+        with lock:
             if latest_config:
                 raw_config['os']['version'] = int(latest_config.get('version')) + 1
             else:
                 raw_config['os']['version'] = 1
 
-    def _maybe_inject_app_versions(self, raw_config: dict):
-        for app in raw_config.get('apps') or []:
-            if app and app.get('version_code') == 'latest':
-                latest_apk = self.config.api.get_latest_artifact(app.get('package_name'), 'apk')
-                if latest_apk:
+    def _maybe_inject_app_version(self, lock: Lock, app: dict):
+        if app and app.get('version_code') == 'latest':
+            latest_apk = self.config.api.get_latest_artifact(app.get('package_name'), 'apk')
+            if latest_apk:
+                with lock:
                     app['version_code'] = int(latest_apk.get('version'))
-                else:
-                    self.config.logger.error("Apk '{}' not found, register it first.".format(
-                        app.get('package_name')))
-                    raise click.Abort()
+            else:
+                self.config.logger.error("Apk '{}' not found, register it first.".format(
+                    app.get('package_name')))
+                raise click.Abort()
 
-    def _maybe_inject_media_versions(self, raw_config: dict):
+    def _maybe_inject_media_versions(self, lock: Lock, raw_config: dict):
         media = raw_config.get('media') or {}
         boot_anim = media.get('bootanimation') or {}
 
-        if boot_anim.get('version') == 'latest':
-            latest_anim = self.config.api.get_latest_artifact(boot_anim.get('name'), 'media')
-            if latest_anim:
+        if boot_anim.get('version') != 'latest':
+            return
+
+        latest_anim = self.config.api.get_latest_artifact(boot_anim.get('name'), 'media')
+        if latest_anim:
+            with lock:
                 boot_anim['version'] = int(latest_anim.get('version'))
-            else:
-                self.config.logger.error("Boot animation '{}' not found, register it first.".format(
-                    boot_anim.get('name')))
-                raise click.Abort()
+        else:
+            self.config.logger.error("Boot animation '{}' not found, register it first.".format(
+                boot_anim.get('name')))
+            raise click.Abort()
 
 
 class RegisterApkCommand(RegisterCommand):

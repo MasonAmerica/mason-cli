@@ -1,5 +1,6 @@
 import logging
 import os
+from concurrent.futures.thread import ThreadPoolExecutor
 
 from cli.internal.apis.mason import MasonApi
 from cli.internal.utils.analytics import MasonAnalytics
@@ -41,3 +42,4 @@ class Config(object):
         self.api = api
         self.analytics = analytics
         self.interactivity = interactivity
+        self.executor = ThreadPoolExecutor()

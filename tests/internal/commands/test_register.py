@@ -1,6 +1,7 @@
 import os
 import tempfile
 import unittest
+from concurrent.futures.thread import ThreadPoolExecutor
 
 import click
 import yaml
@@ -23,6 +24,7 @@ class RegisterCommandTest(unittest.TestCase):
         self.config = MagicMock()
         self.config.push = True
         self.config.no_https = False
+        self.config.executor = ThreadPoolExecutor()
 
     def test_registration_exits_cleanly_on_failure(self):
         config_file = os.path.join(__tests_root__, 'res/config.yml')
