@@ -1,7 +1,7 @@
 import click
 
+from cli.config import Config
 from cli.internal.commands.command import Command
-from cli.mason import Config
 
 
 class HelpCommand(Command):

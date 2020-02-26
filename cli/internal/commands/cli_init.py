@@ -5,9 +5,9 @@ import click_log
 import packaging.version
 import requests
 
+from cli.config import Config
 from cli.internal.commands.command import Command
 from cli.internal.utils.store import Store
-from cli.mason import Config
 from cli.version import __version__
 
 
