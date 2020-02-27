@@ -667,7 +667,7 @@ def xray_desktop(config, port):
 @pass_config
 def xray_adbproxy(config, port):
     """
-    Open an ADB connection to the device for native client connections
+    Open an ADB connection to the device for native client connections.
 
     \b
     Full docs: https://docs.bymason.com/mason-cli/#mason-xray-adbproxy
@@ -682,7 +682,7 @@ def xray_adbproxy(config, port):
 @pass_config
 def xray_screencap(config, outputfile):
     """
-    Capture a screenshot from the device
+    Capture a screenshot from the device.
 
     \b
     Full docs: https://docs.bymason.com/mason-cli/#mason-xray-screencap
@@ -696,7 +696,7 @@ def xray_screencap(config, outputfile):
 @pass_config
 def xray_bugreport(config):
     """
-    Collect a bugreport from the device
+    Collect a bugreport from the device.
 
     \b
     Full docs: https://docs.bymason.com/mason-cli/#mason-xray-bugreport
