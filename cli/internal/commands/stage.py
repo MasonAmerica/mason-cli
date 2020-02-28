@@ -54,4 +54,4 @@ class StageCommand(RegisterCommand):
 
     def _build(self, build_command: BuildCommand):
         self.config.logger.info('')
-        build_command.run()
+        build_command.build()

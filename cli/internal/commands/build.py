@@ -36,6 +36,9 @@ class BuildCommand(Command):
 
     @Command.helper('build')
     def run(self):
+        self.build()
+
+    def build(self):
         self.config.logger.debug('Starting build for {}:{}...'.format(self.project, self.version))
 
         build = self.config.api.start_build(

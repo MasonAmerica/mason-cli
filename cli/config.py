@@ -31,11 +31,9 @@ class Config(object):
         logger = logger or logging.getLogger(__name__)
         api = api or MasonApi(RequestHandler(self), auth_store, endpoints_store)
         if not analytics:
+            analytics = MasonAnalytics(self)
             if os.environ.get('_MASON_CLI_TEST_MODE'):
-                from mock import MagicMock
-                analytics = MagicMock()
-            else:
-                analytics = MasonAnalytics(self)
+                endpoints_store['analytics_url'] = None
         interactivity = interactivity or Interactivity()
 
         self.logger = logger
