@@ -60,6 +60,7 @@ class BuildCommand(Command):
         # 40 minutes (*approximately* since this doesn't account for the request time)
         timeout_seconds = 40 * 60
         time_blocked = 0
+        wait_time = 3
         while time_blocked < timeout_seconds:
             try:
                 build = self.config.api.get_build(build.get('data').get('submittedAt'))
@@ -74,9 +75,10 @@ class BuildCommand(Command):
 
             self.config.logger.info(
                 "Waiting on build for OS Config '{}' to complete...".format(self.project))
-            wait_time = 10 if self.turbo else 30
             self.time.sleep(wait_time)
+
             time_blocked += wait_time
+            wait_time = min(wait_time * 2, 60)
 
         self.config.logger.error(
             "Timed out waiting on build for OS Config '{}' to complete.".format(self.project))
