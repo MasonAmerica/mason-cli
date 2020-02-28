@@ -25,9 +25,16 @@ class DeployCommand(Command):
         if not self.config.skip_verify:
             click.confirm('Continue deployment?', default=True, abort=True)
 
+        deploy_ops = []
+
         for group in self.groups:
-            self.config.api.deploy_artifact(
-                self.type, self.name, self.version, group, self.config.push, self.config.no_https)
+            deploy_ops.append(self.config.executor.submit(
+                self.config.api.deploy_artifact,
+                self.type, self.name, self.version, group, self.config.push, self.config.no_https
+            ))
+
+        for op in deploy_ops:
+            op.result()
 
         self.config.logger.info("{} '{}' deployed.".format(self.type.capitalize(), self.name))
 

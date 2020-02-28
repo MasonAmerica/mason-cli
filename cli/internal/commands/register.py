@@ -98,8 +98,14 @@ class RegisterConfigCommand(RegisterCommand):
         return configs, configs
 
     def register(self, configs):
+        register_ops = []
+
         for config in configs:
-            self.register_artifact(config.binary, config)
+            register_ops.append(self.config.executor.submit(
+                self.register_artifact, config.binary, config))
+
+        for op in register_ops:
+            op.result()
 
     def _sanitize_config_for_upload(self, config: OSConfig):
         raw_config = copy.deepcopy(config.ecosystem)
@@ -181,8 +187,18 @@ class RegisterApkCommand(RegisterCommand):
         return apks, apks
 
     def register(self, apks):
+        register_ops = self.start_register_ops(apks)
+        for op in register_ops:
+            op.result()
+
+    def start_register_ops(self, apks):
+        register_ops = []
+
         for apk in apks:
-            self.register_artifact(apk.binary, apk)
+            register_ops.append(self.config.executor.submit(
+                self.register_artifact, apk.binary, apk))
+
+        return register_ops
 
 
 class RegisterMediaCommand(RegisterCommand):
@@ -253,10 +269,15 @@ class RegisterProjectCommand(RegisterCommand):
             anim_registrations.append(RegisterMediaCommand(
                 self.config, anim.get('name'), 'bootanimation', 'latest', anim.get('file')))
 
-        apks = apk_registration.prepare()[0]
-        media_artifacts = []
+        apk_prep = self.config.executor.submit(apk_registration.prepare)
+        media_preps = []
         for reg in anim_registrations:
-            media_artifacts.append(reg.prepare()[1])
+            media_preps.append(self.config.executor.submit(reg.prepare))
+
+        apks = apk_prep.result()[0]
+        media_artifacts = []
+        for prep in media_preps:
+            media_artifacts.append(prep.result()[1])
 
         config_files = []
         for raw_config_file in raw_config_files:
@@ -283,9 +304,12 @@ class RegisterProjectCommand(RegisterCommand):
         configs: list,
         register: RegisterConfigCommand
     ):
-        apk_registration.register(apks)
+        register_ops = apk_registration.start_register_ops(apks)
         for num, anim in enumerate(anim_registrations):
-            anim.register(media_artifacts[num])
+            register_ops.append(self.config.executor.submit(anim.register, media_artifacts[num]))
+
+        for op in register_ops:
+            op.result()
 
         stage.register(configs, register)
 

@@ -3,6 +3,7 @@ import inspect
 import os
 import shutil
 import unittest
+from concurrent.futures.thread import ThreadPoolExecutor
 
 from click.testing import CliRunner
 from mock import MagicMock
@@ -563,7 +564,11 @@ class CliTest(unittest.TestCase):
         config_file1 = os.path.join(__tests_root__, 'res/config.yml')
         config_file2 = os.path.join(__tests_root__, 'res/config2.yml')
         api = MagicMock()
-        config = Config(auth_store=self._initialized_auth_store(), api=api)
+        config = Config(
+            auth_store=self._initialized_auth_store(),
+            api=api,
+            executor=ThreadPoolExecutor(max_workers=1)
+        )
 
         result = self.runner.invoke(cli, [
             'register', 'config', config_file1, config_file2
@@ -636,7 +641,8 @@ class CliTest(unittest.TestCase):
         config = Config(
             auth_store=self._initialized_auth_store(),
             endpoints_store=self._initialized_endpoints_store(),
-            api=api
+            api=api,
+            executor=ThreadPoolExecutor(max_workers=1)
         )
 
         result = self.runner.invoke(cli, [
@@ -771,7 +777,11 @@ class CliTest(unittest.TestCase):
         apk_file1 = os.path.join(__tests_root__, 'res/v1.apk')
         apk_file2 = os.path.join(__tests_root__, 'res/v1and2.apk')
         api = MagicMock()
-        config = Config(auth_store=self._initialized_auth_store(), api=api)
+        config = Config(
+            auth_store=self._initialized_auth_store(),
+            api=api,
+            executor=ThreadPoolExecutor(max_workers=1)
+        )
 
         result = self.runner.invoke(cli, ['register', 'apk', apk_file1, apk_file2], obj=config)
 
@@ -1157,7 +1167,8 @@ class CliTest(unittest.TestCase):
         config = Config(
             auth_store=self._initialized_auth_store(),
             endpoints_store=self._initialized_endpoints_store(),
-            api=api
+            api=api,
+            executor=ThreadPoolExecutor(max_workers=1)
         )
 
         with self._cd(complex_project):

@@ -36,6 +36,8 @@ class StageCommand(RegisterCommand):
     def register(self, configs: list, register: RegisterConfigCommand):
         register.register(configs)
 
+        build_ops = []
+
         for config in configs:
             build_command = BuildCommand(
                 self.config,
@@ -45,5 +47,11 @@ class StageCommand(RegisterCommand):
                 self.turbo,
                 self.mason_version)
 
-            self.config.logger.info('')
-            build_command.run()
+            build_ops.append(self.config.executor.submit(self._build, build_command))
+
+        for op in build_ops:
+            op.result()
+
+    def _build(self, build_command):
+        self.config.logger.info('')
+        build_command.run()

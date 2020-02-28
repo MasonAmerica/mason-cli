@@ -1,5 +1,6 @@
 import logging
 import os
+from concurrent.futures._base import Executor
 from concurrent.futures.thread import ThreadPoolExecutor
 
 from cli.internal.apis.mason import MasonApi
@@ -24,7 +25,8 @@ class Config(object):
         endpoints_store: Store = ENDPOINTS,
         api: MasonApi = None,
         analytics: MasonAnalytics = None,
-        interactivity: Interactivity = None
+        interactivity: Interactivity = None,
+        executor: Executor = None
     ):
         logger = logger or logging.getLogger(__name__)
         api = api or MasonApi(RequestHandler(self), auth_store, endpoints_store)
@@ -42,4 +44,4 @@ class Config(object):
         self.api = api
         self.analytics = analytics
         self.interactivity = interactivity
-        self.executor = ThreadPoolExecutor()
+        self.executor = executor or ThreadPoolExecutor()

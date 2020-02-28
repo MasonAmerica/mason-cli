@@ -1,4 +1,5 @@
 import unittest
+from concurrent.futures.thread import ThreadPoolExecutor
 
 import click
 from mock import MagicMock
@@ -15,6 +16,7 @@ class DeployCommandTest(unittest.TestCase):
         self.config = MagicMock()
         self.config.push = True
         self.config.no_https = False
+        self.config.executor = ThreadPoolExecutor()
 
     def test_deployment_exits_cleanly_on_failure(self):
         command = DeployConfigCommand(self.config, 'project-id', '1', ['group1', 'group2'])
@@ -38,7 +40,7 @@ class DeployCommandTest(unittest.TestCase):
         self.config.api.deploy_artifact.assert_has_calls([
             call('config', 'project-id', '1', 'group1', True, False),
             call('config', 'project-id', '1', 'group2', True, False)
-        ])
+        ], any_order=True)
 
     def test_latest_config_deploys_successfully(self):
         self.config.api.get_latest_artifact = MagicMock(return_value={'version': '42'})
@@ -49,7 +51,7 @@ class DeployCommandTest(unittest.TestCase):
         self.config.api.deploy_artifact.assert_has_calls([
             call('config', 'project-id', '42', 'group1', True, False),
             call('config', 'project-id', '42', 'group2', True, False)
-        ])
+        ], any_order=True)
 
     def test_non_existent_latest_apk_fails(self):
         self.config.api.get_latest_artifact = MagicMock(return_value=None)
@@ -66,7 +68,7 @@ class DeployCommandTest(unittest.TestCase):
         self.config.api.deploy_artifact.assert_has_calls([
             call('apk', 'com.example.app', '1', 'group1', True, False),
             call('apk', 'com.example.app', '1', 'group2', True, False)
-        ])
+        ], any_order=True)
 
     def test_latest_apk_deploys_successfully(self):
         self.config.api.get_latest_artifact = MagicMock(return_value={'version': '42'})
@@ -77,7 +79,7 @@ class DeployCommandTest(unittest.TestCase):
         self.config.api.deploy_artifact.assert_has_calls([
             call('apk', 'com.example.app', '42', 'group1', True, False),
             call('apk', 'com.example.app', '42', 'group2', True, False)
-        ])
+        ], any_order=True)
 
     def test_ota_deploys_successfully(self):
         command = DeployOtaCommand(self.config, 'mason-os', '1', ['group1', 'group2'])
@@ -87,4 +89,4 @@ class DeployCommandTest(unittest.TestCase):
         self.config.api.deploy_artifact.assert_has_calls([
             call('ota', 'mason-os', '1', 'group1', True, False),
             call('ota', 'mason-os', '1', 'group2', True, False)
-        ])
+        ], any_order=True)

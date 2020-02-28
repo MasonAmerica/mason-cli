@@ -140,7 +140,7 @@ class RegisterCommandTest(unittest.TestCase):
         self.config.api.upload_artifact.assert_has_calls([
             call(apk_file1, Apk.parse(self.config, apk_file1)),
             call(apk_file2, Apk.parse(self.config, apk_file2))
-        ])
+        ], any_order=True)
 
     def test_media_registers_successfully(self):
         media_file = os.path.join(__tests_root__, 'res/bootanimation.zip')
