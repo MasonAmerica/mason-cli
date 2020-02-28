@@ -45,7 +45,7 @@ from cli.internal.utils.websocket import XRayProxyServer
 @six.add_metaclass(abc.ABCMeta)
 class XrayCommand(Command):
     def __init__(self, config: Config):
-        self.config = config
+        super(XrayCommand, self).__init__(config)
         self.xray = XRay(config.device, config)
 
     def invoke(self, method):

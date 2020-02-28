@@ -22,7 +22,8 @@ class BuildCommand(Command):
         time=time,
         urlparse=urlparse
     ):
-        self.config = config
+        super(BuildCommand, self).__init__(config)
+
         self.project = project
         self.version = version
         self.block = block

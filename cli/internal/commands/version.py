@@ -5,7 +5,7 @@ from cli.version import __version__
 
 class VersionCommand(Command):
     def __init__(self, config: Config):
-        self.config = config
+        super(VersionCommand, self).__init__(config)
 
     @Command.helper('version')
     def run(self):

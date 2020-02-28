@@ -18,7 +18,7 @@ class StageCommand(RegisterCommand):
         working_dir=None
     ):
         super(StageCommand, self).__init__(config)
-        self.config = config
+
         self.config_files = config_files
         self.block = block
         self.turbo = turbo
@@ -52,6 +52,6 @@ class StageCommand(RegisterCommand):
         for op in build_ops:
             op.result()
 
-    def _build(self, build_command):
+    def _build(self, build_command: BuildCommand):
         self.config.logger.info('')
         build_command.run()

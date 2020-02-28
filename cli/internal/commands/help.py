@@ -6,7 +6,8 @@ from cli.internal.commands.command import Command
 
 class HelpCommand(Command):
     def __init__(self, config: Config, commands: list):
-        self.config = config
+        super(HelpCommand, self).__init__(config)
+
         self.commands = commands
 
     @Command.helper('help')

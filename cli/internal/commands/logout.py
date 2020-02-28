@@ -4,7 +4,7 @@ from cli.internal.commands.command import Command
 
 class LogoutCommand(Command):
     def __init__(self, config: Config):
-        self.config = config
+        super(LogoutCommand, self).__init__(config)
 
     @Command.helper('logout')
     def run(self):

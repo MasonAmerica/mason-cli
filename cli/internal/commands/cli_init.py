@@ -22,7 +22,8 @@ class CliInitCommand(Command):
         id_token: str,
         access_token: str
     ):
-        self.config = config
+        super(CliInitCommand, self).__init__(config)
+
         self.debug = debug
         self.verbose = verbose
         self.no_color = no_color

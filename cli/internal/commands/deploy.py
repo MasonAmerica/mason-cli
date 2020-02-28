@@ -12,7 +12,8 @@ from cli.internal.utils.validation import validate_credentials
 @six.add_metaclass(abc.ABCMeta)
 class DeployCommand(Command):
     def __init__(self, config: Config, type: str, name: str, version: str, groups: list):
-        self.config = config
+        super(DeployCommand, self).__init__(config)
+
         self.type = type
         self.name = name
         self.version = version

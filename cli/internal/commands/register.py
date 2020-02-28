@@ -23,7 +23,7 @@ from cli.internal.utils.validation import validate_credentials
 @six.add_metaclass(abc.ABCMeta)
 class RegisterCommand(Command):
     def __init__(self, config: Config):
-        self.config = config
+        super(RegisterCommand, self).__init__(config)
 
         validate_credentials(config)
 

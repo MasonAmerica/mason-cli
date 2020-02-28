@@ -4,11 +4,15 @@ from abc import abstractmethod
 
 import six
 
+from cli.config import Config
 from cli.internal.utils.remote import ApiError
 
 
 @six.add_metaclass(abc.ABCMeta)
 class Command:
+    def __init__(self, config: Config):
+        self.config = config
+
     @abstractmethod
     def run(self):
         pass
