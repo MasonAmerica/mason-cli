@@ -42,10 +42,10 @@ class BuildCommand(Command):
 
         console_hostname = self.urlparse(self.config.endpoints_store['deploy_url']).hostname
         self.config.logger.info(inspect.cleandoc("""
-            Build queued.
+            Build queued for OS Config '{0}'.
             You can see the status of your build at
-            https://{}/controller/projects/{}
-        """.format(console_hostname, self.project)))
+            https://{1}/controller/projects/{0}
+        """.format(self.project, console_hostname)))
 
         if self.block:
             self._wait_for_completion(build)
@@ -60,17 +60,20 @@ class BuildCommand(Command):
             try:
                 build = self.config.api.get_build(build.get('data').get('submittedAt'))
             except ApiError as e:
-                self.config.logger.error('Build status check failed.')
+                self.config.logger.error(
+                    "Build status check failed for OS Config '{}'.".format(self.project))
                 raise e
 
             if build.get('data').get('status') == 'COMPLETED':
-                self.config.logger.info('Build completed.')
+                self.config.logger.info("Build completed for OS Config '{}'.".format(self.project))
                 return
 
-            self.config.logger.info('Waiting for build to complete...')
+            self.config.logger.info(
+                "Waiting on build for OS Config '{}' to complete...".format(self.project))
             wait_time = 10 if self.turbo else 30
             self.time.sleep(wait_time)
             time_blocked += wait_time
 
-        self.config.logger.error('Timed out waiting for build to complete.')
+        self.config.logger.error(
+            "Timed out waiting on build for OS Config '{}' to complete.".format(self.project))
         raise click.Abort()

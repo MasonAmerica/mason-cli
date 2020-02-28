@@ -2,6 +2,7 @@ import abc
 import copy
 import os
 import tempfile
+from abc import abstractmethod
 from threading import Lock
 
 import click
@@ -26,11 +27,33 @@ class RegisterCommand(Command):
 
         validate_credentials(config)
 
-    def register_artifact(self, binary, artifact: IArtifact):
-        artifact.log_details()
+    def run(self):
+        (artifacts, *args) = self.prepare()
+
+        self.show_operations(artifacts)
+        self.request_confirmation()
+        self.register(*args)
+
+        return (artifacts, *args)
+
+    @abstractmethod
+    def prepare(self):
+        pass
+
+    def show_operations(self, artifacts: list):
+        for artifact in artifacts:
+            artifact.log_details()
+            self.config.logger.info('')
+
+    def request_confirmation(self):
         if not self.config.skip_verify:
             click.confirm('Continue registration?', default=True, abort=True)
 
+    @abstractmethod
+    def register(self, *args):
+        pass
+
+    def register_artifact(self, binary, artifact: IArtifact):
         self.config.logger.debug('File SHA1: {}'.format(hash_file(binary, 'sha1')))
         self.config.logger.debug('File MD5: {}'.format(hash_file(binary, 'md5')))
 
@@ -40,7 +63,11 @@ class RegisterCommand(Command):
                 artifact.get_pretty_type(), artifact.get_name()))
         except ApiError as e:
             is_in_project_mode = getattr(self.config, 'project_mode', None)
-            if is_in_project_mode and e.message and 'already exists' in e.message:
+            can_skip_upload = is_in_project_mode and \
+                e.message and 'already exists' in e.message and \
+                artifact.get_type() != 'config'
+
+            if can_skip_upload:
                 self.config.logger.info("{} '{}' already registered, ignoring.".format(
                     artifact.get_pretty_type(), artifact.get_name()))
                 pass
@@ -56,21 +83,23 @@ class RegisterConfigCommand(RegisterCommand):
 
     @Command.helper('register config')
     def run(self):
+        return super(RegisterConfigCommand, self).run()
+
+    def prepare(self):
         configs = []
 
-        for num, file in enumerate(self.config_files):
+        for file in self.config_files:
             config = OSConfig.parse(self.config, file)
             config = self._sanitize_config_for_upload(config)
+
             self.config.analytics.log_config(config.ecosystem)
-
-            self.register_artifact(config.binary, config)
-
             configs.append(config)
 
-            if num + 1 < len(self.config_files):
-                self.config.logger.info('')
+        return configs, configs
 
-        return configs
+    def register(self, configs):
+        for config in configs:
+            self.register_artifact(config.binary, config)
 
     def _sanitize_config_for_upload(self, config: OSConfig):
         raw_config = copy.deepcopy(config.ecosystem)
@@ -143,11 +172,17 @@ class RegisterApkCommand(RegisterCommand):
 
     @Command.helper('register apk')
     def run(self):
-        for num, file in enumerate(self.apk_files):
-            self.register_artifact(file, Apk.parse(self.config, file))
+        return super(RegisterApkCommand, self).run()
 
-            if num + 1 < len(self.apk_files):
-                self.config.logger.info('')
+    def prepare(self):
+        apks = []
+        for file in self.apk_files:
+            apks.append(Apk.parse(self.config, file))
+        return apks, apks
+
+    def register(self, apks):
+        for apk in apks:
+            self.register_artifact(apk.binary, apk)
 
 
 class RegisterMediaCommand(RegisterCommand):
@@ -160,15 +195,16 @@ class RegisterMediaCommand(RegisterCommand):
 
     @Command.helper('register media')
     def run(self):
-        self._maybe_inject_version()
-        self.register_artifact(
-            self.media_file,
-            Media.parse(self.config, self.name, self.type, self.version, self.media_file))
+        return super(RegisterMediaCommand, self).run()
 
-        return {
-            'name': self.name,
-            'version': self.version
-        }
+    def prepare(self):
+        self._maybe_inject_version()
+        media = Media.parse(self.config, self.name, self.type, self.version, self.media_file)
+
+        return [media], media
+
+    def register(self, media):
+        self.register_artifact(self.media_file, media)
 
     def _maybe_inject_version(self):
         if self.version != 'latest':
@@ -194,6 +230,13 @@ class RegisterProjectCommand(RegisterCommand):
 
     @Command.helper('register project')
     def run(self):
+        self.config.project_mode = True
+        results = super(RegisterProjectCommand, self).run()
+        self.config.project_mode = False
+
+        return results
+
+    def prepare(self):
         # Needs to be a local import to prevent recursion
         from cli.internal.commands.stage import StageCommand
 
@@ -204,23 +247,47 @@ class RegisterProjectCommand(RegisterCommand):
         apk_files = self._validated_files(context.get('apps'), 'apk')
         raw_boot_animations = self._validated_media(context.get('bootanimations'))
 
-        self.config.project_mode = True
-        RegisterApkCommand(self.config, apk_files).run()
-
-        boot_animations = []
+        apk_registration = RegisterApkCommand(self.config, apk_files)
+        anim_registrations = []
         for anim in raw_boot_animations:
-            self.config.logger.info('')
-            result = RegisterMediaCommand(
-                self.config, anim.get('name'), 'bootanimation', 'latest', anim.get('file')).run()
-            boot_animations.append(result)
-        self.config.project_mode = False
+            anim_registrations.append(RegisterMediaCommand(
+                self.config, anim.get('name'), 'bootanimation', 'latest', anim.get('file')))
+
+        apks = apk_registration.prepare()[0]
+        media_artifacts = []
+        for reg in anim_registrations:
+            media_artifacts.append(reg.prepare()[1])
 
         config_files = []
         for raw_config_file in raw_config_files:
-            config_files.append(self._rewritten_config(raw_config_file, apk_files, boot_animations))
+            config_files.append(self._rewritten_config(raw_config_file, apks, media_artifacts))
+        stage = StageCommand(
+            self.config, config_files, True, True, None, self.working_dir)
 
-        self.config.logger.info('')
-        StageCommand(self.config, config_files, True, True, None, self.working_dir).run()
+        stage_prep = stage.prepare()
+        configs = stage_prep[0]
+        register = stage_prep[2]
+
+        return [*apks, *media_artifacts, *configs], \
+            apk_registration, apks, \
+            anim_registrations, media_artifacts, \
+            stage, configs, register
+
+    def register(
+        self,
+        apk_registration: RegisterApkCommand,
+        apks: list,
+        anim_registrations: list,
+        media_artifacts: list,
+        stage,
+        configs: list,
+        register: RegisterConfigCommand
+    ):
+        apk_registration.register(apks)
+        for num, anim in enumerate(anim_registrations):
+            anim.register(media_artifacts[num])
+
+        stage.register(configs, register)
 
     def _validated_masonrc(self):
         masonrc = os.path.join(self.context_file, '.masonrc')
@@ -296,11 +363,10 @@ class RegisterProjectCommand(RegisterCommand):
                 raise click.Abort()
         return context
 
-    def _rewritten_config(self, raw_config_file, apk_files, boot_animations):
+    def _rewritten_config(self, raw_config_file, apks, medias):
         raw_config = OSConfig.parse(self.config, raw_config_file).ecosystem
         config = copy.deepcopy(raw_config)
         apps = raw_config.get('apps') or []
-        apks = list(map(lambda apk: Apk.parse(self.config, apk), apk_files))
         media = raw_config.get('media') or {}
 
         config['from'] = raw_config_file
@@ -314,11 +380,11 @@ class RegisterProjectCommand(RegisterCommand):
                         app['version_code'] = int(version)
                         break
 
-        for boot_animation in boot_animations:
-            name = boot_animation.get('name')
-            version = boot_animation.get('version')
+        for medium in medias:
+            name = medium.get_name()
+            version = medium.get_version()
             if self._has_boot_animation_presence(media, name):
-                config.get('media').get('bootanimation')['version'] = version
+                config.get('media').get('bootanimation')['version'] = int(version)
 
         config_file = os.path.join(self.working_dir, os.path.basename(raw_config_file))
         with open(config_file, 'w') as f:

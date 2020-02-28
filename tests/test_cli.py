@@ -440,6 +440,7 @@ class CliTest(unittest.TestCase):
             Name: project-id
             Version: 1
             -----------------------------------
+
             Continue registration? [Y/n]: 
             error: Artifact already exists and cannot be overwritten
             Aborted!
@@ -503,6 +504,7 @@ class CliTest(unittest.TestCase):
             Name: project-id
             Version: 1
             -----------------------------------
+
             Continue registration? [Y/n]: n
             Aborted!
         """.format(config_file)))
@@ -522,10 +524,11 @@ class CliTest(unittest.TestCase):
             Name: project-id
             Version: 1
             -----------------------------------
+
             Continue registration? [Y/n]: 
             OS Config 'project-id' registered.
 
-            Build queued.
+            Build queued for OS Config 'project-id'.
             You can see the status of your build at
             https://platform.bymason.com/controller/projects/project-id
         """.format(config_file)))
@@ -547,10 +550,11 @@ class CliTest(unittest.TestCase):
             Name: project-id4
             Version: 42
             -----------------------------------
+
             Continue registration? [Y/n]: 
             OS Config 'project-id4' registered.
 
-            Build queued.
+            Build queued for OS Config 'project-id4'.
             You can see the status of your build at
             https://platform.bymason.com/controller/projects/project-id4
         """.format(config_file)))
@@ -573,22 +577,22 @@ class CliTest(unittest.TestCase):
             Name: project-id
             Version: 1
             -----------------------------------
-            Continue registration? [Y/n]: 
-            OS Config 'project-id' registered.
-
-            Build queued.
-            You can see the status of your build at
-            https://platform.bymason.com/controller/projects/project-id
 
             ------------ OS Config ------------
             File path: {}
             Name: project-id2
             Version: 2
             -----------------------------------
+
             Continue registration? [Y/n]: 
+            OS Config 'project-id' registered.
             OS Config 'project-id2' registered.
 
-            Build queued.
+            Build queued for OS Config 'project-id'.
+            You can see the status of your build at
+            https://platform.bymason.com/controller/projects/project-id
+
+            Build queued for OS Config 'project-id2'.
             You can see the status of your build at
             https://platform.bymason.com/controller/projects/project-id2
         """.format(config_file1, config_file2)))
@@ -613,15 +617,63 @@ class CliTest(unittest.TestCase):
             Name: project-id
             Version: 1
             -----------------------------------
+
             Continue registration? [Y/n]: 
             OS Config 'project-id' registered.
 
-            Build queued.
+            Build queued for OS Config 'project-id'.
             You can see the status of your build at
             https://platform.bymason.com/controller/projects/project-id
 
-            Build completed.
+            Build completed for OS Config 'project-id'.
         """.format(config_file)))
+
+    def test__register_config__multiple_configs_are_registered_and_await_build_completion(self):
+        config_file1 = os.path.join(__tests_root__, 'res/config.yml')
+        config_file2 = os.path.join(__tests_root__, 'res/config2.yml')
+        api = MagicMock()
+        api.get_build = MagicMock(return_value={'data': {'status': 'COMPLETED'}})
+        config = Config(
+            auth_store=self._initialized_auth_store(),
+            endpoints_store=self._initialized_endpoints_store(),
+            api=api
+        )
+
+        result = self.runner.invoke(cli, [
+            'register', 'config', '--await', config_file1, config_file2
+        ], obj=config)
+
+        self.assertIsNone(result.exception)
+        self.assertEqual(result.exit_code, 0)
+        self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
+            ------------ OS Config ------------
+            File path: {}
+            Name: project-id
+            Version: 1
+            -----------------------------------
+
+            ------------ OS Config ------------
+            File path: {}
+            Name: project-id2
+            Version: 2
+            -----------------------------------
+
+            Continue registration? [Y/n]: 
+            OS Config 'project-id' registered.
+            OS Config 'project-id2' registered.
+
+            Build queued for OS Config 'project-id'.
+            You can see the status of your build at
+            https://platform.bymason.com/controller/projects/project-id
+
+            Build completed for OS Config 'project-id'.
+
+            Build queued for OS Config 'project-id2'.
+            You can see the status of your build at
+            https://platform.bymason.com/controller/projects/project-id2
+
+            Build completed for OS Config 'project-id2'.
+        """.format(config_file1, config_file2)))
 
     def test__register_apk__no_files_fails(self):
         result = self.runner.invoke(cli, ['register', 'apk'])
@@ -667,6 +719,7 @@ class CliTest(unittest.TestCase):
             Version name: 1.0
             Version code: 1
             -----------------------------
+
             Continue registration? [Y/n]: 
             error: Artifact already exists and cannot be overwritten
             Aborted!
@@ -688,6 +741,7 @@ class CliTest(unittest.TestCase):
             Version name: 1.0
             Version code: 1
             -----------------------------
+
             Continue registration? [Y/n]: n
             Aborted!
         """.format(apk_file)))
@@ -708,6 +762,7 @@ class CliTest(unittest.TestCase):
             Version name: 1.0
             Version code: 1
             -----------------------------
+
             Continue registration? [Y/n]: 
             App 'com.example.unittestapp1' registered.
         """.format(apk_file)))
@@ -729,8 +784,6 @@ class CliTest(unittest.TestCase):
             Version name: 1.0
             Version code: 1
             -----------------------------
-            Continue registration? [Y/n]: 
-            App 'com.example.unittestapp1' registered.
 
             ------------ App ------------
             File path: {}
@@ -738,7 +791,9 @@ class CliTest(unittest.TestCase):
             Version name: 1.0
             Version code: 1
             -----------------------------
+
             Continue registration? [Y/n]: 
+            App 'com.example.unittestapp1' registered.
             App 'com.example.unittestapp1' registered.
         """.format(apk_file1, apk_file2)))
 
@@ -798,6 +853,7 @@ class CliTest(unittest.TestCase):
             Name: Anim name
             Version: 1
             ----------------------------------------
+
             Continue registration? [Y/n]: n
             Aborted!
         """.format(media_file)))
@@ -820,6 +876,7 @@ class CliTest(unittest.TestCase):
             Name: Anim name
             Version: 1
             ----------------------------------------
+
             Continue registration? [Y/n]: 
             Boot animation 'Anim name' registered.
         """.format(media_file)))
@@ -843,6 +900,7 @@ class CliTest(unittest.TestCase):
             Name: Anim name
             Version: 42
             ----------------------------------------
+
             Continue registration? [Y/n]: 
             Boot animation 'Anim name' registered.
         """.format(media_file)))
@@ -893,6 +951,7 @@ class CliTest(unittest.TestCase):
 
     def test__register_project__negative_confirmation_aborts(self):
         simple_project = os.path.join(__tests_root__, 'res/simple-project')
+        config_file = os.path.join(simple_project, 'mason.yml')
         apk_file = os.path.join(__tests_root__, 'res/simple-project/v1.apk')
         api = MagicMock()
         config = Config(auth_store=self._initialized_auth_store(), api=api)
@@ -909,9 +968,16 @@ class CliTest(unittest.TestCase):
             Version name: 1.0
             Version code: 1
             -----------------------------
+
+            ------------ OS Config ------------
+            File path: {}
+            Name: project-id2
+            Version: 2
+            -----------------------------------
+
             Continue registration? [Y/n]: n
             Aborted!
-        """.format(apk_file)))
+        """.format(apk_file, config_file)))
 
     def test__register_project__app_not_present_is_ignored(self):
         no_app_project = os.path.join(__tests_root__, 'res/no-app-project')
@@ -933,22 +999,22 @@ class CliTest(unittest.TestCase):
             Version name: 1.0
             Version code: 1
             -----------------------------
-            Continue registration? [Y/n]: 
-            App 'com.example.unittestapp1' registered.
 
             ------------ OS Config ------------
             File path: {}
             Name: project-id
             Version: 1
             -----------------------------------
+
             Continue registration? [Y/n]: 
+            App 'com.example.unittestapp1' registered.
             OS Config 'project-id' registered.
 
-            Build queued.
+            Build queued for OS Config 'project-id'.
             You can see the status of your build at
             https://platform.bymason.com/controller/projects/project-id
 
-            Build completed.
+            Build completed for OS Config 'project-id'.
         """.format(apk_file, config_file)))
 
     def test__register_project__config_already_present_failed(self):
@@ -972,15 +1038,15 @@ class CliTest(unittest.TestCase):
             Version name: 1.0
             Version code: 1
             -----------------------------
-            Continue registration? [Y/n]: 
-            App 'com.example.unittestapp1' already registered, ignoring.
 
             ------------ OS Config ------------
             File path: {}
             Name: project-id2
             Version: 2
             -----------------------------------
+
             Continue registration? [Y/n]: 
+            App 'com.example.unittestapp1' already registered, ignoring.
             error: Artifact already exists and cannot be overwritten
             Aborted!
         """.format(apk_file, config_file)))
@@ -1011,22 +1077,22 @@ class CliTest(unittest.TestCase):
             Version name: 1.0
             Version code: 1
             -----------------------------
-            Continue registration? [Y/n]: 
-            App 'com.example.unittestapp1' already registered, ignoring.
 
             ------------ OS Config ------------
             File path: {}
             Name: project-id2
             Version: 2
             -----------------------------------
+
             Continue registration? [Y/n]: 
+            App 'com.example.unittestapp1' already registered, ignoring.
             OS Config 'project-id2' registered.
 
-            Build queued.
+            Build queued for OS Config 'project-id2'.
             You can see the status of your build at
             https://platform.bymason.com/controller/projects/project-id2
 
-            Build completed.
+            Build completed for OS Config 'project-id2'.
         """.format(apk_file, config_file)))
 
     def test__register_project__simple_project_is_registered_and_built(self):
@@ -1053,22 +1119,22 @@ class CliTest(unittest.TestCase):
             Version name: 1.0
             Version code: 1
             -----------------------------
-            Continue registration? [Y/n]: 
-            App 'com.example.unittestapp1' registered.
 
             ------------ OS Config ------------
             File path: {}
             Name: project-id2
             Version: 2
             -----------------------------------
+
             Continue registration? [Y/n]: 
+            App 'com.example.unittestapp1' registered.
             OS Config 'project-id2' registered.
 
-            Build queued.
+            Build queued for OS Config 'project-id2'.
             You can see the status of your build at
             https://platform.bymason.com/controller/projects/project-id2
 
-            Build completed.
+            Build completed for OS Config 'project-id2'.
         """.format(apk_file, config_file)))
 
     def test__register_project__complex_project_is_registered_and_built(self):
@@ -1106,8 +1172,6 @@ class CliTest(unittest.TestCase):
             Version name: 1.0
             Version code: 1
             -----------------------------
-            Continue registration? [Y/n]: 
-            App 'com.example.unittestapp1' registered.
 
             ------------ App ------------
             File path: {}
@@ -1115,52 +1179,50 @@ class CliTest(unittest.TestCase):
             Version name: 1.0
             Version code: 1
             -----------------------------
-            Continue registration? [Y/n]: 
-            App 'com.example.unittestapp1' registered.
 
             ------------ Boot animation ------------
             File path: {}
             Name: anim-1
             Version: 41
             ----------------------------------------
-            Continue registration? [Y/n]: 
-            Boot animation 'anim-1' registered.
 
             ------------ Boot animation ------------
             File path: {}
             Name: anim-2
             Version: 42
             ----------------------------------------
-            Continue registration? [Y/n]: 
-            Boot animation 'anim-2' registered.
 
             ------------ OS Config ------------
             File path: {}
             Name: project-id2
             Version: 2
             -----------------------------------
-            Continue registration? [Y/n]: 
-            OS Config 'project-id2' registered.
-
-            Build queued.
-            You can see the status of your build at
-            https://platform.bymason.com/controller/projects/project-id2
-
-            Build completed.
 
             ------------ OS Config ------------
             File path: {}
             Name: project-id3
             Version: 42
             -----------------------------------
+
             Continue registration? [Y/n]: 
+            App 'com.example.unittestapp1' registered.
+            App 'com.example.unittestapp1' registered.
+            Boot animation 'anim-1' registered.
+            Boot animation 'anim-2' registered.
+            OS Config 'project-id2' registered.
             OS Config 'project-id3' registered.
 
-            Build queued.
+            Build queued for OS Config 'project-id2'.
+            You can see the status of your build at
+            https://platform.bymason.com/controller/projects/project-id2
+
+            Build completed for OS Config 'project-id2'.
+
+            Build queued for OS Config 'project-id3'.
             You can see the status of your build at
             https://platform.bymason.com/controller/projects/project-id3
 
-            Build completed.
+            Build completed for OS Config 'project-id3'.
         """.format(apk_file1, apk_file2,
                    boot_animation1, boot_animation2,
                    config_file1, config_file2)))
@@ -1199,7 +1261,7 @@ class CliTest(unittest.TestCase):
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             warning: `mason build` is deprecated as `mason register config` now starts a build by default.
-            Build queued.
+            Build queued for OS Config 'project-id'.
             You can see the status of your build at
             https://platform.bymason.com/controller/projects/project-id
         """))
@@ -1219,11 +1281,11 @@ class CliTest(unittest.TestCase):
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             warning: `mason build` is deprecated as `mason register config` now starts a build by default.
-            Build queued.
+            Build queued for OS Config 'project-id'.
             You can see the status of your build at
             https://platform.bymason.com/controller/projects/project-id
 
-            Build completed.
+            Build completed for OS Config 'project-id'.
         """))
 
     def test__stage__no_files_fails(self):
@@ -1269,6 +1331,7 @@ class CliTest(unittest.TestCase):
             Name: project-id
             Version: 1
             -----------------------------------
+
             Continue registration? [Y/n]: n
             Aborted!
         """.format(config_file)))
@@ -1293,10 +1356,11 @@ class CliTest(unittest.TestCase):
             Name: project-id
             Version: 1
             -----------------------------------
+
             Continue registration? [Y/n]: 
             OS Config 'project-id' registered.
 
-            Build queued.
+            Build queued for OS Config 'project-id'.
             You can see the status of your build at
             https://platform.bymason.com/controller/projects/project-id
         """.format(config_file)))
@@ -1322,14 +1386,15 @@ class CliTest(unittest.TestCase):
             Name: project-id
             Version: 1
             -----------------------------------
+
             Continue registration? [Y/n]: 
             OS Config 'project-id' registered.
 
-            Build queued.
+            Build queued for OS Config 'project-id'.
             You can see the status of your build at
             https://platform.bymason.com/controller/projects/project-id
 
-            Build completed.
+            Build completed for OS Config 'project-id'.
         """.format(config_file)))
 
     def test__deploy_config__invalid_name_fails(self):
@@ -1396,6 +1461,7 @@ class CliTest(unittest.TestCase):
             Group: group
             Push: False
             ------------------------------------
+
             Continue deployment? [Y/n]: n
             Aborted!
         """))
@@ -1419,6 +1485,31 @@ class CliTest(unittest.TestCase):
             Group: group
             Push: False
             ------------------------------------
+
+            Continue deployment? [Y/n]: 
+            Config 'project-id' deployed.
+        """))
+
+    def test__deploy_config__config_is_deployed_to_multiple_groups(self):
+        api = MagicMock()
+        config = Config(auth_store=self._initialized_auth_store(), api=api)
+
+        result = self.runner.invoke(cli, [
+            'deploy', 'config',
+            'project-id', '1', 'group1', 'group2', 'group3'
+        ], obj=config)
+
+        self.assertIsNone(result.exception)
+        self.assertEqual(result.exit_code, 0)
+        self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
+            ------------ Deployment ------------
+            Name: project-id
+            Type: config
+            Version: 1
+            Groups: group1, group2, group3
+            Push: False
+            ------------------------------------
+
             Continue deployment? [Y/n]: 
             Config 'project-id' deployed.
         """))
@@ -1443,6 +1534,7 @@ class CliTest(unittest.TestCase):
             Group: group
             Push: False
             ------------------------------------
+
             Continue deployment? [Y/n]: 
             Config 'project-id' deployed.
         """))
@@ -1470,6 +1562,7 @@ class CliTest(unittest.TestCase):
             --no-https enabled: this deployment will be delivered to devices over HTTP.
             ***WARNING***
             ------------------------------------
+
             Continue deployment? [Y/n]: 
             Config 'project-id' deployed.
         """))
@@ -1538,6 +1631,7 @@ class CliTest(unittest.TestCase):
             Group: group
             Push: False
             ------------------------------------
+
             Continue deployment? [Y/n]: n
             Aborted!
         """))
@@ -1561,6 +1655,31 @@ class CliTest(unittest.TestCase):
             Group: group
             Push: False
             ------------------------------------
+
+            Continue deployment? [Y/n]: 
+            Apk 'com.example.app' deployed.
+        """))
+
+    def test__deploy_apk__apk_is_deployed_to_multiple_groups(self):
+        api = MagicMock()
+        config = Config(auth_store=self._initialized_auth_store(), api=api)
+
+        result = self.runner.invoke(cli, [
+            'deploy', 'apk',
+            'com.example.app', '1', 'group1', 'group2', 'group3'
+        ], obj=config)
+
+        self.assertIsNone(result.exception)
+        self.assertEqual(result.exit_code, 0)
+        self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
+            ------------ Deployment ------------
+            Name: com.example.app
+            Type: apk
+            Version: 1
+            Groups: group1, group2, group3
+            Push: False
+            ------------------------------------
+
             Continue deployment? [Y/n]: 
             Apk 'com.example.app' deployed.
         """))
@@ -1585,6 +1704,7 @@ class CliTest(unittest.TestCase):
             Group: group
             Push: False
             ------------------------------------
+
             Continue deployment? [Y/n]: 
             Apk 'com.example.app' deployed.
         """))
@@ -1612,6 +1732,7 @@ class CliTest(unittest.TestCase):
             --no-https enabled: this deployment will be delivered to devices over HTTP.
             ***WARNING***
             ------------------------------------
+
             Continue deployment? [Y/n]: 
             Apk 'com.example.app' deployed.
         """))
@@ -1657,6 +1778,7 @@ class CliTest(unittest.TestCase):
             Group: group
             Push: False
             ------------------------------------
+
             Continue deployment? [Y/n]: n
             Aborted!
         """))
@@ -1680,6 +1802,31 @@ class CliTest(unittest.TestCase):
             Group: group
             Push: False
             ------------------------------------
+
+            Continue deployment? [Y/n]: 
+            Ota 'mason-os' deployed.
+        """))
+
+    def test__deploy_ota__ota_is_deployed_to_multiple_groups(self):
+        api = MagicMock()
+        config = Config(auth_store=self._initialized_auth_store(), api=api)
+
+        result = self.runner.invoke(cli, [
+            'deploy', 'ota',
+            'mason-os', '2.0.0', 'group1', 'group2', 'group3'
+        ], obj=config)
+
+        self.assertIsNone(result.exception)
+        self.assertEqual(result.exit_code, 0)
+        self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
+            ------------ Deployment ------------
+            Name: mason-os
+            Type: ota
+            Version: 2.0.0
+            Groups: group1, group2, group3
+            Push: False
+            ------------------------------------
+
             Continue deployment? [Y/n]: 
             Ota 'mason-os' deployed.
         """))
@@ -1707,6 +1854,7 @@ class CliTest(unittest.TestCase):
             --no-https enabled: this deployment will be delivered to devices over HTTP.
             ***WARNING***
             ------------------------------------
+
             Continue deployment? [Y/n]: 
             Ota 'mason-os' deployed.
         """))
@@ -1735,6 +1883,7 @@ class CliTest(unittest.TestCase):
             --no-https enabled: this deployment will be delivered to devices over HTTP.
             ***WARNING***
             ------------------------------------
+
             Continue deployment? [Y/n]: 
             Ota 'mason-os' deployed.
         """))

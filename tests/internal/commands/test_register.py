@@ -21,6 +21,8 @@ from tests import __tests_root__
 
 class RegisterCommandTest(unittest.TestCase):
     def setUp(self):
+        self.maxDiff = None
+
         self.config = MagicMock()
         self.config.push = True
         self.config.no_https = False

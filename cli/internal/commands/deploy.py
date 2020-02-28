@@ -21,24 +21,31 @@ class DeployCommand(Command):
         validate_credentials(config)
 
     def deploy_artifact(self):
-        for group in self.groups:
-            self._deploy_to_group(group)
-
-    def _deploy_to_group(self, group: str):
-        self._log_details(group)
+        self._log_details(self.groups)
         if not self.config.skip_verify:
             click.confirm('Continue deployment?', default=True, abort=True)
 
-        self.config.api.deploy_artifact(
-            self.type, self.name, self.version, group, self.config.push, self.config.no_https)
+        for group in self.groups:
+            self.config.api.deploy_artifact(
+                self.type, self.name, self.version, group, self.config.push, self.config.no_https)
+
         self.config.logger.info("{} '{}' deployed.".format(self.type.capitalize(), self.name))
 
-    def _log_details(self, group: str):
+    def _log_details(self, groups: list):
+        if len(groups) == 1:
+            group_info = 'Group: {}'.format(groups[0])
+        else:
+            group_info = 'Groups: '
+            for num, group in enumerate(groups):
+                group_info += group
+                if num + 1 < len(groups):
+                    group_info += ', '
+
         with section(self.config, 'Deployment'):
             self.config.logger.info('Name: {}'.format(self.name))
             self.config.logger.info('Type: {}'.format(self.type))
             self.config.logger.info('Version: {}'.format(self.version))
-            self.config.logger.info('Group: {}'.format(group))
+            self.config.logger.info(group_info)
             self.config.logger.info('Push: {}'.format(self.config.push))
 
             if self.config.no_https:
@@ -47,6 +54,8 @@ class DeployCommand(Command):
                 self.config.logger.info('--no-https enabled: this deployment will be delivered to '
                                         'devices over HTTP.')
                 self.config.logger.info('***WARNING***')
+
+        self.config.logger.info('')
 
 
 class DeployConfigCommand(DeployCommand):
