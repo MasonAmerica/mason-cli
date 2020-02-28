@@ -129,7 +129,7 @@ class CertFinder:
 
     def find(self):
         cert = None
-        for file in self.apkf.files:
+        for file in self.apkf.get_files():
             # Cert files are NOT necessarily named 'CERT.RSA'
             if file.endswith('.RSA'):
                 cert = self.apkf.get_file(file)
