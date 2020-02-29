@@ -1,19 +1,16 @@
 import hashlib
 
 
-def hash_file(filename, type_of_hash, as_hex=True):
+def hash_file(filename, hash_type, as_hex=True):
     """
     Hash a file using SHA1 or MD5
     :param filename:
-    :param type_of_hash: 'sha1' or 'md5'
+    :param hash_type: 'sha1' or 'md5'
     :param as_hex: True to return a string of hex digits
     :return: The hash of the requested file
     """
 
-    if type_of_hash == 'sha1':
-        h = hashlib.sha1()
-    else:
-        h = hashlib.md5()
+    h = getattr(hashlib, hash_type)()
 
     with open(filename, 'rb') as file_to_hash:
         # loop till the end of the file

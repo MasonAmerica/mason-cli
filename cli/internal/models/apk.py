@@ -9,6 +9,8 @@ import click
 from pyaxmlparser import APK
 
 from cli.internal.models.artifacts import IArtifact
+from cli.internal.utils.hashing import hash_file
+from cli.internal.utils.logging import LazyLog
 from cli.internal.utils.ui import section
 from cli.internal.utils.validation import validate_artifact_version
 
@@ -80,10 +82,18 @@ class Apk(IArtifact):
     def log_details(self):
         with section(self.config, self.get_pretty_type()):
             self.config.logger.info('File path: {}'.format(self.binary))
-            self.config.logger.debug('File size: {}'.format(os.path.getsize(self.binary)))
             self.config.logger.info('Package name: {}'.format(self.apkf.package))
             self.config.logger.info('Version name: {}'.format(self.apkf.get_androidversion_name()))
             self.config.logger.info('Version code: {}'.format(self.apkf.get_androidversion_code()))
+
+            self.config.logger.debug(LazyLog(
+                lambda: 'File size: {}'.format(os.path.getsize(self.binary))))
+            self.config.logger.debug(LazyLog(
+                lambda: 'File SHA256: {}'.format(hash_file(self.binary, 'sha256'))))
+            self.config.logger.debug(LazyLog(
+                lambda: 'File SHA1: {}'.format(hash_file(self.binary, 'sha1'))))
+            self.config.logger.debug(LazyLog(
+                lambda: 'File MD5: {}'.format(hash_file(self.binary, 'md5'))))
             self.config.logger.debug(self.get_details())
 
     def get_content_type(self):

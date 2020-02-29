@@ -4,6 +4,8 @@ import click
 import requests
 from tqdm import tqdm
 
+from cli.internal.utils.logging import LazyLog
+
 
 class RequestHandler:
     def __init__(self, config):
@@ -22,12 +24,12 @@ class RequestHandler:
             'put', url, data=IterableToFileAdapter(iterable), *args, **kwargs)
 
     def _request_wrapper(self, type, url, *args, **kwargs):
-        self.config.logger.debug('Starting {} request to {} with payload {}'.format(
-            type.upper(), url, kwargs.get('json')))
+        self.config.logger.debug(LazyLog(lambda: 'Starting {} request to {} with payload {}'.format(
+            type.upper(), url, kwargs.get('json'))))
         r = self._safe_request(type, url, *args, **kwargs)
-        self.config.logger.debug(
-            'Finished request to {} with status code {} '
-            'and response {}'.format(url, r.status_code, r.text))
+        self.config.logger.debug(LazyLog(
+            lambda: 'Finished request to {} with status code {} '
+                    'and response {}'.format(url, r.status_code, r.text)))
 
         if r.status_code != 200:
             self._handle_failed_response(r)

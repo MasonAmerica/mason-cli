@@ -4,6 +4,8 @@ import click
 import yaml
 
 from cli.internal.models.artifacts import IArtifact
+from cli.internal.utils.hashing import hash_file
+from cli.internal.utils.logging import LazyLog
 from cli.internal.utils.ui import section
 from cli.internal.utils.validation import validate_artifact_version
 
@@ -48,9 +50,17 @@ class OSConfig(IArtifact):
     def log_details(self):
         with section(self.config, self.get_pretty_type()):
             self.config.logger.info('File path: {}'.format(self.user_binary))
-            self.config.logger.debug('File size: {}'.format(os.path.getsize(self.binary)))
             self.config.logger.info('Name: {}'.format(self.name))
             self.config.logger.info('Version: {}'.format(self.version))
+
+            self.config.logger.debug(LazyLog(
+                lambda: 'File size: {}'.format(os.path.getsize(self.binary))))
+            self.config.logger.debug(LazyLog(
+                lambda: 'File SHA256: {}'.format(hash_file(self.binary, 'sha256'))))
+            self.config.logger.debug(LazyLog(
+                lambda: 'File SHA1: {}'.format(hash_file(self.binary, 'sha1'))))
+            self.config.logger.debug(LazyLog(
+                lambda: 'File MD5: {}'.format(hash_file(self.binary, 'md5'))))
 
             self.config.logger.debug('Parsed config:')
             self.config.logger.debug(yaml.safe_dump(self.ecosystem))

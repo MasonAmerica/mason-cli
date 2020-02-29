@@ -8,6 +8,7 @@ from threading import Lock
 import click
 import six
 import yaml
+from tqdm import tqdm
 
 from cli.config import Config
 from cli.internal.commands.command import Command
@@ -54,13 +55,11 @@ class RegisterCommand(Command):
         pass
 
     def register_artifact(self, binary, artifact: IArtifact):
-        self.config.logger.debug('File SHA1: {}'.format(hash_file(binary, 'sha1')))
-        self.config.logger.debug('File MD5: {}'.format(hash_file(binary, 'md5')))
-
         try:
             self.config.api.upload_artifact(binary, artifact)
-            self.config.logger.info("{} '{}' registered.".format(
-                artifact.get_pretty_type(), artifact.get_name()))
+            with tqdm.external_write_mode(nolock=True):
+                self.config.logger.info("{} '{}' registered.".format(
+                    artifact.get_pretty_type(), artifact.get_name()))
         except ApiError as e:
             is_in_project_mode = getattr(self.config, 'project_mode', None)
             can_skip_upload = is_in_project_mode and \
@@ -68,8 +67,9 @@ class RegisterCommand(Command):
                 artifact.get_type() != 'config'
 
             if can_skip_upload:
-                self.config.logger.info("{} '{}' already registered, ignoring.".format(
-                    artifact.get_pretty_type(), artifact.get_name()))
+                with tqdm.external_write_mode(nolock=True):
+                    self.config.logger.info("{} '{}' already registered, ignoring.".format(
+                        artifact.get_pretty_type(), artifact.get_name()))
                 pass
             else:
                 raise e

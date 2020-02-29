@@ -1,8 +1,6 @@
-import logging
 import os
 
 import click
-import click_log
 
 from cli.config import Config
 from cli.internal.commands.build import BuildCommand
@@ -30,17 +28,11 @@ from cli.internal.commands.xray import XrayScreencapCommand
 from cli.internal.commands.xray import XrayShellCommand
 from cli.internal.commands.xray import XrayUninstallCommand
 from cli.internal.utils import mason_types
-from cli.internal.utils.constants import LOG_PROTOCOL_TRACE
+from cli.internal.utils.logging import handle_set_level
+from cli.internal.utils.logging import install_logger
 from cli.internal.utils.mason_types import AliasedGroup
 
 pass_config = click.make_pass_decorator(Config, ensure=True)
-
-
-def install_logger(logger: logging.Logger, level):
-    logger.setLevel(level)
-    click_log.ClickHandler._use_stderr = False
-    click_log.basic_config(logger)
-    return logger
 
 
 # noinspection PyUnusedLocal
@@ -55,31 +47,6 @@ def _version_callback(ctx, param, value):
     command.run()
 
     ctx.exit()
-
-
-# noinspection PyUnusedLocal
-def _handle_set_level(ctx, param, value):
-    default_level = os.environ.get('LOGLEVEL', 'INFO').upper()
-    if default_level.isdigit():
-        default_level = int(default_level)
-    logger = install_logger(ctx.ensure_object(Config).logger, default_level)
-
-    if not value or ctx.resilient_parsing:
-        return
-
-    if value.upper() == "TRACE":
-        logger.setLevel(LOG_PROTOCOL_TRACE)
-        return
-    if value.isdigit():
-        logger.setLevel(int(value))
-        return
-
-    x = getattr(logging, value.upper(), None)
-    if x is None:
-        raise click.BadParameter(
-            'Must be CRITICAL, ERROR, WARNING, INFO or DEBUG, not {}'
-        )
-    logger.setLevel(x)
 
 
 @click.group(cls=AliasedGroup, context_settings={'help_option_names': ['-h', '--help']})
@@ -98,7 +65,7 @@ def _handle_set_level(ctx, param, value):
               help='Log diagnostic data.')
 @click.option('--verbose', is_flag=True, hidden=True,
               help='Log verbose artifact and command details.')
-@click.option('--verbosity', '-v', expose_value=False, is_eager=True, callback=_handle_set_level,
+@click.option('--verbosity', '-v', expose_value=False, is_eager=True, callback=handle_set_level,
               help='Either CRITICAL, ERROR, WARNING, INFO or DEBUG')
 @pass_config
 def cli(config, debug, verbose, api_key, id_token, access_token, no_color):
