@@ -1,4 +1,5 @@
 import base64
+from threading import Lock
 
 from rfc3339 import parse_datetime
 
@@ -12,6 +13,7 @@ class MasonApi:
         self.auth_store = auth_store
         self.endpoints_store = endpoints_store
 
+        self.lock = Lock()
         self._customer = None
 
     def get_projects(self):
@@ -195,6 +197,10 @@ class MasonApi:
         return self.handler.post(url, json=payload)
 
     def _get_validated_customer(self):
+        with self.lock:
+            return self._safe_get_validated_customer()
+
+    def _safe_get_validated_customer(self):
         if self._customer:
             return self._customer
 
