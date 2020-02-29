@@ -150,7 +150,7 @@ class UploadInChunks(object):
     def __init__(self, path):
         self.path = path
         self.num_bytes = os.path.getsize(path)
-        self.chunk_size = 10
+        self.chunk_size = 5120  # 5KB == 2^10 * 5
 
         self.progress = tqdm(
             total=self.num_bytes,
