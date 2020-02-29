@@ -19,7 +19,7 @@ class RequestHandler:
 
     def put(self, url, binary, *args, **kwargs):
         binary_file = open(binary, 'rb')
-        iterable = UploadInChunks(binary_file.name, chunksize=10)
+        iterable = UploadInChunks(binary_file.name)
         return self._request_wrapper(
             'put', url, data=IterableToFileAdapter(iterable), *args, **kwargs)
 
@@ -147,24 +147,32 @@ class ApiError(Exception):
 
 
 class UploadInChunks(object):
-    def __init__(self, filename, chunksize=1 << 13):
-        self.filename = filename
-        self.chunksize = int(chunksize)
-        self.totalsize = os.stat(filename).st_size
-        self.pbar = tqdm(total=self.totalsize, ncols=100, unit='kb', dynamic_ncols=True)
+    def __init__(self, path):
+        self.path = path
+        self.num_bytes = os.path.getsize(path)
+        self.chunk_size = 10
+
+        self.progress = tqdm(
+            total=self.num_bytes,
+            ncols=100,
+            dynamic_ncols=True,
+            unit='B',
+            unit_scale=True
+        )
 
     def __iter__(self):
-        with open(self.filename, 'rb') as file_to_upload:
+        with open(self.path, 'rb') as file_to_upload:
             while True:
-                data = file_to_upload.read(self.chunksize)
+                data = file_to_upload.read(self.chunk_size)
                 if not data:
-                    self.pbar.close()
+                    self.progress.close()
                     break
-                self.pbar.update(len(data))
+
+                self.progress.update(len(data))
                 yield data
 
     def __len__(self):
-        return self.totalsize
+        return self.num_bytes
 
 
 class IterableToFileAdapter(object):
