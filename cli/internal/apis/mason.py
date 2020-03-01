@@ -35,7 +35,7 @@ class MasonApi:
 
     def get_latest_artifact(self, name, type):
         def sort(artifact):
-            return parse_datetime(artifact.get('createdAt')).strftime('%s')
+            return parse_datetime(artifact.get('createdAt')).timestamp()
 
         customer = self._get_validated_customer()
         return self._find_artifact(customer, name, type, sort)
