@@ -5,6 +5,7 @@ import six
 
 from cli.config import Config
 from cli.internal.commands.command import Command
+from cli.internal.utils.io import wait_for_futures
 from cli.internal.utils.ui import section
 from cli.internal.utils.validation import validate_credentials
 
@@ -34,8 +35,7 @@ class DeployCommand(Command):
                 self.type, self.name, self.version, group, self.config.push, self.config.no_https
             ))
 
-        for op in deploy_ops:
-            op.result()
+        wait_for_futures(self.config.executor, deploy_ops)
 
         self.config.logger.info("{} '{}' deployed.".format(self.type.capitalize(), self.name))
 

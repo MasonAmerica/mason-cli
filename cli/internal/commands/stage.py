@@ -5,6 +5,7 @@ from cli.internal.commands.build import BuildCommand
 from cli.internal.commands.command import Command
 from cli.internal.commands.register import RegisterCommand
 from cli.internal.commands.register import RegisterConfigCommand
+from cli.internal.utils.io import wait_for_futures
 
 
 class StageCommand(RegisterCommand):
@@ -49,8 +50,7 @@ class StageCommand(RegisterCommand):
 
             build_ops.append(self.config.executor.submit(self._build, build_command))
 
-        for op in build_ops:
-            op.result()
+        wait_for_futures(self.config.executor, build_ops)
 
     def _build(self, build_command: BuildCommand):
         self.config.logger.info('')

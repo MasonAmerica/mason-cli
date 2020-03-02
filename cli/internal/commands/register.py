@@ -17,6 +17,7 @@ from cli.internal.models.artifacts import IArtifact
 from cli.internal.models.media import Media
 from cli.internal.models.os_config import OSConfig
 from cli.internal.utils.hashing import hash_file
+from cli.internal.utils.io import wait_for_futures
 from cli.internal.utils.remote import ApiError
 from cli.internal.utils.validation import validate_credentials
 
@@ -104,8 +105,7 @@ class RegisterConfigCommand(RegisterCommand):
             register_ops.append(self.config.executor.submit(
                 self.register_artifact, config.binary, config))
 
-        for op in register_ops:
-            op.result()
+        wait_for_futures(self.config.executor, register_ops)
 
     def _sanitize_config_for_upload(self, config: OSConfig):
         raw_config = copy.deepcopy(config.ecosystem)
@@ -122,8 +122,7 @@ class RegisterConfigCommand(RegisterCommand):
         rewrite_ops.append(self.config.executor.submit(
             self._maybe_inject_media_versions, lock, raw_config))
 
-        for op in rewrite_ops:
-            op.result()
+        wait_for_futures(self.config.executor, rewrite_ops)
 
         config_file = os.path.join(self.working_dir, os.path.basename(config.binary))
         with open(config_file, 'w') as f:
@@ -188,8 +187,7 @@ class RegisterApkCommand(RegisterCommand):
 
     def register(self, apks):
         register_ops = self.start_register_ops(apks)
-        for op in register_ops:
-            op.result()
+        wait_for_futures(self.config.executor, register_ops)
 
     def start_register_ops(self, apks):
         register_ops = []
@@ -274,6 +272,7 @@ class RegisterProjectCommand(RegisterCommand):
         for reg in anim_registrations:
             media_preps.append(self.config.executor.submit(reg.prepare))
 
+        wait_for_futures(self.config.executor, [apk_prep, *media_preps])
         apks = apk_prep.result()[0]
         media_artifacts = []
         for prep in media_preps:
@@ -308,8 +307,7 @@ class RegisterProjectCommand(RegisterCommand):
         for num, anim in enumerate(anim_registrations):
             register_ops.append(self.config.executor.submit(anim.register, media_artifacts[num]))
 
-        for op in register_ops:
-            op.result()
+        wait_for_futures(self.config.executor, register_ops)
 
         stage.register(configs, register)
 
