@@ -52,7 +52,7 @@ build_windows:
   stage: build
   tags:
     - mason-deploy
-  image: registry.gitlab.com/masonamerica/cli/mason-cli-builder/master-windows:latest
+  image: cdrx/pyinstaller-windows:python3-32bit
   script:
     - ./scripts/gen_win_exe.sh
   artifacts:
