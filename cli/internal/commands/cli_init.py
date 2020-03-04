@@ -80,10 +80,10 @@ class CliInitCommand(Command):
 
         self.config.logger.debug('Checking for updates')
         try:
-            r = requests.get(
-                'https://raw.githubusercontent.com/MasonAmerica/mason-cli/master/VERSION')
-        except requests.RequestException:
+            r = requests.get(self.config.endpoints_store['latest_version_url'])
+        except requests.RequestException as e:
             # Don't fail the command if checking for updates fails.
+            self.config.logger.debug(e)
             return
 
         if r.status_code == 200 and r.text:

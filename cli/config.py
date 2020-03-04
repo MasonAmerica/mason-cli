@@ -30,11 +30,12 @@ class Config(object):
     ):
         logger = logger or logging.getLogger(__name__)
         api = api or MasonApi(RequestHandler(self), auth_store, endpoints_store)
-        if not analytics:
-            analytics = MasonAnalytics(self)
-            if os.environ.get('_MASON_CLI_TEST_MODE'):
-                endpoints_store['analytics_url'] = None
+        analytics = analytics or MasonAnalytics(self)
         interactivity = interactivity or Interactivity()
+
+        if os.environ.get('_MASON_CLI_TEST_MODE'):
+            endpoints_store['analytics_url'] = None
+            endpoints_store['latest_version_url'] = None
 
         self.logger = logger
         self.auth_store = auth_store
