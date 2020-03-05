@@ -11,6 +11,8 @@ from cli.internal.utils.interactive import Interactivity
 from cli.internal.utils.remote import RequestHandler
 from cli.internal.utils.store import Store
 
+_manual_atexit_callbacks = []
+
 
 class Config(object):
     """
@@ -44,3 +46,7 @@ class Config(object):
         self.analytics = analytics
         self.interactivity = interactivity
         self.executor = executor or ThreadPoolExecutor()
+
+
+def register_manual_atexit_callback(func, *args, **kwargs):
+    _manual_atexit_callbacks.append((func, args, kwargs))

@@ -2,12 +2,15 @@ import contextlib
 import inspect
 import os
 import shutil
+import time
 import unittest
 from concurrent.futures.thread import ThreadPoolExecutor
 
 from click.testing import CliRunner
 from mock import MagicMock
 
+from cli.config import _manual_atexit_callbacks
+from cli.internal.utils.constants import UPDATE_CHECKER_CACHE
 from cli.internal.utils.remote import ApiError
 from cli.internal.utils.store import Store
 from cli.mason import Config
@@ -19,9 +22,13 @@ from tests import __tests_root__
 class CliTest(unittest.TestCase):
     def setUp(self):
         self.runner = CliRunner()
+        _manual_atexit_callbacks.clear()
 
         os.environ['_MASON_CLI_TEST_MODE'] = 'TRUE'
         os.environ.pop('CI', None)  # Guarantee test stability
+
+        UPDATE_CHECKER_CACHE['last_update_check_timestamp'] = time.time()
+        UPDATE_CHECKER_CACHE.save()
 
     def test__version__command_prints_info(self):
         result = self.runner.invoke(cli, ['version'])
@@ -54,6 +61,34 @@ class CliTest(unittest.TestCase):
             Mason CLI v{}
             Copyright (C) 2019 Mason America (https://bymason.com)
             License Apache 2.0 <https://www.apache.org/licenses/LICENSE-2.0>
+        """.format(__version__)))
+
+    def test__update_check__displays_notice_when_available(self):
+        api = MagicMock()
+        api.get_latest_cli_version = MagicMock(return_value='1.1.0')
+        config = Config(api=api)
+
+        UPDATE_CHECKER_CACHE.clear()
+        UPDATE_CHECKER_CACHE['current_version'] = '1.0'
+        UPDATE_CHECKER_CACHE.save()
+        result = self.runner.invoke(cli, ['version'], obj=config)
+
+        self.assertIsNone(result.exception)
+        self.assertEqual(result.exit_code, 0)
+        self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
+            Mason CLI v{}
+            Copyright (C) 2019 Mason America (https://bymason.com)
+            License Apache 2.0 <https://www.apache.org/licenses/LICENSE-2.0>
+
+            ==================== NOTICE ====================
+            A newer version (v1.1.0) of the Mason CLI is available.
+
+            Download the latest version:
+            https://github.com/MasonAmerica/mason-cli/releases/latest
+
+            And check out our installation guide:
+            http://docs.bymason.com/mason-cli/#install
+            ==================== NOTICE ====================
         """.format(__version__)))
 
     def test__logging__starts_at_info_level_by_default(self):

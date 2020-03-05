@@ -1,14 +1,17 @@
 import inspect
 import time
+from math import e
 
 import click_log
 import packaging.version
-import requests
 
 from cli.config import Config
+from cli.config import register_manual_atexit_callback
 from cli.internal.commands.command import Command
+from cli.internal.utils.constants import UPDATE_CHECKER_CACHE
+from cli.internal.utils.io import wait_for_futures
+from cli.internal.utils.remote import ApiError
 from cli.internal.utils.store import Store
-from cli.version import __version__
 
 
 class CliInitCommand(Command):
@@ -20,7 +23,9 @@ class CliInitCommand(Command):
         no_color: bool,
         api_key: str,
         id_token: str,
-        access_token: str
+        access_token: str,
+        update_checker_cache: Store = UPDATE_CHECKER_CACHE,
+        time=time
     ):
         super(CliInitCommand, self).__init__(config)
 
@@ -30,12 +35,16 @@ class CliInitCommand(Command):
         self.api_key = api_key
         self.id_token = id_token
         self.access_token = access_token
+        self.update_checker_cache = update_checker_cache
+        self.time = time
 
     @Command.helper('cli')
     def run(self):
         self._update_logging()
         self._update_creds()
-        self._check_for_updates()
+        update_check_future = self.config.executor.submit(self._check_for_updates)
+        register_manual_atexit_callback(
+            wait_for_futures, self.config.executor, [update_check_future])
 
     def _update_logging(self):
         if self.no_color:
@@ -69,38 +78,84 @@ class CliInitCommand(Command):
                 'use --api-key instead.')
 
     def _check_for_updates(self):
-        current_time = int(time.time())
-        cache = Store('version-check-cache', {'timestamp': 0})
+        cache = self.update_checker_cache
+        current_time = int(self.time.time())
+        frequency = cache['update_check_frequency_seconds']
 
-        if current_time - cache['timestamp'] < 86400:  # 1 day
-            self.config.logger.debug('Skipped version check')
+        if current_time - cache['last_update_check_timestamp'] >= frequency:
+            available_update, success = self._get_available_update(cache['current_version'])
+            if success:
+                cache['last_update_check_timestamp'] = current_time
+                cache['latest_version'] = available_update
+
+                first_timestamp = cache['first_update_found_timestamp']
+                if available_update:
+                    first_timestamp = first_timestamp or current_time
+                else:
+                    first_timestamp = 0
+                    cache['last_nag_timestamp'] = 0
+                cache['first_update_found_timestamp'] = first_timestamp
+        else:
+            available_update = cache['latest_version']
+
+        if not available_update:
+            cache.save()
             return
-        cache['timestamp'] = current_time
+
+        if not self._compare_versions(cache['current_version'], available_update):
+            cache['latest_version'] = None
+            cache['last_nag_timestamp'] = 0
+            cache['first_update_found_timestamp'] = 0
+            cache.save()
+            return
+
+        should_nag = self._should_nag_user_about_update(
+            current_time, cache['last_nag_timestamp'], cache['first_update_found_timestamp'])
+        if should_nag:
+            cache['last_nag_timestamp'] = current_time
+            register_manual_atexit_callback(self._nag_user_about_update, available_update)
+
         cache.save()
 
-        self.config.logger.debug('Checking for updates')
+    def _get_available_update(self, current):
         try:
-            r = requests.get(self.config.endpoints_store['latest_version_url'])
-        except requests.RequestException as e:
+            latest_version = self.config.api.get_latest_cli_version()
+            return self._compare_versions(current, latest_version), True
+        except ApiError as e:
             # Don't fail the command if checking for updates fails.
-            self.config.logger.debug(e)
-            return
+            self.config.logger.debug(e.message)
+            return None, False
 
-        if r.status_code == 200 and r.text:
-            current_version = packaging.version.parse(__version__)
-            remote_version = packaging.version.parse(r.text)
-            if remote_version > current_version:
-                self.config.logger.info(inspect.cleandoc("""
-                    ==================== NOTICE ====================
-                    A newer version (v{}) of the Mason CLI is available.
+    def _compare_versions(self, current, new):
+        current_version = packaging.version.parse(current)
+        new_version = packaging.version.parse(new)
 
-                    Download the latest version:
-                    https://github.com/MasonAmerica/mason-cli/releases/latest
+        if new_version > current_version:
+            return str(new_version)
 
-                    And check out our installation guide:
-                    http://docs.bymason.com/mason-cli/#install
-                    ==================== NOTICE ====================
-                """.format(remote_version)))
-                self.config.logger.info('')
-        else:
-            self.config.logger.debug('Failed to check for updates: {}'.format(r))
+    def _should_nag_user_about_update(
+        self,
+        current_time,
+        last_nag_timestamp,
+        first_update_found_timestamp
+    ):
+        days_since_update_found = (current_time - first_update_found_timestamp) / 86400
+        seconds_since_last_nag = current_time - last_nag_timestamp
+
+        nag_timeout = 86400 / (1 + e ** min(25, .4 * days_since_update_found - 5))
+        if seconds_since_last_nag >= nag_timeout:
+            return True
+
+    def _nag_user_about_update(self, version):
+        self.config.logger.info('')
+        self.config.logger.info(inspect.cleandoc("""
+            ==================== NOTICE ====================
+            A newer version (v{}) of the Mason CLI is available.
+
+            Download the latest version:
+            https://github.com/MasonAmerica/mason-cli/releases/latest
+
+            And check out our installation guide:
+            http://docs.bymason.com/mason-cli/#install
+            ==================== NOTICE ====================
+        """.format(version)))

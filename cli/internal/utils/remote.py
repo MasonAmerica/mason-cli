@@ -1,4 +1,5 @@
 import os
+from json.decoder import JSONDecodeError
 
 import click
 import requests
@@ -31,12 +32,16 @@ class RequestHandler:
             lambda: 'Finished request to {} with status code {} '
                     'and response {}'.format(url, r.status_code, r.text)))
 
-        if r.status_code != 200:
+        if not r.ok:
             self._handle_failed_response(r)
         if r.text:
-            return r.json()
+            try:
+                return r.json()
+            except JSONDecodeError as e:
+                self.config.logger.debug(e)
+                return r.text
 
-    def _safe_request(self, type, *args, **kwargs):
+    def _safe_request(self, type, *args, **kwargs) -> requests.Response:
         func = getattr(requests, type)
         try:
             return func(*args, **kwargs)

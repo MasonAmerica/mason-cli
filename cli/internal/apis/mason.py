@@ -58,6 +58,9 @@ class MasonApi:
     def login(self, username, password):
         return self._login(password, username)
 
+    def get_latest_cli_version(self):
+        return self._get_latest_cli_version()
+
     def _get_projects(self, customer):
         headers = {
             'Authorization': 'Bearer {}'.format(self.auth_store['id_token'])
@@ -195,6 +198,10 @@ class MasonApi:
         }
         url = self.endpoints_store['auth_url']
         return self.handler.post(url, json=payload)
+
+    def _get_latest_cli_version(self):
+        version = self.handler.get(self.endpoints_store['latest_version_url'])
+        return str(version).strip()
 
     def _get_validated_customer(self):
         with self.lock:

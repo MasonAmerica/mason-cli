@@ -38,7 +38,7 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'mason = cli.mason:cli'
+            'mason = cli.mason:main'
         ]
     },
     include_package_data=True,

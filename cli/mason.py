@@ -3,6 +3,7 @@ import os
 import click
 
 from cli.config import Config
+from cli.config import _manual_atexit_callbacks
 from cli.internal.commands.build import BuildCommand
 from cli.internal.commands.cli_init import CliInitCommand
 from cli.internal.commands.deploy import DeployApkCommand
@@ -738,5 +739,16 @@ def help(config, command):
     command.run()
 
 
-if __name__ == '__main__':
+# noinspection PyUnusedLocal
+@cli.resultcallback()
+def atexit(*args, **kwargs):
+    for (func, args, kwargs) in _manual_atexit_callbacks:
+        func(*args, **kwargs)
+
+
+def main():
     cli()
+
+
+if __name__ == '__main__':
+    main()
