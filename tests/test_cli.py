@@ -510,6 +510,25 @@ class CliTest(unittest.TestCase):
             Aborted!
         """.format(config_file)))
 
+    def test__register_config__dry_run_exits_cleanly(self):
+        config_file = os.path.join(__tests_root__, 'res/config.yml')
+        api = MagicMock()
+        config = Config(auth_store=self._initialized_auth_store(), api=api)
+
+        result = self.runner.invoke(cli, [
+            'register', '--dry-run', 'config', config_file
+        ], obj=config)
+
+        self.assertIsNone(result.exception)
+        self.assertEqual(result.exit_code, 0)
+        self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
+            ------------ OS Config ------------
+            File path: {}
+            Name: project-id
+            Version: 1
+            -----------------------------------
+        """.format(config_file)))
+
     def test__register_config__file_is_registered(self):
         config_file = os.path.join(__tests_root__, 'res/config.yml')
         api = MagicMock()
@@ -752,6 +771,24 @@ class CliTest(unittest.TestCase):
             Aborted!
         """.format(apk_file)))
 
+    def test__register_apk__dry_run_exits_cleanly(self):
+        apk_file = os.path.join(__tests_root__, 'res/v1.apk')
+        api = MagicMock()
+        config = Config(auth_store=self._initialized_auth_store(), api=api)
+
+        result = self.runner.invoke(cli, ['register', '--dry-run', 'apk', apk_file], obj=config)
+
+        self.assertIsNone(result.exception)
+        self.assertEqual(result.exit_code, 0)
+        self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
+            ------------ App ------------
+            File path: {}
+            Package name: com.example.unittestapp1
+            Version name: 1.0
+            Version code: 1
+            -----------------------------
+        """.format(apk_file)))
+
     def test__register_apk__file_is_registered(self):
         apk_file = os.path.join(__tests_root__, 'res/v1.apk')
         api = MagicMock()
@@ -866,6 +903,26 @@ class CliTest(unittest.TestCase):
 
             Continue registration? [Y/n]: n
             Aborted!
+        """.format(media_file)))
+
+    def test__register_media__dry_run_exits_cleanly(self):
+        media_file = os.path.join(__tests_root__, 'res/bootanimation.zip')
+        api = MagicMock()
+        config = Config(auth_store=self._initialized_auth_store(), api=api)
+
+        result = self.runner.invoke(cli, [
+            'register', '--dry-run', 'media',
+            'bootanimation', 'Anim name', '1', media_file
+        ], obj=config)
+
+        self.assertIsNone(result.exception)
+        self.assertEqual(result.exit_code, 0)
+        self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
+            ------------ Boot animation ------------
+            File path: {}
+            Name: Anim name
+            Version: 1
+            ----------------------------------------
         """.format(media_file)))
 
     def test__register_media__file_is_registered(self):
@@ -987,6 +1044,33 @@ class CliTest(unittest.TestCase):
 
             Continue registration? [Y/n]: n
             Aborted!
+        """.format(apk_file, config_file)))
+
+    def test__register_project__dry_run_exits_cleanly(self):
+        simple_project = os.path.join(__tests_root__, 'res/simple-project')
+        config_file = os.path.join(simple_project, 'mason.yml')
+        apk_file = os.path.join(__tests_root__, 'res/simple-project/v1.apk')
+        api = MagicMock()
+        config = Config(auth_store=self._initialized_auth_store(), api=api)
+
+        with self._cd(simple_project):
+            result = self.runner.invoke(cli, ['register', '--dry-run', 'project'], obj=config)
+
+        self.assertIsNone(result.exception)
+        self.assertEqual(result.exit_code, 0)
+        self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
+            ------------ App ------------
+            File path: {}
+            Package name: com.example.unittestapp1
+            Version name: 1.0
+            Version code: 1
+            -----------------------------
+
+            ------------ OS Config ------------
+            File path: {}
+            Name: project-id2
+            Version: 2
+            -----------------------------------
         """.format(apk_file, config_file)))
 
     def test__register_project__app_not_present_is_ignored(self):
@@ -1477,6 +1561,27 @@ class CliTest(unittest.TestCase):
             Aborted!
         """))
 
+    def test__deploy_config__dry_run_exits_cleanly(self):
+        api = MagicMock()
+        config = Config(auth_store=self._initialized_auth_store(), api=api)
+
+        result = self.runner.invoke(cli, [
+            'deploy', '--dry-run', 'config',
+            'project-id', '1', 'group'
+        ], obj=config)
+
+        self.assertIsNone(result.exception)
+        self.assertEqual(result.exit_code, 0)
+        self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
+            ------------ Deployment ------------
+            Name: project-id
+            Type: config
+            Version: 1
+            Group: group
+            Push: False
+            ------------------------------------
+        """))
+
     def test__deploy_config__config_is_deployed(self):
         api = MagicMock()
         config = Config(auth_store=self._initialized_auth_store(), api=api)
@@ -1647,6 +1752,27 @@ class CliTest(unittest.TestCase):
             Aborted!
         """))
 
+    def test__deploy_apk__dry_run_exits_cleanly(self):
+        api = MagicMock()
+        config = Config(auth_store=self._initialized_auth_store(), api=api)
+
+        result = self.runner.invoke(cli, [
+            'deploy', '--dry-run', 'apk',
+            'com.example.app', '1', 'group'
+        ], obj=config)
+
+        self.assertIsNone(result.exception)
+        self.assertEqual(result.exit_code, 0)
+        self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
+            ------------ Deployment ------------
+            Name: com.example.app
+            Type: apk
+            Version: 1
+            Group: group
+            Push: False
+            ------------------------------------
+        """))
+
     def test__deploy_apk__apk_is_deployed(self):
         api = MagicMock()
         config = Config(auth_store=self._initialized_auth_store(), api=api)
@@ -1792,6 +1918,27 @@ class CliTest(unittest.TestCase):
 
             Continue deployment? [Y/n]: n
             Aborted!
+        """))
+
+    def test__deploy_ota__dry_run_exits_cleanly(self):
+        api = MagicMock()
+        config = Config(auth_store=self._initialized_auth_store(), api=api)
+
+        result = self.runner.invoke(cli, [
+            'deploy', '--dry-run', 'ota',
+            'mason-os', '2.0.0', 'group'
+        ], obj=config)
+
+        self.assertIsNone(result.exception)
+        self.assertEqual(result.exit_code, 0)
+        self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
+            ------------ Deployment ------------
+            Name: mason-os
+            Type: ota
+            Version: 2.0.0
+            Group: group
+            Push: False
+            ------------------------------------
         """))
 
     def test__deploy_ota__ota_is_deployed(self):

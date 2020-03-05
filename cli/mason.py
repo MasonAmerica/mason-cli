@@ -102,10 +102,12 @@ def init(config):
 @cli.group(cls=AliasedGroup)
 @click.option('assume_yes', '-y', '--yes', '--assume-yes', is_flag=True, default=False,
               help='Don\'t require confirmation.')
+@click.option('--dry-run', is_flag=True, default=False,
+              help='Show planned operations, but don\'t execute them.')
 @click.option('--skip-verify', '-s', is_flag=True, default=False, hidden=True,
               help='Don\'t require confirmation.')
 @pass_config
-def register(config, assume_yes, skip_verify):
+def register(config, assume_yes, dry_run, skip_verify):
     """
     Register artifacts to the Mason Platform.
 
@@ -117,6 +119,7 @@ def register(config, assume_yes, skip_verify):
         config.logger.warning('--skip-verify is deprecated. Use --assume-yes instead.')
 
     config.skip_verify = assume_yes or 'CI' in os.environ or skip_verify
+    config.execute_ops = not dry_run
 
 
 @register.command('project')
@@ -314,6 +317,7 @@ def stage(config, assume_yes, block, turbo, mason_version, skip_verify, configs)
         config.logger.warning('--skip-verify is deprecated. Use --assume-yes instead.')
 
     config.skip_verify = assume_yes or skip_verify
+    config.execute_ops = True
 
     config.logger.warning('`mason stage` is deprecated, use `mason register config` instead.')
 
@@ -322,8 +326,10 @@ def stage(config, assume_yes, block, turbo, mason_version, skip_verify, configs)
 
 
 @cli.group(cls=AliasedGroup)
-@click.option('--assume-yes', '--yes', '-y', is_flag=True, default=False,
+@click.option('assume_yes', '-y', '--yes', '--assume-yes', is_flag=True, default=False,
               help='Don\'t require confirmation.')
+@click.option('--dry-run', is_flag=True, default=False,
+              help='Show planned operations, but don\'t execute them.')
 @click.option('--push', '-p', is_flag=True, default=False,
               help='Push the deployment to devices in the field immediately.')
 @click.option('--no-https', is_flag=True, default=False, hidden=True,
@@ -331,7 +337,7 @@ def stage(config, assume_yes, block, turbo, mason_version, skip_verify, configs)
 @click.option('--skip-verify', '-s', is_flag=True, default=False, hidden=True,
               help='Don\'t require confirmation.')
 @pass_config
-def deploy(config, assume_yes, push, no_https, skip_verify):
+def deploy(config, assume_yes, dry_run, push, no_https, skip_verify):
     """
     Deploy artifacts to groups.
 
@@ -343,6 +349,7 @@ def deploy(config, assume_yes, push, no_https, skip_verify):
         config.logger.warning('--skip-verify is deprecated. Use --assume-yes instead.')
 
     config.skip_verify = assume_yes or 'CI' in os.environ or skip_verify
+    config.execute_ops = not dry_run
     config.push = push
     config.no_https = no_https
 
@@ -674,11 +681,11 @@ def xray_bugreport(config):
 
 
 @cli.command()
-@click.option('--api-key', '--token', '-t',
+@click.option('api_key', '-t', '--token', '--api-key',
               help='Your Mason Platform API Key.')
-@click.option('--username', '--user', '-u', prompt=True,
+@click.option('username', '-u', '--user', '--username', prompt=True,
               help='Your Mason Platform username.')
-@click.option('--password', '--pass', '-p', prompt=True, hide_input=True,
+@click.option('password', '--pass', '--password', '-p', prompt=True, hide_input=True,
               help='Your Mason Platform password.')
 @pass_config
 def login(config, api_key, username, password):

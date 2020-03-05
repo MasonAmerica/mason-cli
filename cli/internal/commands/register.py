@@ -33,8 +33,8 @@ class RegisterCommand(Command):
         (artifacts, *args) = self.prepare()
 
         self.show_operations(artifacts)
-        self.request_confirmation()
-        self.register(*args)
+        if self.request_confirmation():
+            self.register(*args)
 
         return (artifacts, *args)
 
@@ -48,8 +48,12 @@ class RegisterCommand(Command):
             self.config.logger.info('')
 
     def request_confirmation(self):
+        if not self.config.execute_ops:
+            return False
         if not self.config.skip_verify:
             click.confirm('Continue registration?', default=True, abort=True)
+
+        return True
 
     @abstractmethod
     def register(self, *args):

@@ -24,6 +24,8 @@ class DeployCommand(Command):
 
     def deploy_artifact(self):
         self._log_details(self.groups)
+        if not self.config.execute_ops:
+            return
         if not self.config.skip_verify:
             click.confirm('Continue deployment?', default=True, abort=True)
 
