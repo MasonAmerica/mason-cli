@@ -52,6 +52,8 @@ class OSConfig(IArtifact):
             self.config.logger.info('File path: {}'.format(self.user_binary))
             self.config.logger.info('Name: {}'.format(self.name))
             self.config.logger.info('Version: {}'.format(self.version))
+            self._log_apps()
+            self._log_media()
 
             self.config.logger.debug(LazyLog(
                 lambda: 'File size: {}'.format(os.path.getsize(self.binary))))
@@ -64,6 +66,26 @@ class OSConfig(IArtifact):
 
             self.config.logger.debug('Parsed config:')
             self.config.logger.debug(yaml.safe_dump(self.ecosystem))
+
+    def _log_apps(self):
+        apps = list(filter(None, self.ecosystem.get('apps') or []))
+        if not apps:
+            return
+
+        self.config.logger.info('App(s):')
+        for app in apps:
+            self.config.logger.info("  - '{}' at version {}".format(
+                app.get('package_name'), app.get('version_code')))
+
+    def _log_media(self):
+        media = self.ecosystem.get('media')
+        if not media:
+            return
+
+        boot_anim = media.get('bootanimation')
+        if boot_anim:
+            self.config.logger.info("Boot animation: '{}' at version {}".format(
+                boot_anim.get('name'), boot_anim.get('version')))
 
     def get_content_type(self):
         return 'text/x-yaml'

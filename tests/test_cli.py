@@ -440,6 +440,8 @@ class CliTest(unittest.TestCase):
             File path: {}
             Name: project-id
             Version: 1
+            App(s):
+              - 'com.example.app' at version 1
             -----------------------------------
 
             Continue registration? [Y/n]: 
@@ -504,6 +506,8 @@ class CliTest(unittest.TestCase):
             File path: {}
             Name: project-id
             Version: 1
+            App(s):
+              - 'com.example.app' at version 1
             -----------------------------------
 
             Continue registration? [Y/n]: n
@@ -526,6 +530,8 @@ class CliTest(unittest.TestCase):
             File path: {}
             Name: project-id
             Version: 1
+            App(s):
+              - 'com.example.app' at version 1
             -----------------------------------
         """.format(config_file)))
 
@@ -543,6 +549,8 @@ class CliTest(unittest.TestCase):
             File path: {}
             Name: project-id
             Version: 1
+            App(s):
+              - 'com.example.app' at version 1
             -----------------------------------
 
             Continue registration? [Y/n]: 
@@ -569,6 +577,10 @@ class CliTest(unittest.TestCase):
             File path: {}
             Name: project-id4
             Version: 42
+            App(s):
+              - 'com.example.app1' at version 1
+              - 'com.example.app2' at version 41
+            Boot animation: 'anim' at version 41
             -----------------------------------
 
             Continue registration? [Y/n]: 
@@ -600,12 +612,16 @@ class CliTest(unittest.TestCase):
             File path: {}
             Name: project-id
             Version: 1
+            App(s):
+              - 'com.example.app' at version 1
             -----------------------------------
 
             ------------ OS Config ------------
             File path: {}
             Name: project-id2
             Version: 2
+            App(s):
+              - 'com.example.unittestapp1' at version None
             -----------------------------------
 
             Continue registration? [Y/n]: 
@@ -640,6 +656,8 @@ class CliTest(unittest.TestCase):
             File path: {}
             Name: project-id
             Version: 1
+            App(s):
+              - 'com.example.app' at version 1
             -----------------------------------
 
             Continue registration? [Y/n]: 
@@ -675,12 +693,16 @@ class CliTest(unittest.TestCase):
             File path: {}
             Name: project-id
             Version: 1
+            App(s):
+              - 'com.example.app' at version 1
             -----------------------------------
 
             ------------ OS Config ------------
             File path: {}
             Name: project-id2
             Version: 2
+            App(s):
+              - 'com.example.unittestapp1' at version None
             -----------------------------------
 
             Continue registration? [Y/n]: 
@@ -1040,6 +1062,8 @@ class CliTest(unittest.TestCase):
             File path: {}
             Name: project-id2
             Version: 2
+            App(s):
+              - 'com.example.unittestapp1' at version 1
             -----------------------------------
 
             Continue registration? [Y/n]: n
@@ -1070,6 +1094,8 @@ class CliTest(unittest.TestCase):
             File path: {}
             Name: project-id2
             Version: 2
+            App(s):
+              - 'com.example.unittestapp1' at version 1
             -----------------------------------
         """.format(apk_file, config_file)))
 
@@ -1098,6 +1124,8 @@ class CliTest(unittest.TestCase):
             File path: {}
             Name: project-id
             Version: 1
+            App(s):
+              - 'com.example.app' at version 1
             -----------------------------------
 
             Continue registration? [Y/n]: 
@@ -1137,6 +1165,8 @@ class CliTest(unittest.TestCase):
             File path: {}
             Name: project-id2
             Version: 2
+            App(s):
+              - 'com.example.unittestapp1' at version 1
             -----------------------------------
 
             Continue registration? [Y/n]: 
@@ -1176,6 +1206,8 @@ class CliTest(unittest.TestCase):
             File path: {}
             Name: project-id2
             Version: 2
+            App(s):
+              - 'com.example.unittestapp1' at version 1
             -----------------------------------
 
             Continue registration? [Y/n]: 
@@ -1218,6 +1250,8 @@ class CliTest(unittest.TestCase):
             File path: {}
             Name: project-id2
             Version: 2
+            App(s):
+              - 'com.example.unittestapp1' at version 1
             -----------------------------------
 
             Continue registration? [Y/n]: 
@@ -1291,12 +1325,19 @@ class CliTest(unittest.TestCase):
             File path: {}
             Name: project-id2
             Version: 2
+            App(s):
+              - 'com.example.unittestapp1' at version 1
             -----------------------------------
 
             ------------ OS Config ------------
             File path: {}
             Name: project-id3
             Version: 42
+            App(s):
+              - 'com.example.app1' at version 1
+              - 'com.example.unittestapp1' at version 1
+              - 'com.example.app2' at version 41
+            Boot animation: 'anim-1' at version 41
             -----------------------------------
 
             Continue registration? [Y/n]: 
@@ -1425,6 +1466,8 @@ class CliTest(unittest.TestCase):
             File path: {}
             Name: project-id
             Version: 1
+            App(s):
+              - 'com.example.app' at version 1
             -----------------------------------
 
             Continue registration? [Y/n]: n
@@ -1450,6 +1493,8 @@ class CliTest(unittest.TestCase):
             File path: {}
             Name: project-id
             Version: 1
+            App(s):
+              - 'com.example.app' at version 1
             -----------------------------------
 
             Continue registration? [Y/n]: 
@@ -1480,6 +1525,8 @@ class CliTest(unittest.TestCase):
             File path: {}
             Name: project-id
             Version: 1
+            App(s):
+              - 'com.example.app' at version 1
             -----------------------------------
 
             Continue registration? [Y/n]: 
