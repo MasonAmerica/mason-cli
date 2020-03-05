@@ -1,4 +1,4 @@
-#!/bin/sh -e
+#!/bin/bash -ex
 
 echo "__version__ = '$(cat VERSION)'" > cli/version.py
 wine pip install windows-curses
@@ -9,3 +9,6 @@ wine pyinstaller cli/mason.py --onefile \
   --add-data "VERSION;." \
   --add-data "openssl-win;cli/internal/models" \
   --icon m.ico
+
+wine dist/mason.exe version
+wine dist/mason.exe --id-token a --access-token b register --dry-run apk tests/res/v1.apk

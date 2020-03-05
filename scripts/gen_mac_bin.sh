@@ -1,4 +1,4 @@
-#!/bin/sh -e
+#!/bin/bash -ex
 
 echo "__version__ = '$(cat VERSION)'" > cli/version.py
 pip3 install .
@@ -7,3 +7,4 @@ pyinstaller cli/mason.py --onefile \
   --add-data VERSION:.
 
 ./dist/mason version
+./dist/mason --id-token a --access-token b register --dry-run apk tests/res/v1.apk
