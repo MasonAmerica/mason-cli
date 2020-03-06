@@ -4,34 +4,10 @@ import click
 
 from cli.config import Config
 from cli.config import _manual_atexit_callbacks
-from cli.internal.commands.build import BuildCommand
-from cli.internal.commands.cli_init import CliInitCommand
-from cli.internal.commands.deploy import DeployApkCommand
-from cli.internal.commands.deploy import DeployConfigCommand
-from cli.internal.commands.deploy import DeployOtaCommand
-from cli.internal.commands.help import HelpCommand
-from cli.internal.commands.init import InitCommand
-from cli.internal.commands.login import LoginCommand
-from cli.internal.commands.logout import LogoutCommand
-from cli.internal.commands.register import RegisterApkCommand
-from cli.internal.commands.register import RegisterMediaCommand
-from cli.internal.commands.register import RegisterProjectCommand
-from cli.internal.commands.stage import StageCommand
-from cli.internal.commands.version import VersionCommand
-from cli.internal.commands.xray import XrayADBProxyCommand
-from cli.internal.commands.xray import XrayBugreportCommand
-from cli.internal.commands.xray import XrayDesktopCommand
-from cli.internal.commands.xray import XrayInstallCommand
-from cli.internal.commands.xray import XrayLogcatCommand
-from cli.internal.commands.xray import XrayPullCommand
-from cli.internal.commands.xray import XrayPushCommand
-from cli.internal.commands.xray import XrayScreencapCommand
-from cli.internal.commands.xray import XrayShellCommand
-from cli.internal.commands.xray import XrayUninstallCommand
-from cli.internal.utils import mason_types
 from cli.internal.utils.logging import handle_set_level
 from cli.internal.utils.logging import install_logger
 from cli.internal.utils.mason_types import AliasedGroup
+from cli.internal.utils.mason_types import Version
 
 pass_config = click.make_pass_decorator(Config, ensure=True)
 
@@ -44,6 +20,7 @@ def _version_callback(ctx, param, value):
     config = ctx.ensure_object(Config)
     install_logger(config.logger, 'INFO')
 
+    from cli.internal.commands.version import VersionCommand
     command = VersionCommand(config)
     command.run()
 
@@ -80,6 +57,7 @@ def cli(config, debug, verbose, api_key, id_token, access_token, no_color):
 
     api_key = api_key or os.environ.get('MASON_API_KEY') or os.environ.get('MASON_TOKEN')
 
+    from cli.internal.commands.cli_init import CliInitCommand
     command = CliInitCommand(config, debug, verbose, no_color, api_key, id_token, access_token)
     command.run()
 
@@ -96,6 +74,7 @@ def init(config):
 
     config.skip_verify = False
 
+    from cli.internal.commands.init import InitCommand
     command = InitCommand(config)
     command.run()
 
@@ -141,6 +120,7 @@ def register_project(config, context):
     Full docs: https://docs.bymason.com/mason-cli/#mason-register-project
     """
 
+    from cli.internal.commands.register import RegisterProjectCommand
     command = RegisterProjectCommand(config, context)
     command.run()
 
@@ -171,6 +151,7 @@ def register_config(config, block, turbo, mason_version, configs):
     Full docs: https://docs.bymason.com/mason-cli/#mason-register-config
     """
 
+    from cli.internal.commands.stage import StageCommand
     command = StageCommand(config, configs, block, turbo, mason_version)
     command.run()
 
@@ -196,6 +177,7 @@ def register_apk(config, apks):
     Full docs: https://docs.bymason.com/mason-cli/#mason-register-apk
     """
 
+    from cli.internal.commands.register import RegisterApkCommand
     command = RegisterApkCommand(config, apks)
     command.run()
 
@@ -214,7 +196,7 @@ def register_media():
 
 @register_media.command('bootanimation')
 @click.argument('name')
-@click.argument('version', type=mason_types.Version())
+@click.argument('version', type=Version())
 @click.argument('media', type=click.Path(exists=True, dir_okay=False))
 @pass_config
 def register_media_bootanimation(config, name, version, media):
@@ -234,6 +216,7 @@ def register_media_bootanimation(config, name, version, media):
     Full docs: https://docs.bymason.com/mason-cli/#mason-register-media-bootanimation
     """
 
+    from cli.internal.commands.register import RegisterMediaCommand
     command = RegisterMediaCommand(config, name, 'bootanimation', version, media)
     command.run()
 
@@ -275,6 +258,7 @@ def build(config, block, turbo, mason_version, project, version):
     config.logger.warning('`mason build` is deprecated as '
                           '`mason register config` now starts a build by default.')
 
+    from cli.internal.commands.build import BuildCommand
     command = BuildCommand(config, project, version, block, turbo, mason_version)
     command.run()
 
@@ -322,6 +306,7 @@ def stage(config, assume_yes, block, turbo, mason_version, skip_verify, configs)
 
     config.logger.warning('`mason stage` is deprecated, use `mason register config` instead.')
 
+    from cli.internal.commands.stage import StageCommand
     command = StageCommand(config, configs, block, turbo, mason_version)
     command.run()
 
@@ -357,7 +342,7 @@ def deploy(config, assume_yes, dry_run, push, no_https, skip_verify):
 
 @deploy.command('config')
 @click.argument('name')
-@click.argument('version', type=mason_types.Version())
+@click.argument('version', type=Version())
 @click.argument('groups', nargs=-1, required=True)
 @pass_config
 def deploy_config(config, name, version, groups):
@@ -387,13 +372,14 @@ def deploy_config(config, name, version, groups):
     Full docs: https://docs.bymason.com/mason-cli/#mason-deploy-config
     """
 
+    from cli.internal.commands.deploy import DeployConfigCommand
     command = DeployConfigCommand(config, name, version, groups)
     command.run()
 
 
 @deploy.command('apk')
 @click.argument('name')
-@click.argument('version', type=mason_types.Version())
+@click.argument('version', type=Version())
 @click.argument('groups', nargs=-1, required=True)
 @pass_config
 def deploy_apk(config, name, version, groups):
@@ -418,6 +404,7 @@ def deploy_apk(config, name, version, groups):
     Full docs: https://docs.bymason.com/mason-cli/#mason-deploy-apk
     """
 
+    from cli.internal.commands.deploy import DeployApkCommand
     command = DeployApkCommand(config, name, version, groups)
     command.run()
 
@@ -453,6 +440,7 @@ def deploy_ota(config, name, version, groups):
                               "Forcing it to 'mason-os'".format(name))
         name = 'mason-os'
 
+    from cli.internal.commands.deploy import DeployOtaCommand
     command = DeployOtaCommand(config, name, version, groups)
     command.run()
 
@@ -517,6 +505,7 @@ def xray_logcat(config, args):
     Full docs: https://docs.bymason.com/mason-cli/#mason-xray-logcat
     """
 
+    from cli.internal.commands.xray import XrayLogcatCommand
     command = XrayLogcatCommand(config, args)
     command.run()
 
@@ -538,6 +527,7 @@ def xray_shell(config, command):
     Full docs: https://docs.bymason.com/mason-cli/#mason-xray-shell
     """
 
+    from cli.internal.commands.xray import XrayShellCommand
     command = XrayShellCommand(config, command)
     command.run()
 
@@ -559,6 +549,7 @@ def xray_push(config, local, remote):
     Full docs: https://docs.bymason.com/mason-cli/#mason-xray-push
     """
 
+    from cli.internal.commands.xray import XrayPushCommand
     command = XrayPushCommand(config, local, remote)
     command.run()
 
@@ -580,6 +571,7 @@ def xray_pull(config, remote, local):
     Full docs: https://docs.bymason.com/mason-cli/#mason-xray-pull
     """
 
+    from cli.internal.commands.xray import XrayPullCommand
     command = XrayPullCommand(config, remote, local)
     command.run()
 
@@ -599,6 +591,7 @@ def xray_install(config, apk):
     Full docs: https://docs.bymason.com/mason-cli/#mason-xray-install
     """
 
+    from cli.internal.commands.xray import XrayInstallCommand
     command = XrayInstallCommand(config, apk)
     command.run()
 
@@ -618,6 +611,7 @@ def xray_uninstall(config, package):
     Full docs: https://docs.bymason.com/mason-cli/#mason-xray-uninstall
     """
 
+    from cli.internal.commands.xray import XrayUninstallCommand
     command = XrayUninstallCommand(config, package)
     command.run()
 
@@ -633,6 +627,7 @@ def xray_desktop(config, port):
     Full docs: https://docs.bymason.com/mason-cli/#mason-xray-desktop
     """
 
+    from cli.internal.commands.xray import XrayDesktopCommand
     command = XrayDesktopCommand(config, port)
     command.run()
 
@@ -648,6 +643,7 @@ def xray_adbproxy(config, port):
     Full docs: https://docs.bymason.com/mason-cli/#mason-xray-adbproxy
     """
 
+    from cli.internal.commands.xray import XrayADBProxyCommand
     command = XrayADBProxyCommand(config, port)
     command.run()
 
@@ -663,6 +659,7 @@ def xray_screencap(config, outputfile):
     Full docs: https://docs.bymason.com/mason-cli/#mason-xray-screencap
     """
 
+    from cli.internal.commands.xray import XrayScreencapCommand
     command = XrayScreencapCommand(config, outputfile)
     command.run()
 
@@ -677,6 +674,7 @@ def xray_bugreport(config):
     Full docs: https://docs.bymason.com/mason-cli/#mason-xray-bugreport
     """
 
+    from cli.internal.commands.xray import XrayBugreportCommand
     command = XrayBugreportCommand(config)
     command.run()
 
@@ -697,6 +695,7 @@ def login(config, api_key, username, password):
     Full docs: https://docs.bymason.com/mason-cli/#mason-login
     """
 
+    from cli.internal.commands.login import LoginCommand
     command = LoginCommand(config, api_key, username, password)
     command.run()
 
@@ -711,6 +710,7 @@ def logout(config):
     Full docs: https://docs.bymason.com/mason-cli/#mason-logout
     """
 
+    from cli.internal.commands.logout import LogoutCommand
     command = LogoutCommand(config)
     command.run()
 
@@ -720,6 +720,7 @@ def logout(config):
 def version(config):
     """Display the Mason CLI version."""
 
+    from cli.internal.commands.version import VersionCommand
     command = VersionCommand(config)
     command.run()
 
@@ -735,6 +736,7 @@ def help(config, command):
       COMMAND the name of the command.
     """
 
+    from cli.internal.commands.help import HelpCommand
     command = HelpCommand(config, command)
     command.run()
 
