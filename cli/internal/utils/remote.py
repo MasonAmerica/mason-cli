@@ -3,6 +3,7 @@ from json.decoder import JSONDecodeError
 
 import click
 import requests
+from requests_toolbelt.utils import dump
 from tqdm import tqdm
 
 from cli.internal.utils.logging import LazyLog
@@ -11,6 +12,12 @@ from cli.internal.utils.logging import LazyLog
 class RequestHandler:
     def __init__(self, config):
         self.config = config
+
+        if os.environ.get('_MASON_CLI_TEST_MODE'):
+            self.http = requests
+        else:
+            self.http = requests.Session()
+            self.http.hooks['response'] = [self._logging_hook]
 
     def get(self, url, *args, **kwargs):
         return self._request_wrapper('get', url, *args, **kwargs)
@@ -25,12 +32,7 @@ class RequestHandler:
             'put', url, data=IterableToFileAdapter(iterable), *args, **kwargs)
 
     def _request_wrapper(self, type, url, *args, **kwargs):
-        self.config.logger.debug(LazyLog(lambda: 'Starting {} request to {} with payload {}'.format(
-            type.upper(), url, kwargs.get('json'))))
         r = self._safe_request(type, url, *args, **kwargs)
-        self.config.logger.debug(LazyLog(
-            lambda: 'Finished request to {} with status code {} '
-                    'and response {}'.format(url, r.status_code, r.text)))
 
         if not r.ok:
             self._handle_failed_response(r)
@@ -42,12 +44,17 @@ class RequestHandler:
                 return r.text
 
     def _safe_request(self, type, *args, **kwargs) -> requests.Response:
-        func = getattr(requests, type)
+        func = getattr(self.http, type)
         try:
             return func(*args, **kwargs)
         except requests.RequestException as e:
-            self.config.logger.debug('{} request to {} failed: {}'.format(type.upper(), args[0], e))
+            self.config.logger.debug('{} request to {} with payload {} failed: {}'.format(
+                type.upper(), args[0], kwargs.get('json'), e))
             raise ApiError('Network request failed. Check you internet connection.')
+
+    # noinspection PyUnusedLocal
+    def _logging_hook(self, r, *args, **kwargs):
+        self.config.logger.debug(LazyLog(lambda: dump.dump_all(r).decode('utf-8')))
 
     def _handle_failed_response(self, r):
         self._handle_status(r.status_code)

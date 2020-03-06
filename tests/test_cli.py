@@ -21,6 +21,8 @@ from tests import __tests_root__
 
 class CliTest(unittest.TestCase):
     def setUp(self):
+        self.maxDiff = None
+
         self.runner = CliRunner()
         _manual_atexit_callbacks.clear()
 

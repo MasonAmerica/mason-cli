@@ -23,6 +23,7 @@ setup(
         'click-log',
         'pick',
         'requests',
+        'requests-toolbelt',
         'tqdm',
         'pyyaml',
         'six',
