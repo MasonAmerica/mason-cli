@@ -92,8 +92,8 @@ class CliInitCommand(Command):
                 if available_update:
                     first_timestamp = first_timestamp or current_time
                 else:
-                    first_timestamp = 0
-                    cache['last_nag_timestamp'] = 0
+                    first_timestamp = None
+                    cache['last_nag_timestamp'] = None
                 cache['first_update_found_timestamp'] = first_timestamp
         else:
             available_update = cache['latest_version']
@@ -104,8 +104,8 @@ class CliInitCommand(Command):
 
         if not self._compare_versions(cache['current_version'], available_update):
             cache['latest_version'] = None
-            cache['last_nag_timestamp'] = 0
-            cache['first_update_found_timestamp'] = 0
+            cache['last_nag_timestamp'] = None
+            cache['first_update_found_timestamp'] = None
             cache.save()
             return
 

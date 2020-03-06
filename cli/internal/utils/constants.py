@@ -32,3 +32,4 @@ UPDATE_CHECKER_CACHE = Store('version-check-cache', {
     'first_update_found_timestamp': 0,
     'update_check_frequency_seconds': 86400  # 1 day
 })
+UPDATE_CHECKER_CACHE['current_version'] = None
