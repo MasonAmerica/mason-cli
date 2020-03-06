@@ -25,13 +25,16 @@ class Store(object):
                 yml = yaml.safe_load(f)
                 if type(yml) is dict:
                     for (k, v) in yml.items():
-                        self._fields[k] = v
+                        self[k] = v
 
     def __getitem__(self, item: str):
         return self._fields.get(item, self._defaults.get(item, None))
 
     def __setitem__(self, key: str, value):
-        self._fields[key] = value
+        if value is None:
+            self._fields.pop(key, None)
+        else:
+            self._fields[key] = value
 
     def clear(self):
         self._fields = {}
