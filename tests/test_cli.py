@@ -35,7 +35,7 @@ class CliTest(unittest.TestCase):
     def test__version__command_prints_info(self):
         result = self.runner.invoke(cli, ['version'])
 
-        self.assertIsNone(result.exception)
+        self.assertIsNone(result.exception, result.output)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             Mason CLI v{}
@@ -46,7 +46,7 @@ class CliTest(unittest.TestCase):
     def test__version__V_flag_prints_info(self):
         result = self.runner.invoke(cli, ['-V'])
 
-        self.assertIsNone(result.exception)
+        self.assertIsNone(result.exception, result.output)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             Mason CLI v{}
@@ -57,7 +57,7 @@ class CliTest(unittest.TestCase):
     def test__version__version_option_prints_info(self):
         result = self.runner.invoke(cli, ['--version'])
 
-        self.assertIsNone(result.exception)
+        self.assertIsNone(result.exception, result.output)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             Mason CLI v{}
@@ -75,7 +75,7 @@ class CliTest(unittest.TestCase):
         UPDATE_CHECKER_CACHE.save()
         result = self.runner.invoke(cli, ['version'], obj=config)
 
-        self.assertIsNone(result.exception)
+        self.assertIsNone(result.exception, result.output)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             Mason CLI v{}
@@ -96,7 +96,7 @@ class CliTest(unittest.TestCase):
     def test__logging__starts_at_info_level_by_default(self):
         result = self.runner.invoke(cli, ['version'])
 
-        self.assertIsNone(result.exception)
+        self.assertIsNone(result.exception, result.output)
         self.assertEqual(result.exit_code, 0)
         self.assertNotIn('Lowest logging level activated.', result.output)
         self.assertNotIn('debug: Debug logging activated.', result.output)
@@ -104,7 +104,7 @@ class CliTest(unittest.TestCase):
     def test__logging__switching_to_debug_level_logs_debug_messages(self):
         result = self.runner.invoke(cli, ['-v', 'debug', 'version'])
 
-        self.assertIsNone(result.exception)
+        self.assertIsNone(result.exception, result.output)
         self.assertEqual(result.exit_code, 0)
         self.assertNotIn('Lowest logging level activated.', result.output)
         self.assertIn('debug: Debug logging activated.', result.output)
@@ -112,7 +112,7 @@ class CliTest(unittest.TestCase):
     def test__logging__switching_to_custom_level_logs_custom_messages(self):
         result = self.runner.invoke(cli, ['-v', '1', 'version'])
 
-        self.assertIsNone(result.exception)
+        self.assertIsNone(result.exception, result.output)
         self.assertEqual(result.exit_code, 0)
         self.assertIn('Lowest logging level activated.', result.output)
         self.assertIn('debug: Debug logging activated.', result.output)
@@ -122,7 +122,7 @@ class CliTest(unittest.TestCase):
         result = self.runner.invoke(cli, ['version'])
         del os.environ['LOGLEVEL']
 
-        self.assertIsNone(result.exception)
+        self.assertIsNone(result.exception, result.output)
         self.assertEqual(result.exit_code, 0)
         self.assertNotIn('Lowest logging level activated.', result.output)
         self.assertIn('debug: Debug logging activated.', result.output)
@@ -132,7 +132,7 @@ class CliTest(unittest.TestCase):
         result = self.runner.invoke(cli, ['version'])
         del os.environ['LOGLEVEL']
 
-        self.assertIsNone(result.exception)
+        self.assertIsNone(result.exception, result.output)
         self.assertEqual(result.exit_code, 0)
         self.assertIn('Lowest logging level activated.', result.output)
         self.assertIn('debug: Debug logging activated.', result.output)
@@ -140,14 +140,14 @@ class CliTest(unittest.TestCase):
     def test__logging__colors_are_enabled_by_default(self):
         result = self.runner.invoke(cli, ['-v', 'debug', 'version'], color=True)
 
-        self.assertIsNone(result.exception)
+        self.assertIsNone(result.exception, result.output)
         self.assertEqual(result.exit_code, 0)
         self.assertIn(b'\x1b[34mdebug: \x1b[0mDebug logging activated.', result.stdout_bytes)
 
     def test__logging__colors_can_be_disabled(self):
         result = self.runner.invoke(cli, ['-v', 'debug', '--no-color', 'version'], color=True)
 
-        self.assertIsNone(result.exception)
+        self.assertIsNone(result.exception, result.output)
         self.assertEqual(result.exit_code, 0)
         self.assertNotIn(b'\x1b[34mdebug: \x1b[0mDebug logging activated.', result.stdout_bytes)
 
@@ -159,7 +159,7 @@ class CliTest(unittest.TestCase):
 
         result = self.runner.invoke(cli, ['version'], obj=config)
 
-        self.assertIsNone(result.exception)
+        self.assertIsNone(result.exception, result.output)
         self.assertEqual(result.exit_code, 0)
 
         self.assertDictEqual(auth_store._fields, {'api_key': 'Foobar'})
@@ -172,7 +172,7 @@ class CliTest(unittest.TestCase):
 
         result = self.runner.invoke(cli, ['--token', 'New foobar', 'version'], obj=config)
 
-        self.assertIsNone(result.exception)
+        self.assertIsNone(result.exception, result.output)
         self.assertEqual(result.exit_code, 0)
 
         self.assertDictEqual(auth_store._fields, {'api_key': 'New foobar'})
@@ -190,7 +190,7 @@ class CliTest(unittest.TestCase):
         result = self.runner.invoke(cli, ['version'], obj=config)
         del os.environ['MASON_API_KEY']
 
-        self.assertIsNone(result.exception)
+        self.assertIsNone(result.exception, result.output)
         self.assertEqual(result.exit_code, 0)
 
         self.assertDictEqual(auth_store._fields, {'api_key': 'New foobar'})
@@ -316,7 +316,7 @@ class CliTest(unittest.TestCase):
 
             result = self.runner.invoke(cli, ['init'], obj=config, input='y\nproject-id')
 
-        self.assertIsNone(result.exception)
+        self.assertIsNone(result.exception, result.output)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
 
@@ -359,7 +359,7 @@ class CliTest(unittest.TestCase):
 
             result = self.runner.invoke(cli, ['init'], obj=config)
 
-        self.assertIsNone(result.exception)
+        self.assertIsNone(result.exception, result.output)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
 
@@ -406,7 +406,7 @@ class CliTest(unittest.TestCase):
 
             result = self.runner.invoke(cli, ['init'], obj=config, input='y\nfake-dir\napps, apps2')
 
-        self.assertIsNone(result.exception)
+        self.assertIsNone(result.exception, result.output)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
 
@@ -560,7 +560,7 @@ class CliTest(unittest.TestCase):
             'register', '--dry-run', 'config', config_file
         ], obj=config)
 
-        self.assertIsNone(result.exception)
+        self.assertIsNone(result.exception, result.output)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             ------------ OS Config ------------
@@ -579,7 +579,7 @@ class CliTest(unittest.TestCase):
 
         result = self.runner.invoke(cli, ['register', 'config', config_file], obj=config)
 
-        self.assertIsNone(result.exception)
+        self.assertIsNone(result.exception, result.output)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             ------------ OS Config ------------
@@ -607,7 +607,7 @@ class CliTest(unittest.TestCase):
 
         result = self.runner.invoke(cli, ['register', 'config', config_file], obj=config)
 
-        self.assertIsNone(result.exception)
+        self.assertIsNone(result.exception, result.output)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             ------------ OS Config ------------
@@ -642,7 +642,7 @@ class CliTest(unittest.TestCase):
             'register', 'config', config_file1, config_file2
         ], obj=config)
 
-        self.assertIsNone(result.exception)
+        self.assertIsNone(result.exception, result.output)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             ------------ OS Config ------------
@@ -686,7 +686,7 @@ class CliTest(unittest.TestCase):
 
         result = self.runner.invoke(cli, ['register', 'config', '--await', config_file], obj=config)
 
-        self.assertIsNone(result.exception)
+        self.assertIsNone(result.exception, result.output)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             ------------ OS Config ------------
@@ -723,7 +723,7 @@ class CliTest(unittest.TestCase):
             'register', 'config', '--await', config_file1, config_file2
         ], obj=config)
 
-        self.assertIsNone(result.exception)
+        self.assertIsNone(result.exception, result.output)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             ------------ OS Config ------------
@@ -837,7 +837,7 @@ class CliTest(unittest.TestCase):
 
         result = self.runner.invoke(cli, ['register', '--dry-run', 'apk', apk_file], obj=config)
 
-        self.assertIsNone(result.exception)
+        self.assertIsNone(result.exception, result.output)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             ------------ App ------------
@@ -855,7 +855,7 @@ class CliTest(unittest.TestCase):
 
         result = self.runner.invoke(cli, ['register', 'apk', apk_file], obj=config)
 
-        self.assertIsNone(result.exception)
+        self.assertIsNone(result.exception, result.output)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             ------------ App ------------
@@ -881,7 +881,7 @@ class CliTest(unittest.TestCase):
 
         result = self.runner.invoke(cli, ['register', 'apk', apk_file1, apk_file2], obj=config)
 
-        self.assertIsNone(result.exception)
+        self.assertIsNone(result.exception, result.output)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             ------------ App ------------
@@ -974,7 +974,7 @@ class CliTest(unittest.TestCase):
             'bootanimation', 'Anim name', '1', media_file
         ], obj=config)
 
-        self.assertIsNone(result.exception)
+        self.assertIsNone(result.exception, result.output)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             ------------ Boot animation ------------
@@ -994,7 +994,7 @@ class CliTest(unittest.TestCase):
             'bootanimation', 'Anim name', '1', media_file
         ], obj=config)
 
-        self.assertIsNone(result.exception)
+        self.assertIsNone(result.exception, result.output)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             ------------ Boot animation ------------
@@ -1018,7 +1018,7 @@ class CliTest(unittest.TestCase):
             'bootanimation', 'Anim name', 'latest', media_file
         ], obj=config)
 
-        self.assertIsNone(result.exception)
+        self.assertIsNone(result.exception, result.output)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             ------------ Boot animation ------------
@@ -1117,7 +1117,7 @@ class CliTest(unittest.TestCase):
         with self._cd(simple_project):
             result = self.runner.invoke(cli, ['register', '--dry-run', 'project'], obj=config)
 
-        self.assertIsNone(result.exception)
+        self.assertIsNone(result.exception, result.output)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             ------------ App ------------
@@ -1147,7 +1147,7 @@ class CliTest(unittest.TestCase):
         with self._cd(no_app_project):
             result = self.runner.invoke(cli, ['register', 'project'], obj=config)
 
-        self.assertIsNone(result.exception)
+        self.assertIsNone(result.exception, result.output)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             ------------ App ------------
@@ -1245,7 +1245,7 @@ class CliTest(unittest.TestCase):
         with self._cd(simple_project):
             result = self.runner.invoke(cli, ['register', 'project'], obj=config)
 
-        self.assertIsNone(result.exception)
+        self.assertIsNone(result.exception, result.output)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             ------------ App ------------
@@ -1329,7 +1329,7 @@ class CliTest(unittest.TestCase):
         with self._cd(simple_project):
             result = self.runner.invoke(cli, ['register', 'project'], obj=config)
 
-        self.assertIsNone(result.exception)
+        self.assertIsNone(result.exception, result.output)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             ------------ App ------------
@@ -1486,7 +1486,7 @@ class CliTest(unittest.TestCase):
 
         result = self.runner.invoke(cli, ['build', 'project-id', '1'], obj=config)
 
-        self.assertIsNone(result.exception)
+        self.assertIsNone(result.exception, result.output)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             warning: `mason build` is deprecated as `mason register config` now starts a build by default.
@@ -1506,7 +1506,7 @@ class CliTest(unittest.TestCase):
 
         result = self.runner.invoke(cli, ['build', '--await', 'project-id', '1'], obj=config)
 
-        self.assertIsNone(result.exception)
+        self.assertIsNone(result.exception, result.output)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             warning: `mason build` is deprecated as `mason register config` now starts a build by default.
@@ -1578,7 +1578,7 @@ class CliTest(unittest.TestCase):
 
         result = self.runner.invoke(cli, ['stage', config_file], obj=config)
 
-        self.assertIsNone(result.exception)
+        self.assertIsNone(result.exception, result.output)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             warning: `mason stage` is deprecated, use `mason register config` instead.
@@ -1610,7 +1610,7 @@ class CliTest(unittest.TestCase):
 
         result = self.runner.invoke(cli, ['stage', '--await', config_file], obj=config)
 
-        self.assertIsNone(result.exception)
+        self.assertIsNone(result.exception, result.output)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             warning: `mason stage` is deprecated, use `mason register config` instead.
@@ -1710,7 +1710,7 @@ class CliTest(unittest.TestCase):
             'project-id', '1', 'group'
         ], obj=config)
 
-        self.assertIsNone(result.exception)
+        self.assertIsNone(result.exception, result.output)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             ------------ Deployment ------------
@@ -1731,7 +1731,7 @@ class CliTest(unittest.TestCase):
             'project-id', '1', 'group'
         ], obj=config)
 
-        self.assertIsNone(result.exception)
+        self.assertIsNone(result.exception, result.output)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             ------------ Deployment ------------
@@ -1755,7 +1755,7 @@ class CliTest(unittest.TestCase):
             'project-id', '1', 'group1', 'group2', 'group3'
         ], obj=config)
 
-        self.assertIsNone(result.exception)
+        self.assertIsNone(result.exception, result.output)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             ------------ Deployment ------------
@@ -1780,7 +1780,7 @@ class CliTest(unittest.TestCase):
             'project-id', 'latest', 'group'
         ], obj=config)
 
-        self.assertIsNone(result.exception)
+        self.assertIsNone(result.exception, result.output)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             ------------ Deployment ------------
@@ -1804,7 +1804,7 @@ class CliTest(unittest.TestCase):
             'project-id', '1', 'group'
         ], obj=config)
 
-        self.assertIsNone(result.exception)
+        self.assertIsNone(result.exception, result.output)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             ------------ Deployment ------------
@@ -1901,7 +1901,7 @@ class CliTest(unittest.TestCase):
             'com.example.app', '1', 'group'
         ], obj=config)
 
-        self.assertIsNone(result.exception)
+        self.assertIsNone(result.exception, result.output)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             ------------ Deployment ------------
@@ -1922,7 +1922,7 @@ class CliTest(unittest.TestCase):
             'com.example.app', '1', 'group'
         ], obj=config)
 
-        self.assertIsNone(result.exception)
+        self.assertIsNone(result.exception, result.output)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             ------------ Deployment ------------
@@ -1946,7 +1946,7 @@ class CliTest(unittest.TestCase):
             'com.example.app', '1', 'group1', 'group2', 'group3'
         ], obj=config)
 
-        self.assertIsNone(result.exception)
+        self.assertIsNone(result.exception, result.output)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             ------------ Deployment ------------
@@ -1971,7 +1971,7 @@ class CliTest(unittest.TestCase):
             'com.example.app', 'latest', 'group'
         ], obj=config)
 
-        self.assertIsNone(result.exception)
+        self.assertIsNone(result.exception, result.output)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             ------------ Deployment ------------
@@ -1995,7 +1995,7 @@ class CliTest(unittest.TestCase):
             'com.example.app', '1', 'group'
         ], obj=config)
 
-        self.assertIsNone(result.exception)
+        self.assertIsNone(result.exception, result.output)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             ------------ Deployment ------------
@@ -2069,7 +2069,7 @@ class CliTest(unittest.TestCase):
             'mason-os', '2.0.0', 'group'
         ], obj=config)
 
-        self.assertIsNone(result.exception)
+        self.assertIsNone(result.exception, result.output)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             ------------ Deployment ------------
@@ -2090,7 +2090,7 @@ class CliTest(unittest.TestCase):
             'mason-os', '2.0.0', 'group'
         ], obj=config)
 
-        self.assertIsNone(result.exception)
+        self.assertIsNone(result.exception, result.output)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             ------------ Deployment ------------
@@ -2114,7 +2114,7 @@ class CliTest(unittest.TestCase):
             'mason-os', '2.0.0', 'group1', 'group2', 'group3'
         ], obj=config)
 
-        self.assertIsNone(result.exception)
+        self.assertIsNone(result.exception, result.output)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             ------------ Deployment ------------
@@ -2138,7 +2138,7 @@ class CliTest(unittest.TestCase):
             'mason-os', '2.0.0', 'group'
         ], obj=config)
 
-        self.assertIsNone(result.exception)
+        self.assertIsNone(result.exception, result.output)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             ------------ Deployment ------------
@@ -2166,7 +2166,7 @@ class CliTest(unittest.TestCase):
             'invalid', '2.0.0', 'group'
         ], obj=config)
 
-        self.assertIsNone(result.exception)
+        self.assertIsNone(result.exception, result.output)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             warning: Unknown name 'invalid' for 'ota' deployments. Forcing it to 'mason-os'
@@ -2200,7 +2200,7 @@ class CliTest(unittest.TestCase):
             '--password', 'pass'
         ], obj=config)
 
-        self.assertIsNone(result.exception)
+        self.assertIsNone(result.exception, result.output)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             Successfully logged in.
@@ -2229,7 +2229,7 @@ class CliTest(unittest.TestCase):
             '--password', 'pass'
         ], obj=config)
 
-        self.assertIsNone(result.exception)
+        self.assertIsNone(result.exception, result.output)
         self.assertEqual(result.exit_code, 0)
 
         auth_store.clear()
@@ -2249,7 +2249,7 @@ class CliTest(unittest.TestCase):
 
         result = self.runner.invoke(cli, ['logout'], obj=config)
 
-        self.assertIsNone(result.exception)
+        self.assertIsNone(result.exception, result.output)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             Successfully logged out.
