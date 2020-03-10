@@ -482,7 +482,7 @@ class CliTest(unittest.TestCase):
             -----------------------------------
 
             Continue registration? [Y/n]: 
-            error: Artifact already exists and cannot be overwritten
+            error: OS Config 'project-id' at version 1 has already been registered and cannot be overwritten.
             Aborted!
         """.format(config_file)))
 
@@ -805,7 +805,7 @@ class CliTest(unittest.TestCase):
             -----------------------------
 
             Continue registration? [Y/n]: 
-            error: Artifact already exists and cannot be overwritten
+            error: App 'com.example.unittestapp1' at version 1 has already been registered and cannot be overwritten.
             Aborted!
         """.format(apk_file)))
 
@@ -1176,13 +1176,26 @@ class CliTest(unittest.TestCase):
             Build completed for OS Config 'project-id'.
         """.format(apk_file, config_file)))
 
-    def test__register_project__config_already_present_failed(self):
+    def test__register_project__config_already_present_fails(self):
+        # noinspection PyUnusedLocal
+        def artifact_response(type, name, version):
+            if type == 'apk':
+                return {
+                    'version': '1',
+                    'checksum': {'sha1': '9d66f37de677405cda3d01a3fab74879f816a65e'}
+                }
+
+        # noinspection PyUnusedLocal
+        def upload_response(binary, artifact):
+            if artifact.get_type() == 'config':
+                raise ApiError('Artifact already exists and cannot be overwritten')
+
         simple_project = os.path.join(__tests_root__, 'res/simple-project')
         config_file = os.path.join(__tests_root__, 'res/simple-project/mason.yml')
         apk_file = os.path.join(__tests_root__, 'res/simple-project/v1.apk')
         api = MagicMock()
-        api.upload_artifact = MagicMock(side_effect=ApiError(
-            'Artifact already exists and cannot be overwritten'))
+        api.get_artifact = MagicMock(side_effect=artifact_response)
+        api.upload_artifact = MagicMock(side_effect=upload_response)
         config = Config(auth_store=self._initialized_auth_store(), api=api)
 
         with self._cd(simple_project):
@@ -1208,21 +1221,24 @@ class CliTest(unittest.TestCase):
 
             Continue registration? [Y/n]: 
             App 'com.example.unittestapp1' already registered, ignoring.
-            error: Artifact already exists and cannot be overwritten
+            error: OS Config 'project-id2' at version 2 has already been registered and cannot be overwritten.
             Aborted!
         """.format(apk_file, config_file)))
 
-    def test__register_project__artifact_already_present_is_ignored(self):
+    def test__register_project__matching_apk_already_present_is_ignored(self):
         # noinspection PyUnusedLocal
-        def api_response(binary, artifact):
-            if artifact.get_type() == 'apk':
-                raise ApiError('Artifact already exists and cannot be overwritten')
+        def api_response(type, name, version):
+            if type == 'apk':
+                return {
+                    'version': '1',
+                    'checksum': {'sha1': '9d66f37de677405cda3d01a3fab74879f816a65e'}
+                }
 
         simple_project = os.path.join(__tests_root__, 'res/simple-project')
         config_file = os.path.join(__tests_root__, 'res/simple-project/mason.yml')
         apk_file = os.path.join(__tests_root__, 'res/simple-project/v1.apk')
         api = MagicMock()
-        api.upload_artifact = MagicMock(side_effect=api_response)
+        api.get_artifact = MagicMock(side_effect=api_response)
         api.get_build = MagicMock(return_value={'data': {'status': 'COMPLETED'}})
         config = Config(auth_store=self._initialized_auth_store(), api=api)
 
@@ -1256,6 +1272,46 @@ class CliTest(unittest.TestCase):
             https://platform.bymason.com/controller/projects/project-id2
 
             Build completed for OS Config 'project-id2'.
+        """.format(apk_file, config_file)))
+
+    def test__register_project__non_matching_apk_already_present_fails(self):
+        # noinspection PyUnusedLocal
+        def api_response(binary, artifact):
+            if artifact.get_type() == 'apk':
+                raise ApiError('Artifact already exists and cannot be overwritten')
+
+        simple_project = os.path.join(__tests_root__, 'res/simple-project')
+        config_file = os.path.join(__tests_root__, 'res/simple-project/mason.yml')
+        apk_file = os.path.join(__tests_root__, 'res/simple-project/v1.apk')
+        api = MagicMock()
+        api.upload_artifact = MagicMock(side_effect=api_response)
+        api.get_build = MagicMock(return_value={'data': {'status': 'COMPLETED'}})
+        config = Config(auth_store=self._initialized_auth_store(), api=api)
+
+        with self._cd(simple_project):
+            result = self.runner.invoke(cli, ['register', 'project'], obj=config)
+
+        self.assertIsInstance(result.exception, SystemExit)
+        self.assertEqual(result.exit_code, 1)
+        self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
+            ------------ App ------------
+            File path: {}
+            Package name: com.example.unittestapp1
+            Version name: 1.0
+            Version code: 1
+            -----------------------------
+
+            ------------ OS Config ------------
+            File path: {}
+            Name: project-id2
+            Version: 2
+            App(s):
+              - 'com.example.unittestapp1' at version 1
+            -----------------------------------
+
+            Continue registration? [Y/n]: 
+            error: App 'com.example.unittestapp1' at version 1 has already been registered and cannot be overwritten.
+            Aborted!
         """.format(apk_file, config_file)))
 
     def test__register_project__simple_project_is_registered_and_built(self):
@@ -1329,7 +1385,7 @@ class CliTest(unittest.TestCase):
         with self._cd(complex_project):
             result = self.runner.invoke(cli, ['register', 'project'], obj=config)
 
-        self.assertIsNone(result.exception)
+        self.assertIsNone(result.exception, result.output)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             ------------ App ------------
@@ -1380,7 +1436,7 @@ class CliTest(unittest.TestCase):
             Continue registration? [Y/n]: 
             App 'com.example.unittestapp1' registered.
             App 'com.example.unittestapp1' registered.
-            Boot animation 'anim-1' registered.
+            Boot animation 'anim-1' already registered, ignoring.
             Boot animation 'anim-2' registered.
             OS Config 'project-id2' registered.
             OS Config 'project-id3' registered.

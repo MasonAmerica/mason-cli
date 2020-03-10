@@ -60,24 +60,26 @@ class RegisterCommand(Command):
         pass
 
     def register_artifact(self, binary, artifact: IArtifact):
+        if getattr(artifact, 'already_registered', None):
+            with tqdm.external_write_mode(nolock=True):
+                self.config.logger.info("{} '{}' already registered, ignoring.".format(
+                    artifact.get_pretty_type(), artifact.get_name()))
+            return
+
         try:
             self.config.api.upload_artifact(binary, artifact)
-            with tqdm.external_write_mode(nolock=True):
-                self.config.logger.info("{} '{}' registered.".format(
-                    artifact.get_pretty_type(), artifact.get_name()))
         except ApiError as e:
-            is_in_project_mode = getattr(self.config, 'project_mode', None)
-            can_skip_upload = is_in_project_mode and \
-                e.message and 'already exists' in e.message and \
-                artifact.get_type() != 'config'
-
-            if can_skip_upload:
-                with tqdm.external_write_mode(nolock=True):
-                    self.config.logger.info("{} '{}' already registered, ignoring.".format(
-                        artifact.get_pretty_type(), artifact.get_name()))
-                pass
+            if e.message and 'already exists' in e.message:
+                raise ApiError(
+                    "{} '{}' at version {} has already been registered and cannot be "
+                    "overwritten.".format(
+                        artifact.get_pretty_type(), artifact.get_name(), artifact.get_version()))
             else:
                 raise e
+
+        with tqdm.external_write_mode(nolock=True):
+            self.config.logger.info("{} '{}' registered.".format(
+                artifact.get_pretty_type(), artifact.get_name()))
 
 
 class RegisterConfigCommand(RegisterCommand):
@@ -139,7 +141,7 @@ class RegisterConfigCommand(RegisterCommand):
         if config.get_version() != 'latest':
             return
 
-        latest_config = self.config.api.get_highest_artifact(config.get_name(), 'config')
+        latest_config = self.config.api.get_highest_artifact('config', config.get_name())
         with lock:
             if latest_config:
                 raw_config['os']['version'] = int(latest_config.get('version')) + 1
@@ -184,14 +186,21 @@ class RegisterApkCommand(RegisterCommand):
         return super(RegisterApkCommand, self).run()
 
     def prepare(self):
-        apks = []
-        for file in self.apk_files:
-            apks.append(Apk.parse(self.config, file))
+        prepare_ops = self.start_prepare_ops()
+        apks = wait_for_futures(self.config.executor, prepare_ops)
         return apks, apks
 
     def register(self, apks):
         register_ops = self.start_register_ops(apks)
         wait_for_futures(self.config.executor, register_ops)
+
+    def start_prepare_ops(self):
+        apk_ops = []
+
+        for file in self.apk_files:
+            apk_ops.append(self.config.executor.submit(self.prepare_apk, file))
+
+        return apk_ops
 
     def start_register_ops(self, apks):
         register_ops = []
@@ -202,6 +211,19 @@ class RegisterApkCommand(RegisterCommand):
 
         return register_ops
 
+    def prepare_apk(self, binary):
+        apk = Apk.parse(self.config, binary)
+
+        is_in_project_mode = getattr(self.config, 'project_mode', None)
+        if is_in_project_mode:
+            apk_artifact = self.config.api.get_artifact(
+                apk.get_type(), apk.get_name(), apk.get_version())
+            checksum = apk_artifact.get('checksum') or {}
+            if checksum.get('sha1') == hash_file(binary, 'sha1'):
+                apk.already_registered = True
+
+        return apk
+
 
 class RegisterMediaCommand(RegisterCommand):
     def __init__(self, config: Config, name: str, type: str, version: str, media_file):
@@ -211,6 +233,8 @@ class RegisterMediaCommand(RegisterCommand):
         self.version = version
         self.media_file = media_file
 
+        self.already_registered = False
+
     @Command.helper('register media')
     def run(self):
         return super(RegisterMediaCommand, self).run()
@@ -218,6 +242,7 @@ class RegisterMediaCommand(RegisterCommand):
     def prepare(self):
         self._maybe_inject_version()
         media = Media.parse(self.config, self.name, self.type, self.version, self.media_file)
+        media.already_registered = self.already_registered
 
         return [media], media
 
@@ -228,12 +253,13 @@ class RegisterMediaCommand(RegisterCommand):
         if self.version != 'latest':
             return
 
-        latest_media = self.config.api.get_highest_artifact(self.name, 'media')
+        latest_media = self.config.api.get_highest_artifact('media', self.name)
         if latest_media:
             is_in_project_mode = getattr(self.config, 'project_mode', None)
             checksum = latest_media.get('checksum') or {}
             if is_in_project_mode and checksum.get('sha1') == hash_file(self.media_file, 'sha1'):
                 self.version = int(latest_media.get('version'))
+                self.already_registered = True
             else:
                 self.version = int(latest_media.get('version')) + 1
         else:
@@ -271,16 +297,15 @@ class RegisterProjectCommand(RegisterCommand):
             anim_registrations.append(RegisterMediaCommand(
                 self.config, anim.get('name'), 'bootanimation', 'latest', anim.get('file')))
 
-        apk_prep = self.config.executor.submit(apk_registration.prepare)
+        apk_preps = apk_registration.start_prepare_ops()
         media_preps = []
         for reg in anim_registrations:
             media_preps.append(self.config.executor.submit(reg.prepare))
 
-        wait_for_futures(self.config.executor, [apk_prep, *media_preps])
-        apks = apk_prep.result()[0]
+        apks = wait_for_futures(self.config.executor, apk_preps)
         media_artifacts = []
-        for prep in media_preps:
-            media_artifacts.append(prep.result()[1])
+        for prep in wait_for_futures(self.config.executor, media_preps):
+            media_artifacts.append(prep[1])
 
         config_files = []
         for raw_config_file in raw_config_files:
