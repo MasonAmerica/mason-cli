@@ -261,7 +261,8 @@ class XRay(object):
                     self._logger.error("Connection to the device timed out")
 
             except Exception as exc:
-                raise click.Abort(exc)
+                self._logger.debug(exc, exc_info=True)
+                self._logger.error(exc)
 
             finally:
                 adb.close()
