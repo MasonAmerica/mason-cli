@@ -14,6 +14,8 @@ from adb_shell.adb_device import AdbDevice
 from adb_shell.adb_device import _AdbTransactionInfo
 from adb_shell.adb_message import AdbMessage
 from adb_shell.auth.keygen import keygen
+from adb_shell.exceptions import AdbCommandFailureException
+from adb_shell.exceptions import PushFailedError
 from adb_shell.exceptions import TcpTimeoutException
 
 from cli.config import Config
@@ -353,7 +355,14 @@ class XRay(object):
         self._run_in_reactor(self._push, local, remote)
 
     def _push(self, device, local, remote):
-        self._with_progressbar(remote, device.push, local, remote)
+        try:
+            self._with_progressbar(remote, device.push, local, remote)
+        except PushFailedError as e:
+            if not remote.startswith('/') and 'No such file or directory' in str(e):
+                remote = '/sdcard/' + remote
+                self._with_progressbar(remote, device.push, local, remote)
+            else:
+                raise e
 
     def pull(self, remote, dest_file=None):
         self._run_in_reactor(self._pull, remote, dest_file=dest_file)
@@ -362,7 +371,14 @@ class XRay(object):
         if dest_file is None:
             dest_file = os.path.basename(remote)
 
-        return self._with_progressbar(remote, device.pull, remote, dest_file=str(dest_file))
+        try:
+            return self._with_progressbar(remote, device.pull, remote, dest_file=str(dest_file))
+        except AdbCommandFailureException as e:
+            if not remote.startswith('/') and 'No such file or directory' in str(e):
+                remote = '/sdcard/' + remote
+                return self._with_progressbar(remote, device.pull, remote, dest_file=str(dest_file))
+            else:
+                raise e
 
     def install(self, local_path, replace_existing=True, grant_permissions=False, args=None):
         return self._run_in_reactor(self._install, local_path,
