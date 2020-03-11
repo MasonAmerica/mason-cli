@@ -407,7 +407,7 @@ class RegisterProjectCommand(RegisterCommand):
             raise click.Abort()
 
     def _parse_context(self, masonrc):
-        with open(masonrc, 'r') as f:
+        with open(masonrc, encoding='utf-8-sig') as f:
             context = yaml.safe_load(f)
             if type(context) is not dict:
                 self.config.logger.error('.masonrc file is corrupt.')

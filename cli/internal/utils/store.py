@@ -21,7 +21,7 @@ class Store(object):
 
     def restore(self):
         if os.path.exists(self._file):
-            with open(self._file, 'r') as f:
+            with open(self._file, encoding='utf-8-sig') as f:
                 yml = yaml.safe_load(f)
                 if type(yml) is dict:
                     for (k, v) in yml.items():

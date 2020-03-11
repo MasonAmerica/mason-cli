@@ -49,7 +49,7 @@ class InitCommandTest(unittest.TestCase):
 
         command._write_files({}, [])
 
-        with open(os.path.join(working_dir, '.masonrc'), 'r') as f:
+        with open(os.path.join(working_dir, '.masonrc')) as f:
             yml = yaml.safe_load(f)
 
         self.assertDictEqual(yml, {
@@ -63,7 +63,7 @@ class InitCommandTest(unittest.TestCase):
 
         command._write_files({}, ['a', 'b'])
 
-        with open(os.path.join(working_dir, '.masonrc'), 'r') as f:
+        with open(os.path.join(working_dir, '.masonrc')) as f:
             yml = yaml.safe_load(f)
 
         self.assertDictEqual(yml, {
@@ -77,7 +77,7 @@ class InitCommandTest(unittest.TestCase):
 
         command._write_files({'a': {'b': True}}, [])
 
-        with open(os.path.join(working_dir, 'mason.yml'), 'r') as f:
+        with open(os.path.join(working_dir, 'mason.yml')) as f:
             yml = yaml.safe_load(f)
 
         self.assertDictEqual(yml, {

@@ -6,7 +6,7 @@ from setuptools import setup
 root = os.path.dirname(os.path.realpath(__file__))
 
 # Read version
-with open(os.path.join(root, "VERSION"), "r") as f:
+with open(os.path.join(root, "VERSION")) as f:
     version = f.read().strip()
 
 # Write version.py

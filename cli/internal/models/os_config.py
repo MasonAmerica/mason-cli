@@ -27,7 +27,7 @@ class OSConfig(IArtifact):
 
     @staticmethod
     def parse(config, config_yaml):
-        with open(config_yaml) as file:
+        with open(config_yaml, encoding='utf-8-sig') as file:
             try:
                 ecosystem = yaml.safe_load(file)
             except yaml.YAMLError as err:

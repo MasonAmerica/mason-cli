@@ -64,7 +64,7 @@ class RegisterCommandTest(unittest.TestCase):
         command = RegisterConfigCommand(self.config, [input_config_file], working_dir)
 
         command.run()
-        with open(config_file, 'r') as f:
+        with open(config_file) as f:
             yml = yaml.safe_load(f)
 
         self.assertDictEqual(yml, {
@@ -104,7 +104,7 @@ class RegisterCommandTest(unittest.TestCase):
         command = RegisterConfigCommand(self.config, [input_config_file], working_dir)
 
         command.run()
-        with open(config_file, 'r') as f:
+        with open(config_file) as f:
             yml = yaml.safe_load(f)
 
         self.assertDictEqual(yml, {
@@ -199,7 +199,7 @@ class RegisterCommandTest(unittest.TestCase):
         command = RegisterProjectCommand(self.config, simple_project, working_dir)
 
         command.run()
-        with open(config_file, 'r') as f:
+        with open(config_file) as f:
             yml = yaml.safe_load(f)
 
         self.assertDictEqual(yml, {
@@ -226,7 +226,7 @@ class RegisterCommandTest(unittest.TestCase):
         command = RegisterProjectCommand(self.config, complex_project, working_dir)
 
         command.run()
-        with open(config_file, 'r') as f:
+        with open(config_file) as f:
             yml = yaml.safe_load(f)
 
         self.assertDictEqual(yml, {
