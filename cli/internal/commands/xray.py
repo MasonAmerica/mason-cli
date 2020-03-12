@@ -19,6 +19,7 @@ from adb_shell.exceptions import PushFailedError
 from adb_shell.exceptions import TcpTimeoutException
 
 from cli.config import Config
+from cli.internal.utils.remote import build_url
 
 try:
     from adb_shell.auth import sign_cryptography
@@ -203,7 +204,7 @@ class XRay(object):
         self._auth = {'Authorization': 'Basic {}'.format(config.auth_store['api_key'])}
         self._progress = None
         self._cur_bytes = 0
-        self._url = config.endpoints_store['xray_url'] + "/{}/{}"
+        self._url = build_url(config.endpoints_store, 'xray_url') + "/{}/{}"
         self._logger = config.logger
         self._adbkey = os.path.join(click.get_app_dir('Mason CLI'), 'adbkey')
         self._awaiting_auth = False

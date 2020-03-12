@@ -7,6 +7,17 @@ from requests_toolbelt.utils import dump
 from tqdm import tqdm
 
 from cli.internal.utils.logging import LazyLog
+from cli.internal.utils.store import Store
+
+
+def build_url(endpoints: Store, name: str, prefix='api_url_base'):
+    full_url = endpoints[name]
+    if not full_url:
+        url_path = endpoints[name + '_path']
+        if url_path:
+            full_url = endpoints[prefix] + url_path
+
+    return full_url
 
 
 class RequestHandler:
@@ -116,7 +127,8 @@ class RequestHandler:
                             self.config.logger.debug(e)
                             project_id = ''
 
-                        base_url = self.config.endpoints_store['console_create_url']
+                        base_url = build_url(
+                            self.config.endpoints_store, 'console_create_url', 'platform_url_base')
                         url = base_url + '/project?name={}'.format(project_id)
 
                         self.config.logger.error(item['message'])

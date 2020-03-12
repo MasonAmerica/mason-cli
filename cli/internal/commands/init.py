@@ -9,6 +9,7 @@ import yaml
 from cli.config import Config
 from cli.internal.commands.command import Command
 from cli.internal.models.apk import Apk
+from cli.internal.utils.remote import build_url
 from cli.internal.utils.validation import validate_credentials
 
 
@@ -73,7 +74,8 @@ class InitCommand(Command):
         if index == 0:
             id = click.prompt('Enter your new project ID')
 
-            base_url = self.config.endpoints_store['console_create_url']
+            base_url = build_url(
+                self.config.endpoints_store, 'console_create_url', 'platform_url_base')
             url = base_url + '/project?name={}'.format(id)
             self.config.interactivity.open(url)
 

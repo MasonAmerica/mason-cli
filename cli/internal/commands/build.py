@@ -7,6 +7,7 @@ import click
 from cli.config import Config
 from cli.internal.commands.command import Command
 from cli.internal.utils.remote import ApiError
+from cli.internal.utils.remote import build_url
 from cli.internal.utils.validation import validate_credentials
 
 
@@ -41,12 +42,13 @@ class BuildCommand(Command):
 
         build = self.config.api.start_build(self.project, self.version, self.mason_version)
 
-        console_hostname = self.urlparse(self.config.endpoints_store['deploy_url']).hostname
+        project_url = build_url(
+            self.config.endpoints_store, 'console_projects_url', 'platform_url_base')
         self.config.logger.info(inspect.cleandoc("""
             Build queued for OS Config '{0}'.
             You can see the status of your build at
-            https://{1}/controller/projects/{0}
-        """.format(self.project, console_hostname)))
+            {1}/{0}
+        """.format(self.project, project_url)))
 
         if self.block:
             self._wait_for_completion(build)

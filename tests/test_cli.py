@@ -10,6 +10,7 @@ from click.testing import CliRunner
 from mock import MagicMock
 
 from cli.config import _manual_atexit_callbacks
+from cli.internal.utils.constants import ENDPOINTS
 from cli.internal.utils.constants import UPDATE_CHECKER_CACHE
 from cli.internal.utils.remote import ApiError
 from cli.internal.utils.store import Store
@@ -2273,8 +2274,8 @@ class CliTest(unittest.TestCase):
             return auth_store
 
     def _initialized_endpoints_store(self):
-        endpoints_store = MagicMock()
-        endpoints_store.__getitem__ = MagicMock(return_value='https://platform.bymason.com')
+        endpoints_store = ENDPOINTS
+        endpoints_store.clear()
         return endpoints_store
 
     @contextlib.contextmanager

@@ -7,6 +7,7 @@ import time
 import click
 
 from cli.internal.utils.remote import RequestHandler
+from cli.internal.utils.remote import build_url
 from cli.internal.utils.store import Store
 from cli.version import __version__
 
@@ -45,7 +46,7 @@ class MasonAnalytics:
             }
         }
 
-        url = self.config.endpoints_store['analytics_url']
+        url = build_url(self.config.endpoints_store, 'analytics_url')
         try:
             self.handler.post(url, headers=headers, json=payload)
         except Exception as e:
@@ -70,7 +71,7 @@ class MasonAnalytics:
             'configs2': mapped_configs
         }
 
-        url = self.config.endpoints_store['analytics_url']
+        url = build_url(self.config.endpoints_store, 'analytics_url')
         try:
             self.handler.post(url, headers=headers, json=payload)
         except Exception as e:
@@ -82,7 +83,7 @@ class MasonAnalytics:
 
         self.ci = True if os.getenv("CI") else False
 
-        sample_url = self.config.endpoints_store['deploy_url']
+        sample_url = build_url(self.config.endpoints_store, 'deploy_url')
         if 'development' in sample_url:
             self.environment = 'development'
         elif 'staging' in sample_url:

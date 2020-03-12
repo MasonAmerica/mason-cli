@@ -5,6 +5,7 @@ from rfc3339 import parse_datetime
 
 from cli.internal.utils.hashing import hash_file
 from cli.internal.utils.remote import ApiError
+from cli.internal.utils.remote import build_url
 
 
 class MasonApi:
@@ -70,7 +71,7 @@ class MasonApi:
             'Authorization': 'Bearer {}'.format(self.auth_store['id_token'])
         }
 
-        url = self.endpoints_store['projects_url'] + '/{}'.format(customer)
+        url = self._get_base_url('projects_url') + '/{}'.format(customer)
         return self.handler.get(url, headers=headers)
 
     def _get_signed_url(self, customer, binary, artifact):
@@ -81,7 +82,7 @@ class MasonApi:
             'Authorization': 'Bearer {}'.format(self.auth_store['id_token'])
         }
 
-        url = self.endpoints_store['registry_signed_url'] + '/{0}/{1}/{2}?type={3}'.format(
+        url = self._get_base_url('registry_signed_url') + '/{0}/{1}/{2}?type={3}'.format(
             customer, artifact.get_name(), artifact.get_version(), artifact.get_type())
         return self.handler.get(url, headers=headers)
 
@@ -114,7 +115,7 @@ class MasonApi:
         if artifact.get_registry_meta_data():
             payload.update(artifact.get_registry_meta_data())
 
-        url = self.endpoints_store['registry_artifact_url'] + '/{0}'.format(customer)
+        url = self._get_base_url('registry_artifact_url') + '/{0}'.format(customer)
         self.handler.post(url, headers=headers, json=payload)
 
     def _deploy_artifact(self, customer, type, name, version, group, push, no_https):
@@ -132,7 +133,7 @@ class MasonApi:
             'deployInsecure': bool(no_https)
         }
 
-        url = self.endpoints_store['deploy_url']
+        url = self._get_base_url('deploy_url')
         self.handler.post(url, headers=headers, json=payload)
 
     def _get_artifact(self, customer, type_, name, version):
@@ -141,7 +142,7 @@ class MasonApi:
             'Authorization': 'Bearer {}'.format(self.auth_store['id_token'])
         }
 
-        url = self.endpoints_store['registry_artifact_url'] + '/{}/{}/{}/{}'.format(
+        url = self._get_base_url('registry_artifact_url') + '/{}/{}/{}/{}'.format(
             customer, type_, name, version)
         return self.handler.get(url, headers=headers)
 
@@ -151,7 +152,7 @@ class MasonApi:
             'Authorization': 'Bearer {}'.format(self.auth_store['id_token'])
         }
 
-        url = self.endpoints_store['registry_artifact_url'] + '/{}/{}/{}'.format(
+        url = self._get_base_url('registry_artifact_url') + '/{}/{}/{}'.format(
             customer, type_, name)
         result = self.handler.get(url, headers=headers)
 
@@ -176,7 +177,7 @@ class MasonApi:
         if mason_version:
             payload['masonVersion'] = str(mason_version)
 
-        url = self.endpoints_store['builder_url'] + '/{0}/jobs'.format(customer)
+        url = self._get_base_url('builder_url') + '/{0}/jobs'.format(customer)
         return self.handler.post(url, headers=headers, json=payload)
 
     def _get_build(self, customer, id):
@@ -185,7 +186,7 @@ class MasonApi:
             'Authorization': 'Bearer {}'.format(self.auth_store['id_token'])
         }
 
-        url = self.endpoints_store['builder_url'] + '/{}/jobs/{}'.format(customer, id)
+        url = self._get_base_url('builder_url') + '/{}/jobs/{}'.format(customer, id)
         return self.handler.get(url, headers=headers)
 
     def _login(self, password, username):
@@ -203,7 +204,7 @@ class MasonApi:
         return self.handler.post(url, json=payload)
 
     def _get_latest_cli_version(self):
-        version = self.handler.get(self.endpoints_store['latest_version_url'])
+        version = self.handler.get(self._get_base_url('latest_version_url'))
         return str(version).strip()
 
     def _get_validated_customer(self):
@@ -228,3 +229,6 @@ class MasonApi:
         self._customer = customer
 
         return customer
+
+    def _get_base_url(self, name: str):
+        return build_url(self.endpoints_store, name)

@@ -13,14 +13,22 @@ ENDPOINTS = Store('endpoints', {
     'client_id': 'QLWpUwYOOcLlAJsmyQhQMXyeWn6RZpoc',
     'auth_url': 'https://bymason.auth0.com/oauth/ro',
     'user_info_url': 'https://bymason.auth0.com/userinfo',
-    'projects_url': 'https://platform.bymason.com/api/dashboard/projects',
-    'registry_artifact_url': 'https://platform.bymason.com/api/registry/artifacts',
-    'registry_signed_url': 'https://platform.bymason.com/api/registry/signedurl',
-    'builder_url': 'https://platform.bymason.com/api/tracker/builder',
-    'deploy_url': 'https://platform.bymason.com/api/deploy',
+
+    'platform_url_base': 'https://platform.bymason.com',
+    'api_url_base': 'https://platform.bymason.com/api',
+
+    'projects_url_path': '/dashboard/projects',
+    'registry_signed_url_path': '/registry/signedurl',
+    'registry_artifact_url_path': '/registry/artifacts',
+    'builder_url_path': '/tracker/builder',
+    'deploy_url_path': '/deploy',
+
+    'console_create_url_path': '/controller/create',
+    'console_projects_url_path': '/controller/projects',
+
     'xray_url': 'wss://api.bymason.com/v1/global/xray',
+
     'analytics_url': None,
-    'console_create_url': 'https://platform.bymason.com/controller/create',
     'latest_version_url': 'https://raw.githubusercontent.com/MasonAmerica/mason-cli/master/VERSION'
 })
 
