@@ -310,8 +310,7 @@ class RegisterProjectCommand(RegisterCommand):
         config_files = []
         for raw_config_file in raw_config_files:
             config_files.append(self._rewritten_config(raw_config_file, apks, media_artifacts))
-        stage = StageCommand(
-            self.config, config_files, True, True, None, self.working_dir)
+        stage = StageCommand(self.config, config_files, True, None, self.working_dir)
 
         stage_prep = stage.prepare()
         configs = stage_prep[0]

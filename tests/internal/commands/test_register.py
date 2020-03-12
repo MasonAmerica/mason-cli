@@ -188,7 +188,7 @@ class RegisterCommandTest(unittest.TestCase):
             call(apk_file, Apk.parse(self.config, apk_file)),
             call(config_file, OSConfig.parse(self.config, config_file))
         ])
-        self.config.api.start_build.assert_called_with('project-id2', '2', True, None)
+        self.config.api.start_build.assert_called_with('project-id2', '2', None)
 
     def test_project_registers_updated_config(self):
         self.config.endpoints_store.__getitem__ = MagicMock(return_value='https://google.com')

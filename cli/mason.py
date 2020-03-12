@@ -128,7 +128,7 @@ def register_project(config, context):
 @register.command('config')
 @click.option('--await', 'block', is_flag=True, default=False,
               help='Wait synchronously for the build to finish before continuing.')
-@click.option('--turbo/--no-turbo', is_flag=True, default=True,
+@click.option('--turbo/--no-turbo', is_flag=True, default=None, hidden=True,
               help='Enable fast Mason config builds (beta).')
 @click.option('--mason-version', hidden=True, help='Pick a specific Mason OS version.')
 @click.argument('configs', type=click.Path(exists=True, dir_okay=False), nargs=-1, required=True)
@@ -151,8 +151,12 @@ def register_config(config, block, turbo, mason_version, configs):
     Full docs: https://docs.bymason.com/mason-cli/#mason-register-config
     """
 
+    if turbo is not None:
+        config.logger.warning(
+            'The turbo flags are deprecated and will be removed. All builds now use Turbo Builder.')
+
     from cli.internal.commands.stage import StageCommand
-    command = StageCommand(config, configs, block, turbo, mason_version)
+    command = StageCommand(config, configs, block, mason_version)
     command.run()
 
 
@@ -259,7 +263,7 @@ def build(config, block, turbo, mason_version, project, version):
                           '`mason register config` now starts a build by default.')
 
     from cli.internal.commands.build import BuildCommand
-    command = BuildCommand(config, project, version, block, turbo, mason_version)
+    command = BuildCommand(config, project, version, block, mason_version)
     command.run()
 
 
@@ -307,7 +311,7 @@ def stage(config, assume_yes, block, turbo, mason_version, skip_verify, configs)
     config.logger.warning('`mason stage` is deprecated, use `mason register config` instead.')
 
     from cli.internal.commands.stage import StageCommand
-    command = StageCommand(config, configs, block, turbo, mason_version)
+    command = StageCommand(config, configs, block, mason_version)
     command.run()
 
 

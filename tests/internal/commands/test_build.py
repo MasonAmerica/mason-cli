@@ -14,14 +14,14 @@ class BuildCommandTest(unittest.TestCase):
 
     def test_starts_build(self):
         command = BuildCommand(
-            self.config, 'project-id', '1', False, False, None, urlparse=MagicMock())
+            self.config, 'project-id', '1', False, None, urlparse=MagicMock())
 
         command.run()
 
-        self.config.api.start_build.assert_called_with('project-id', '1', False, None)
+        self.config.api.start_build.assert_called_with('project-id', '1', None)
 
     def test_failure_exits_cleanly(self):
-        command = BuildCommand(self.config, 'project-id', '1', False, False, None)
+        command = BuildCommand(self.config, 'project-id', '1', False, None)
         self.config.api.start_build = MagicMock(side_effect=ApiError())
 
         with self.assertRaises(click.Abort):
@@ -35,18 +35,18 @@ class BuildCommandTest(unittest.TestCase):
                 return {'data': {'status': 'COMPLETED'}}
 
         command = BuildCommand(
-            self.config, 'project-id', '1', True, True, None, MagicMock(), MagicMock())
+            self.config, 'project-id', '1', True, None, MagicMock(), MagicMock())
         self.config.api.start_build = MagicMock(return_value={'data': {'submittedAt': '1'}})
         self.config.api.get_build = MagicMock(side_effect=build_completer)
 
         command.run()
 
-        self.config.api.start_build.assert_called_with('project-id', '1', True, None)
+        self.config.api.start_build.assert_called_with('project-id', '1', None)
         self.config.api.get_build.assert_has_calls([call('1'), call('2')])
 
     def test_build_completion_exists_cleanly_on_failure(self):
         command = BuildCommand(
-            self.config, 'project-id', '1', True, True, None, MagicMock(), MagicMock())
+            self.config, 'project-id', '1', True, None, MagicMock(), MagicMock())
         self.config.api.start_build = MagicMock()
         self.config.api.get_build = MagicMock(side_effect=ApiError())
 
@@ -55,7 +55,7 @@ class BuildCommandTest(unittest.TestCase):
 
     def test_build_completion_times_out_on_incomplete_build(self):
         command = BuildCommand(
-            self.config, 'project-id', '1', True, True, None, MagicMock(), MagicMock())
+            self.config, 'project-id', '1', True, None, MagicMock(), MagicMock())
         self.config.api.start_build = MagicMock(return_value={'data': {'submittedAt': '1'}})
         self.config.api.get_build = MagicMock(
             return_value={'data': {'submittedAt': '1', 'status': 'PENDING'}})

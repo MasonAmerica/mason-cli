@@ -14,7 +14,6 @@ class StageCommand(RegisterCommand):
         config: Config,
         config_files: list,
         block: bool,
-        turbo: bool,
         mason_version: str,
         working_dir=None
     ):
@@ -22,7 +21,6 @@ class StageCommand(RegisterCommand):
 
         self.config_files = config_files
         self.block = block
-        self.turbo = turbo
         self.mason_version = mason_version
         self.working_dir = working_dir or tempfile.mkdtemp()
 
@@ -45,7 +43,6 @@ class StageCommand(RegisterCommand):
                 config.get_name(),
                 config.get_version(),
                 self.block,
-                self.turbo,
                 self.mason_version)
 
             build_ops.append(self.config.executor.submit(self._build, build_command))

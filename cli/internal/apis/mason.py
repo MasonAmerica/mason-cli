@@ -51,9 +51,9 @@ class MasonApi:
         customer = self._get_validated_customer()
         return self._find_artifact(customer, type, name, sort)
 
-    def start_build(self, project, version, fast_build, mason_version):
+    def start_build(self, project, version, mason_version):
         customer = self._get_validated_customer()
-        return self._start_build(customer, project, version, fast_build, mason_version)
+        return self._start_build(customer, project, version, mason_version)
 
     def get_build(self, id):
         customer = self._get_validated_customer()
@@ -163,7 +163,7 @@ class MasonApi:
             if artifact.get('name') == name and artifact.get('type') == type_:
                 return self._get_artifact(customer, type_, name, artifact.get('version'))
 
-    def _start_build(self, customer, project, version, fast_build, mason_version):
+    def _start_build(self, customer, project, version, mason_version):
         headers = {
             'Content-Type': 'application/json',
             'Authorization': 'Bearer {}'.format(self.auth_store['id_token'])
@@ -171,8 +171,7 @@ class MasonApi:
         payload = {
             'customer': customer,
             'project': str(project),
-            'version': str(version),
-            'fastBuild': bool(fast_build),
+            'version': str(version)
         }
         if mason_version:
             payload['masonVersion'] = str(mason_version)

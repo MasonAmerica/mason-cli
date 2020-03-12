@@ -17,7 +17,6 @@ class BuildCommand(Command):
         project: str,
         version: str,
         block: bool,
-        turbo: bool,
         mason_version: str,
         time=time,
         urlparse=urlparse
@@ -27,7 +26,6 @@ class BuildCommand(Command):
         self.project = project
         self.version = version
         self.block = block
-        self.turbo = turbo
         self.mason_version = mason_version
         self.time = time
         self.urlparse = urlparse
@@ -41,8 +39,7 @@ class BuildCommand(Command):
     def build(self):
         self.config.logger.debug('Starting build for {}:{}...'.format(self.project, self.version))
 
-        build = self.config.api.start_build(
-            self.project, self.version, self.turbo, self.mason_version)
+        build = self.config.api.start_build(self.project, self.version, self.mason_version)
 
         console_hostname = self.urlparse(self.config.endpoints_store['deploy_url']).hostname
         self.config.logger.info(inspect.cleandoc("""
