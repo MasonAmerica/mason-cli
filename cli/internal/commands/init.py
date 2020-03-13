@@ -73,8 +73,8 @@ class InitCommand(Command):
         if index == 0:
             id = click.prompt('Enter your new project ID')
 
-            base_url = self.config.endpoints_store['console_projects_url']
-            url = base_url + '/_create?name={}'.format(id)
+            base_url = self.config.endpoints_store['console_create_url']
+            url = base_url + '/project?name={}'.format(id)
             self.config.interactivity.open(url)
 
             option = id

@@ -116,8 +116,8 @@ class RequestHandler:
                             self.config.logger.debug(e)
                             project_id = ''
 
-                        base_url = self.config.endpoints_store['console_projects_url']
-                        url = base_url + '/_create?name={}'.format(project_id)
+                        base_url = self.config.endpoints_store['console_create_url']
+                        url = base_url + '/project?name={}'.format(project_id)
 
                         self.config.logger.error(item['message'])
                         self.config.logger.info('Create a new project: {}'.format(url))
