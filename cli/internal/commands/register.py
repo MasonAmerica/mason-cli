@@ -216,8 +216,13 @@ class RegisterApkCommand(RegisterCommand):
 
         is_in_project_mode = getattr(self.config, 'project_mode', None)
         if is_in_project_mode:
-            apk_artifact = self.config.api.get_artifact(
-                apk.get_type(), apk.get_name(), apk.get_version())
+            try:
+                apk_artifact = self.config.api.get_artifact(
+                    apk.get_type(), apk.get_name(), apk.get_version())
+            except ApiError as e:
+                self.config.logger.debug(e, exc_info=True)
+                apk_artifact = {}
+
             checksum = apk_artifact.get('checksum') or {}
             if checksum.get('sha1') == hash_file(binary, 'sha1'):
                 apk.already_registered = True

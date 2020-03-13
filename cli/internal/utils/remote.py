@@ -138,7 +138,7 @@ class RequestHandler:
         try:
             details = r.json()['error']['details']
             raise ApiError(details)
-        except (KeyError, ValueError):
+        except (KeyError, ValueError, TypeError):
             try:
                 raise ApiError(r.json()['data'])
             except (KeyError, ValueError):
