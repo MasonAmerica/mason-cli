@@ -1,4 +1,5 @@
-import click
+import webbrowser
+
 from pick import pick
 
 
@@ -9,4 +10,4 @@ class Interactivity:
 
     @staticmethod
     def open(url):
-        click.launch(url)
+        webbrowser.open_new_tab(url)
