@@ -381,6 +381,15 @@ class XRay(object):
                 raise e
 
     def install(self, local_path, replace_existing=True, grant_permissions=False, args=None):
+
+        if not os.path.exists(local_path):
+            self._logger.error("File does not exist: %s" % local_path)
+            return
+
+        if not local_path.endswith('.apk'):
+            self._logger.error("Only .apk files may be installed")
+            return
+
         return self._run_in_reactor(self._install, local_path,
                                     replace_existing=replace_existing,
                                     grant_permissions=grant_permissions)
