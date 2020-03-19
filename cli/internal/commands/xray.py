@@ -2,6 +2,7 @@
 import abc
 import os
 import posixpath
+import socket
 import sys
 import threading
 from time import gmtime
@@ -224,9 +225,18 @@ class XRay(object):
 
         return WsHandle(self._logger, self._get_url('adb'), timeout_ms=5000, header=self._auth)
 
+    def _is_port_in_use(self, port):
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            return s.connect_ex(('localhost', port)) == 0
+
     def adbproxy(self, port=None):
         if port is None:
             port = 5555
+        port = int(port)
+
+        if self._is_port_in_use(port):
+            self._logger.error("Port %s is in use, please select a different local port." % port)
+            return
 
         XRayProxyServer(self._logger, self._get_url('adb'), port, timeout_ms=5000,
                         header=self._auth).run()
@@ -234,6 +244,11 @@ class XRay(object):
     def desktop(self, port=None):
         if port is None:
             port = 5558
+        port = int(port)
+
+        if self._is_port_in_use(port):
+            self._logger.error("Port %s is in use, please select a different local port." % port)
+            return
 
         XRayProxyServer(self._logger, self._get_url('vnc'), port, timeout_ms=5000,
                         header=self._auth).run()
