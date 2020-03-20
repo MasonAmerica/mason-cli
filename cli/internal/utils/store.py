@@ -14,8 +14,7 @@ class Store(object):
             self.restore()
 
     def save(self):
-        if not os.path.exists(os.path.dirname(self._file)):
-            os.makedirs(os.path.dirname(self._file))
+        os.makedirs(os.path.dirname(self._file), exist_ok=True)
         with open(self._file, 'w') as f:
             f.write(yaml.safe_dump(self._fields))
 

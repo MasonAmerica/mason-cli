@@ -83,3 +83,21 @@ class InitCommandTest(unittest.TestCase):
         self.assertDictEqual(yml, {
             'a': {'b': True}
         })
+
+    def test__write__existing_config_file_is_moved(self):
+        working_dir = tempfile.mkdtemp()
+        with open(os.path.join(working_dir, 'mason.yml'), 'w') as f:
+            f.write('foobar')
+        command = InitCommand(self.config, working_dir)
+
+        command._write_files({'a': {'b': True}}, [])
+
+        with open(os.path.join(working_dir, 'mason.yml.old')) as f:
+            old_file = f.read()
+        with open(os.path.join(working_dir, 'mason.yml')) as f:
+            yml = yaml.safe_load(f)
+
+        self.assertEqual(old_file, 'foobar')
+        self.assertDictEqual(yml, {
+            'a': {'b': True}
+        })

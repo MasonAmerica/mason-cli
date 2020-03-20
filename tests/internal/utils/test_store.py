@@ -90,8 +90,7 @@ class StoreTest(unittest.TestCase):
         self.assertDictEqual(self.store._defaults, {'default': True})
 
     def _write_data(self, data):
-        if not os.path.exists(os.path.dirname(self.store._file)):
-            os.makedirs(os.path.dirname(self.store._file))
+        os.makedirs(os.path.dirname(self.store._file), exist_ok=True)
         with open(self.store._file, 'w') as f:
             if type(data) is dict:
                 yaml.safe_dump(data, f)

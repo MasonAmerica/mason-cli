@@ -2291,8 +2291,7 @@ class CliTest(unittest.TestCase):
     def _home_dir_isolated_filesystem(self):
         cwd = os.getcwd()
         t = os.path.join(os.path.expanduser('~'), '.cache/tmp-mason-tests')
-        if not os.path.exists(t):
-            os.makedirs(t)
+        os.makedirs(t, exist_ok=True)
         os.chdir(t)
         try:
             yield t

@@ -138,7 +138,10 @@ class InitCommand(Command):
 
     def _write_files(self, config, apps):
         self.config.logger.info('Writing configuration file to mason.yml...')
-        with open(os.path.join(self.working_dir, 'mason.yml'), 'w') as f:
+        config_file = os.path.join(self.working_dir, 'mason.yml')
+        if os.path.exists(config_file):
+            os.rename(config_file, os.path.join(self.working_dir, 'mason.yml.old'))
+        with open(config_file, 'w') as f:
             f.write(yaml.safe_dump(config))
 
         self.config.logger.info('Writing project information to .masonrc...')
