@@ -204,6 +204,7 @@ class XRayBaseClient(object):
 
         self.ws_factory = None
         self._logger = logger
+        self._is_shutdown = False
 
         predicate = LogLevelFilterPredicate(LogLevel.error)
 
@@ -246,6 +247,9 @@ class XRayBaseClient(object):
         self.shutdown(reason)
 
     def shutdown(self, reason):
+        if self._is_shutdown:
+            return
+        self._is_shutdown = True
         if reactor.running:
             reactor.callFromThread(reactor.stop)
 
