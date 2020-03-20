@@ -280,7 +280,10 @@ class XRay(object):
 
             except Exception as exc:
                 self._logger.debug(exc, exc_info=True)
-                self._logger.error(exc)
+                if len(exc.args) >= 1 and type(exc.args[0]) is bytearray:
+                    self._logger.error(exc.args[0].decode('utf-8'))
+                else:
+                    self._logger.error(exc)
 
             finally:
                 adb.close()
