@@ -294,7 +294,7 @@ class XRay(object):
         self._run_in_reactor(self._shell, command)
 
     def _interactive_shell(self, device):
-        adb_info = _AdbTransactionInfo(None, None, 10, 20)
+        adb_info = _AdbTransactionInfo(None, None, 600, 20)
 
         device._open(b'shell:', adb_info)
 
@@ -328,7 +328,7 @@ class XRay(object):
             except WSHandleShutdown:
                 break
 
-    def _noninteractive_shell(self, device, command, timeout_s=120, total_timeout_s=20):
+    def _noninteractive_shell(self, device, command, timeout_s=600, total_timeout_s=20):
         adb_info = _AdbTransactionInfo(None, None, timeout_s, total_timeout_s)
 
         if isinstance(command, list):
