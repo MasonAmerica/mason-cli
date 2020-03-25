@@ -145,7 +145,7 @@ class XRayWebSocketFactoryFIFO(XRayWebSocketFactory):
         # library and the twisted reactor
         self.rsock, self.ssock = socket.socketpair()
         self.rsock.setblocking(0)
-        self.rsock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 8192)
+        self.rsock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 16 * 4096)
 
     def clientConnectionLost(self, connector, reason):
         self.running = False
