@@ -328,7 +328,7 @@ class XRay(object):
             except WSHandleShutdown:
                 break
 
-    def _noninteractive_shell(self, device, command, timeout_s=10, total_timeout_s=20):
+    def _noninteractive_shell(self, device, command, timeout_s=120, total_timeout_s=20):
         adb_info = _AdbTransactionInfo(None, None, timeout_s, total_timeout_s)
 
         if isinstance(command, list):
