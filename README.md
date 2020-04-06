@@ -19,7 +19,7 @@ the CLI for your platform under "Assets".
 1. Install Python 3
 1. [Make it the default](https://linuxconfig.org/how-to-change-from-default-to-alternative-python-version-on-debian-linux#h2-change-python-version-system-wide)
 1. Run `pip install virtualenvwrapper`
-1. Run `echo "source virtualenvwrapper.sh" > ~/.bashrc`
+1. Run `echo "source virtualenvwrapper.sh" >> ~/.bashrc`
 
 #### Building the CLI
 
