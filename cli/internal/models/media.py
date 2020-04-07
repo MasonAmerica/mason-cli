@@ -3,6 +3,7 @@ import zipfile
 
 import click
 
+from cli.config import Config
 from cli.internal.models.artifacts import IArtifact
 from cli.internal.utils.hashing import hash_file
 from cli.internal.utils.logging import LazyLog
@@ -10,7 +11,7 @@ from cli.internal.utils.ui import section
 
 
 class Media(IArtifact):
-    def __init__(self, config, name, type, version, binary):
+    def __init__(self, config: Config, name, type, version, binary):
         self.config = config
         self.name = str(name)
         self.type = type
@@ -91,9 +92,6 @@ class Media(IArtifact):
             },
         }
         return meta_data
-
-    def get_details(self):
-        return self.details
 
     def _validate_bootanimation(self):
         try:

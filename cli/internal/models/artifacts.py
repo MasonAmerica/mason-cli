@@ -43,10 +43,6 @@ class IArtifact:
         pass
 
     @abstractmethod
-    def get_details(self):
-        pass
-
-    @abstractmethod
     def __eq__(self, other):
         pass
 

@@ -3,6 +3,7 @@ import os
 import click
 import yaml
 
+from cli.config import Config
 from cli.internal.models.artifacts import IArtifact
 from cli.internal.utils.hashing import hash_file
 from cli.internal.utils.logging import LazyLog
@@ -11,7 +12,7 @@ from cli.internal.utils.validation import validate_artifact_version
 
 
 class OSConfig(IArtifact):
-    def __init__(self, config, binary, ecosystem):
+    def __init__(self, config: Config, binary, ecosystem: dict):
         self.config = config
         self.binary = binary
         self.ecosystem = ecosystem
@@ -112,9 +113,6 @@ class OSConfig(IArtifact):
 
     def get_registry_meta_data(self):
         return
-
-    def get_details(self):
-        return self.ecosystem
 
     def __eq__(self, other):
         return self.binary == other.binary and self.ecosystem == other.ecosystem

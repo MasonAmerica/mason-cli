@@ -6,4 +6,4 @@ os:
       disable_keyguard: true
 apps:
   - name: Dummy app
-    package_name: com.example.unittestapp1
+    package_name: com.supercilex.test

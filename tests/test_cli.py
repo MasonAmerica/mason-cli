@@ -660,7 +660,7 @@ class CliTest(unittest.TestCase):
             Name: project-id2
             Version: 2
             App(s):
-              - 'com.example.unittestapp1' at version None
+              - 'com.supercilex.test' at version None
             -----------------------------------
 
             Continue registration? [Y/n]: 
@@ -741,7 +741,7 @@ class CliTest(unittest.TestCase):
             Name: project-id2
             Version: 2
             App(s):
-              - 'com.example.unittestapp1' at version None
+              - 'com.supercilex.test' at version None
             -----------------------------------
 
             Continue registration? [Y/n]: 
@@ -801,13 +801,13 @@ class CliTest(unittest.TestCase):
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             ------------ App ------------
             File path: {}
-            Package name: com.example.unittestapp1
-            Version name: 1.0
-            Version code: 1
+            Package name: com.supercilex.test
+            Version name: 0.1.0-4-g0f30bf8-dirty
+            Version code: 384866
             -----------------------------
 
             Continue registration? [Y/n]: 
-            error: App 'com.example.unittestapp1' at version 1 has already been registered and cannot be overwritten.
+            error: App 'com.supercilex.test' at version 384866 has already been registered and cannot be overwritten.
             Aborted!
         """.format(apk_file)))
 
@@ -823,9 +823,9 @@ class CliTest(unittest.TestCase):
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             ------------ App ------------
             File path: {}
-            Package name: com.example.unittestapp1
-            Version name: 1.0
-            Version code: 1
+            Package name: com.supercilex.test
+            Version name: 0.1.0-4-g0f30bf8-dirty
+            Version code: 384866
             -----------------------------
 
             Continue registration? [Y/n]: n
@@ -844,9 +844,9 @@ class CliTest(unittest.TestCase):
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             ------------ App ------------
             File path: {}
-            Package name: com.example.unittestapp1
-            Version name: 1.0
-            Version code: 1
+            Package name: com.supercilex.test
+            Version name: 0.1.0-4-g0f30bf8-dirty
+            Version code: 384866
             -----------------------------
         """.format(apk_file)))
 
@@ -862,13 +862,13 @@ class CliTest(unittest.TestCase):
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             ------------ App ------------
             File path: {}
-            Package name: com.example.unittestapp1
-            Version name: 1.0
-            Version code: 1
+            Package name: com.supercilex.test
+            Version name: 0.1.0-4-g0f30bf8-dirty
+            Version code: 384866
             -----------------------------
 
             Continue registration? [Y/n]: 
-            App 'com.example.unittestapp1' registered.
+            App 'com.supercilex.test' registered.
         """.format(apk_file)))
 
     def test__register_apk__files_are_registered(self):
@@ -888,21 +888,21 @@ class CliTest(unittest.TestCase):
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             ------------ App ------------
             File path: {}
-            Package name: com.example.unittestapp1
-            Version name: 1.0
-            Version code: 1
+            Package name: com.supercilex.test
+            Version name: 0.1.0-4-g0f30bf8-dirty
+            Version code: 384866
             -----------------------------
 
             ------------ App ------------
             File path: {}
-            Package name: com.example.unittestapp1
-            Version name: 1.0
-            Version code: 1
+            Package name: com.supercilex.test
+            Version name: 0.1.0-4-g0f30bf8-dirty
+            Version code: 384866
             -----------------------------
 
             Continue registration? [Y/n]: 
-            App 'com.example.unittestapp1' registered.
-            App 'com.example.unittestapp1' registered.
+            App 'com.supercilex.test' registered.
+            App 'com.supercilex.test' registered.
         """.format(apk_file1, apk_file2)))
 
     def test__register_boot_animation__no_files_fails(self):
@@ -1220,9 +1220,9 @@ class CliTest(unittest.TestCase):
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             ------------ App ------------
             File path: {}
-            Package name: com.example.unittestapp1
-            Version name: 1.0
-            Version code: 1
+            Package name: com.supercilex.test
+            Version name: 0.1.0-4-g0f30bf8-dirty
+            Version code: 384866
             -----------------------------
 
             ------------ OS Config ------------
@@ -1230,7 +1230,7 @@ class CliTest(unittest.TestCase):
             Name: project-id2
             Version: 2
             App(s):
-              - 'com.example.unittestapp1' at version 1
+              - 'com.supercilex.test' at version 384866
             -----------------------------------
 
             Continue registration? [Y/n]: n
@@ -1252,9 +1252,9 @@ class CliTest(unittest.TestCase):
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             ------------ App ------------
             File path: {}
-            Package name: com.example.unittestapp1
-            Version name: 1.0
-            Version code: 1
+            Package name: com.supercilex.test
+            Version name: 0.1.0-4-g0f30bf8-dirty
+            Version code: 384866
             -----------------------------
 
             ------------ OS Config ------------
@@ -1262,7 +1262,7 @@ class CliTest(unittest.TestCase):
             Name: project-id2
             Version: 2
             App(s):
-              - 'com.example.unittestapp1' at version 1
+              - 'com.supercilex.test' at version 384866
             -----------------------------------
         """.format(apk_file, config_file)))
 
@@ -1282,9 +1282,9 @@ class CliTest(unittest.TestCase):
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             ------------ App ------------
             File path: {}
-            Package name: com.example.unittestapp1
-            Version name: 1.0
-            Version code: 1
+            Package name: com.supercilex.test
+            Version name: 0.1.0-4-g0f30bf8-dirty
+            Version code: 384866
             -----------------------------
 
             ------------ OS Config ------------
@@ -1296,7 +1296,7 @@ class CliTest(unittest.TestCase):
             -----------------------------------
 
             Continue registration? [Y/n]: 
-            App 'com.example.unittestapp1' registered.
+            App 'com.supercilex.test' registered.
             OS Config 'project-id' registered.
 
             Build queued for OS Config 'project-id'.
@@ -1311,8 +1311,8 @@ class CliTest(unittest.TestCase):
         def artifact_response(type, name, version):
             if type == 'apk':
                 return {
-                    'version': '1',
-                    'checksum': {'sha1': '9d66f37de677405cda3d01a3fab74879f816a65e'}
+                    'version': '384866',
+                    'checksum': {'sha1': '891544e59702a6138962a9a2728cb2527fb77554'}
                 }
 
         # noinspection PyUnusedLocal
@@ -1336,9 +1336,9 @@ class CliTest(unittest.TestCase):
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             ------------ App ------------
             File path: {}
-            Package name: com.example.unittestapp1
-            Version name: 1.0
-            Version code: 1
+            Package name: com.supercilex.test
+            Version name: 0.1.0-4-g0f30bf8-dirty
+            Version code: 384866
             -----------------------------
 
             ------------ OS Config ------------
@@ -1346,11 +1346,11 @@ class CliTest(unittest.TestCase):
             Name: project-id2
             Version: 2
             App(s):
-              - 'com.example.unittestapp1' at version 1
+              - 'com.supercilex.test' at version 384866
             -----------------------------------
 
             Continue registration? [Y/n]: 
-            App 'com.example.unittestapp1' already registered, ignoring.
+            App 'com.supercilex.test' already registered, ignoring.
             error: OS Config 'project-id2' at version 2 has already been registered and cannot be overwritten.
             Aborted!
         """.format(apk_file, config_file)))
@@ -1360,8 +1360,8 @@ class CliTest(unittest.TestCase):
         def api_response(type, name, version):
             if type == 'apk':
                 return {
-                    'version': '1',
-                    'checksum': {'sha1': '9d66f37de677405cda3d01a3fab74879f816a65e'}
+                    'version': '384866',
+                    'checksum': {'sha1': '891544e59702a6138962a9a2728cb2527fb77554'}
                 }
 
         simple_project = os.path.join(__tests_root__, 'res/simple-project')
@@ -1380,9 +1380,9 @@ class CliTest(unittest.TestCase):
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             ------------ App ------------
             File path: {}
-            Package name: com.example.unittestapp1
-            Version name: 1.0
-            Version code: 1
+            Package name: com.supercilex.test
+            Version name: 0.1.0-4-g0f30bf8-dirty
+            Version code: 384866
             -----------------------------
 
             ------------ OS Config ------------
@@ -1390,11 +1390,11 @@ class CliTest(unittest.TestCase):
             Name: project-id2
             Version: 2
             App(s):
-              - 'com.example.unittestapp1' at version 1
+              - 'com.supercilex.test' at version 384866
             -----------------------------------
 
             Continue registration? [Y/n]: 
-            App 'com.example.unittestapp1' already registered, ignoring.
+            App 'com.supercilex.test' already registered, ignoring.
             OS Config 'project-id2' registered.
 
             Build queued for OS Config 'project-id2'.
@@ -1426,9 +1426,9 @@ class CliTest(unittest.TestCase):
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             ------------ App ------------
             File path: {}
-            Package name: com.example.unittestapp1
-            Version name: 1.0
-            Version code: 1
+            Package name: com.supercilex.test
+            Version name: 0.1.0-4-g0f30bf8-dirty
+            Version code: 384866
             -----------------------------
 
             ------------ OS Config ------------
@@ -1436,11 +1436,11 @@ class CliTest(unittest.TestCase):
             Name: project-id2
             Version: 2
             App(s):
-              - 'com.example.unittestapp1' at version 1
+              - 'com.supercilex.test' at version 384866
             -----------------------------------
 
             Continue registration? [Y/n]: 
-            error: App 'com.example.unittestapp1' at version 1 has already been registered and cannot be overwritten.
+            error: App 'com.supercilex.test' at version 384866 has already been registered and cannot be overwritten.
             Aborted!
         """.format(apk_file, config_file)))
 
@@ -1464,9 +1464,9 @@ class CliTest(unittest.TestCase):
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             ------------ App ------------
             File path: {}
-            Package name: com.example.unittestapp1
-            Version name: 1.0
-            Version code: 1
+            Package name: com.supercilex.test
+            Version name: 0.1.0-4-g0f30bf8-dirty
+            Version code: 384866
             -----------------------------
 
             ------------ OS Config ------------
@@ -1474,11 +1474,11 @@ class CliTest(unittest.TestCase):
             Name: project-id2
             Version: 2
             App(s):
-              - 'com.example.unittestapp1' at version 1
+              - 'com.supercilex.test' at version 384866
             -----------------------------------
 
             Continue registration? [Y/n]: 
-            App 'com.example.unittestapp1' registered.
+            App 'com.supercilex.test' registered.
             OS Config 'project-id2' registered.
 
             Build queued for OS Config 'project-id2'.
@@ -1520,16 +1520,16 @@ class CliTest(unittest.TestCase):
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             ------------ App ------------
             File path: {}
-            Package name: com.example.unittestapp1
-            Version name: 1.0
-            Version code: 1
+            Package name: com.supercilex.test
+            Version name: 0.1.0-4-g0f30bf8-dirty
+            Version code: 384866
             -----------------------------
 
             ------------ App ------------
             File path: {}
-            Package name: com.example.unittestapp1
-            Version name: 1.0
-            Version code: 1
+            Package name: com.supercilex.test
+            Version name: 0.1.0-4-g0f30bf8-dirty
+            Version code: 384866
             -----------------------------
 
             ------------ Boot animation ------------
@@ -1549,7 +1549,7 @@ class CliTest(unittest.TestCase):
             Name: project-id2
             Version: 2
             App(s):
-              - 'com.example.unittestapp1' at version 1
+              - 'com.supercilex.test' at version 384866
             -----------------------------------
 
             ------------ OS Config ------------
@@ -1558,15 +1558,15 @@ class CliTest(unittest.TestCase):
             Version: 42
             App(s):
               - 'com.example.app1' at version 1
-              - 'com.example.unittestapp1' at version 1
+              - 'com.supercilex.test' at version 384866
               - 'com.example.app2' at version 41
             Boot animation: 'anim-1' at version 41
             Splash screen: 'splash-1' at version 41
             -----------------------------------
 
             Continue registration? [Y/n]: 
-            App 'com.example.unittestapp1' registered.
-            App 'com.example.unittestapp1' registered.
+            App 'com.supercilex.test' registered.
+            App 'com.supercilex.test' registered.
             Boot animation 'anim-1' already registered, ignoring.
             Boot animation 'anim-2' registered.
             OS Config 'project-id2' registered.

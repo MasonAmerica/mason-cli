@@ -210,8 +210,8 @@ class RegisterCommandTest(unittest.TestCase):
             },
             'apps': [{
                 'name': 'Dummy app',
-                'package_name': 'com.example.unittestapp1',
-                'version_code': 1
+                'package_name': 'com.supercilex.test',
+                'version_code': 384866
             }]
         })
 
@@ -241,8 +241,8 @@ class RegisterCommandTest(unittest.TestCase):
                 'version_code': 1
             }, {
                 'name': 'Dummy app',
-                'package_name': 'com.example.unittestapp1',
-                'version_code': 1
+                'package_name': 'com.supercilex.test',
+                'version_code': 384866
             }, {
                 'name': 'Testy Testeron',
                 'package_name': 'com.example.app2',

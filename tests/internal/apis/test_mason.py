@@ -69,10 +69,10 @@ class MasonApiTest(unittest.TestCase):
         self.api.upload_artifact(apk_file, artifact)
 
         self.handler.get.assert_called_with(
-            'url_root/mason-test/com.example.unittestapp1/1?type=apk&noContentType=true',
+            'url_root/mason-test/com.supercilex.test/384866?type=apk&noContentType=true',
             headers={
                 'Content-Type': 'application/json',
-                'Content-MD5': 'UK70RLRMCuewDJThkBcO8g==',
+                'Content-MD5': 'QrDVanEnOLaXIgSL3ut67g==',
                 'Authorization': 'Bearer Foobar'
             }
         )
@@ -80,23 +80,23 @@ class MasonApiTest(unittest.TestCase):
             'signed_request',
             apk_file,
             headers={
-                'Content-MD5': 'UK70RLRMCuewDJThkBcO8g=='
+                'Content-MD5': 'QrDVanEnOLaXIgSL3ut67g=='
             }
         )
         self.handler.post.assert_called_with(
             'url_root/mason-test',
             headers={'Content-Type': 'application/json', 'Authorization': 'Bearer Foobar'},
             json={
-                'name': 'com.example.unittestapp1',
-                'version': '1',
+                'name': 'com.supercilex.test',
+                'version': '384866',
                 'customer': 'mason-test',
                 'url': 'signed_url',
                 'type': 'apk',
-                'checksum': {'sha1': '9d66f37de677405cda3d01a3fab74879f816a65e'},
+                'checksum': {'sha1': '891544e59702a6138962a9a2728cb2527fb77554'},
                 'apk': {
-                    'versionName': '1.0',
-                    'versionCode': '1',
-                    'packageName': 'com.example.unittestapp1'
+                    'versionName': '0.1.0-4-g0f30bf8-dirty',
+                    'versionCode': '384866',
+                    'packageName': 'com.supercilex.test'
                 }
             }
         )

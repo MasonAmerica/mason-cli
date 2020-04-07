@@ -23,10 +23,7 @@ class ApkTest(unittest.TestCase):
         apkf.is_valid_APK = MagicMock(return_value=True)
         apkf.get_min_sdk_version = MagicMock(return_value=23)
 
-        cert_finder = MagicMock()
-        cert_finder.find = MagicMock(return_value='foo')
-
-        self.test_apk = Apk(config, MagicMock(), apkf, cert_finder)
+        self.test_apk = Apk(config, MagicMock(), apkf)
 
     def test_apk_is_valid(self):
         self.assertIsNone(self.test_apk.validate())
@@ -45,17 +42,17 @@ class ApkTest(unittest.TestCase):
         self.assertIsNone(self.test_apk.get_sub_type())
 
     def test_apk_name(self):
-        self.assertEqual(self.test_apk.get_name(), self.test_apk.apkf.package)
+        self.assertEqual(self.test_apk.get_name(), self.test_apk.apk.get_package())
 
     def test_apk_version(self):
-        self.assertEqual(self.test_apk.get_version(), self.test_apk.apkf.get_androidversion_code())
+        self.assertEqual(self.test_apk.get_version(), self.test_apk.apk.get_androidversion_code())
 
     def test_apk_meta_data(self):
         meta_data = {
             'apk': {
-                'versionName': self.test_apk.apkf.get_androidversion_name(),
-                'versionCode': self.test_apk.apkf.get_androidversion_code(),
-                'packageName': self.test_apk.apkf.package
+                'versionName': self.test_apk.apk.get_androidversion_name(),
+                'versionCode': self.test_apk.apk.get_androidversion_code(),
+                'packageName': self.test_apk.apk.get_package()
             },
         }
 
@@ -69,8 +66,9 @@ class ApkTest(unittest.TestCase):
 
     def test_apk_v2_signed(self):
         mock_config = MagicMock()
-        with self.assertRaises(click.Abort):
-            Apk.parse(mock_config, os.path.join(__tests_root__, 'res/v2.apk'))
+        apk = Apk.parse(mock_config, os.path.join(__tests_root__, 'res/v2.apk'))
+
+        self.assertIsNotNone(apk)
 
     def test_apk_v1_and_v2_signed(self):
         mock_config = MagicMock()

@@ -9,7 +9,7 @@ apps:
     package_name: com.example.app1
     version_code: 1
   - name: Dummy app
-    package_name: com.example.unittestapp1
+    package_name: com.supercilex.test
   - name: Testy Testeron
     package_name: com.example.app2
     version_code: latest
