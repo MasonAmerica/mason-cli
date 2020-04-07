@@ -252,6 +252,10 @@ class RegisterCommandTest(unittest.TestCase):
                 'bootanimation': {
                     'name': 'anim-1',
                     'version': 42
+                },
+                'splash': {
+                    'name': 'splash-1',
+                    'version': 41
                 }
             }
         })

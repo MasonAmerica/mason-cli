@@ -87,6 +87,11 @@ class OSConfig(IArtifact):
             self.config.logger.info("Boot animation: '{}' at version {}".format(
                 boot_anim.get('name'), boot_anim.get('version')))
 
+        splash = media.get('splash')
+        if splash:
+            self.config.logger.info("Splash screen: '{}' at version {}".format(
+                splash.get('name'), splash.get('version')))
+
     def get_content_type(self):
         return 'text/x-yaml'
 

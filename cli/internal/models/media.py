@@ -31,6 +31,8 @@ class Media(IArtifact):
     def validate(self):
         if self.type == 'bootanimation':
             self._validate_bootanimation()
+        elif self.type == 'splash':
+            self._validate_splash()
         else:
             self.config.logger.error('Unknown media type: {}'.format(self.type))
             raise click.Abort()
@@ -59,6 +61,8 @@ class Media(IArtifact):
     def get_content_type(self):
         if self.get_sub_type() == 'bootanimation':
             return 'application/zip'
+        elif self.get_sub_type() == 'splash':
+            return 'image/png'
 
     def get_type(self):
         return 'media'
@@ -66,6 +70,8 @@ class Media(IArtifact):
     def get_pretty_type(self):
         if self.get_sub_type() == 'bootanimation':
             return 'Boot animation'
+        if self.get_sub_type() == 'splash':
+            return 'Splash screen'
         else:
             return 'Media'
 
@@ -110,6 +116,9 @@ class Media(IArtifact):
 
             with zip_file.open('desc.txt') as filename:
                 self.details = filename.readlines()
+
+    def _validate_splash(self):
+        pass
 
     def __eq__(self, other):
         return self.binary == other.binary and self.version == other.version

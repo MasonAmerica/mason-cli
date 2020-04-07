@@ -503,6 +503,7 @@ class CliTest(unittest.TestCase):
         self.assertEqual(result.exit_code, 1)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
             error: Apk 'com.example.app2' not found, register it first.
+            error: Media 'splash-1' not found, register it first.
             Aborted!
         """))
 
@@ -526,7 +527,7 @@ class CliTest(unittest.TestCase):
         self.assertIsInstance(result.exception, SystemExit)
         self.assertEqual(result.exit_code, 1)
         self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
-            error: Boot animation 'anim' not found, register it first.
+            error: Media 'anim' not found, register it first.
             Aborted!
         """))
 
@@ -904,20 +905,20 @@ class CliTest(unittest.TestCase):
             App 'com.example.unittestapp1' registered.
         """.format(apk_file1, apk_file2)))
 
-    def test__register_media__no_files_fails(self):
+    def test__register_boot_animation__no_files_fails(self):
         result = self.runner.invoke(cli, ['register', 'media', 'bootanimation', 'Anim name', '1'])
 
         self.assertIsInstance(result.exception, SystemExit)
         self.assertEqual(result.exit_code, 2)
 
-    def test__register_media__non_existent_file_fails(self):
+    def test__register_boot_animation__non_existent_file_fails(self):
         result = self.runner.invoke(
             cli, ['register', 'media', 'bootanimation', 'Anim name', '1', 'foobar'])
 
         self.assertIsInstance(result.exception, SystemExit)
         self.assertEqual(result.exit_code, 2)
 
-    def test__register_media__invalid_version_fails(self):
+    def test__register_boot_animation__invalid_version_fails(self):
         media_file = os.path.join(__tests_root__, 'res/bootanimation.zip')
         result = self.runner.invoke(
             cli, ['register', 'media', 'bootanimation', 'Anim name', 'invalid', media_file])
@@ -925,7 +926,7 @@ class CliTest(unittest.TestCase):
         self.assertIsInstance(result.exception, SystemExit)
         self.assertEqual(result.exit_code, 2)
 
-    def test__register_media__no_creds_fails(self):
+    def test__register_boot_animation__no_creds_fails(self):
         media_file = os.path.join(__tests_root__, 'res/bootanimation.zip')
         api = MagicMock()
         config = Config(auth_store=self._uninitialized_auth_store(), api=api)
@@ -942,7 +943,7 @@ class CliTest(unittest.TestCase):
             Aborted!
         """))
 
-    def test__register_media__negative_confirmation_aborts(self):
+    def test__register_boot_animation__negative_confirmation_aborts(self):
         media_file = os.path.join(__tests_root__, 'res/bootanimation.zip')
         api = MagicMock()
         config = Config(auth_store=self._initialized_auth_store(), api=api)
@@ -965,7 +966,7 @@ class CliTest(unittest.TestCase):
             Aborted!
         """.format(media_file)))
 
-    def test__register_media__dry_run_exits_cleanly(self):
+    def test__register_boot_animation__dry_run_exits_cleanly(self):
         media_file = os.path.join(__tests_root__, 'res/bootanimation.zip')
         api = MagicMock()
         config = Config(auth_store=self._initialized_auth_store(), api=api)
@@ -985,7 +986,7 @@ class CliTest(unittest.TestCase):
             ----------------------------------------
         """.format(media_file)))
 
-    def test__register_media__file_is_registered(self):
+    def test__register_boot_animation__file_is_registered(self):
         media_file = os.path.join(__tests_root__, 'res/bootanimation.zip')
         api = MagicMock()
         config = Config(auth_store=self._initialized_auth_store(), api=api)
@@ -1008,7 +1009,7 @@ class CliTest(unittest.TestCase):
             Boot animation 'Anim name' registered.
         """.format(media_file)))
 
-    def test__register_media__latest_file_is_registered(self):
+    def test__register_boot_animation__latest_file_is_registered(self):
         media_file = os.path.join(__tests_root__, 'res/bootanimation.zip')
         api = MagicMock()
         api.get_highest_artifact = MagicMock(return_value={'version': '41'})
@@ -1030,6 +1031,134 @@ class CliTest(unittest.TestCase):
 
             Continue registration? [Y/n]: 
             Boot animation 'Anim name' registered.
+        """.format(media_file)))
+
+    def test__register_splash__no_files_fails(self):
+        result = self.runner.invoke(cli, ['register', 'media', 'splash', 'Splash name', '1'])
+
+        self.assertIsInstance(result.exception, SystemExit)
+        self.assertEqual(result.exit_code, 2)
+
+    def test__register_splash__non_existent_file_fails(self):
+        result = self.runner.invoke(
+            cli, ['register', 'media', 'splash', 'Splash name', '1', 'foobar'])
+
+        self.assertIsInstance(result.exception, SystemExit)
+        self.assertEqual(result.exit_code, 2)
+
+    def test__register_splash__invalid_version_fails(self):
+        media_file = os.path.join(__tests_root__, 'res/splash.png')
+        result = self.runner.invoke(
+            cli, ['register', 'media', 'splash', 'Splash name', 'invalid', media_file])
+
+        self.assertIsInstance(result.exception, SystemExit)
+        self.assertEqual(result.exit_code, 2)
+
+    def test__register_splash__no_creds_fails(self):
+        media_file = os.path.join(__tests_root__, 'res/splash.png')
+        api = MagicMock()
+        config = Config(auth_store=self._uninitialized_auth_store(), api=api)
+
+        result = self.runner.invoke(cli, [
+            'register', 'media',
+            'splash', 'Splash name', '1', media_file
+        ], obj=config)
+
+        self.assertIsInstance(result.exception, SystemExit)
+        self.assertEqual(result.exit_code, 1)
+        self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
+            error: Not authenticated. Run 'mason login' to sign in.
+            Aborted!
+        """))
+
+    def test__register_splash__negative_confirmation_aborts(self):
+        media_file = os.path.join(__tests_root__, 'res/splash.png')
+        api = MagicMock()
+        config = Config(auth_store=self._initialized_auth_store(), api=api)
+
+        result = self.runner.invoke(cli, [
+            'register', 'media',
+            'splash', 'Splash name', '1', media_file
+        ], obj=config, input='n')
+
+        self.assertIsInstance(result.exception, SystemExit)
+        self.assertEqual(result.exit_code, 1)
+        self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
+            ------------ Splash screen ------------
+            File path: {}
+            Name: Splash name
+            Version: 1
+            ---------------------------------------
+
+            Continue registration? [Y/n]: n
+            Aborted!
+        """.format(media_file)))
+
+    def test__register_splash__dry_run_exits_cleanly(self):
+        media_file = os.path.join(__tests_root__, 'res/splash.png')
+        api = MagicMock()
+        config = Config(auth_store=self._initialized_auth_store(), api=api)
+
+        result = self.runner.invoke(cli, [
+            'register', '--dry-run', 'media',
+            'splash', 'Splash name', '1', media_file
+        ], obj=config)
+
+        self.assertIsNone(result.exception, result.output)
+        self.assertEqual(result.exit_code, 0)
+        self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
+            ------------ Splash screen ------------
+            File path: {}
+            Name: Splash name
+            Version: 1
+            ---------------------------------------
+        """.format(media_file)))
+
+    def test__register_splash__file_is_registered(self):
+        media_file = os.path.join(__tests_root__, 'res/splash.png')
+        api = MagicMock()
+        config = Config(auth_store=self._initialized_auth_store(), api=api)
+
+        result = self.runner.invoke(cli, [
+            'register', 'media',
+            'splash', 'Splash name', '1', media_file
+        ], obj=config)
+
+        self.assertIsNone(result.exception, result.output)
+        self.assertEqual(result.exit_code, 0)
+        self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
+            ------------ Splash screen ------------
+            File path: {}
+            Name: Splash name
+            Version: 1
+            ---------------------------------------
+
+            Continue registration? [Y/n]: 
+            Splash screen 'Splash name' registered.
+        """.format(media_file)))
+
+    def test__register_splash__latest_file_is_registered(self):
+        media_file = os.path.join(__tests_root__, 'res/splash.png')
+        api = MagicMock()
+        api.get_highest_artifact = MagicMock(return_value={'version': '41'})
+        config = Config(auth_store=self._initialized_auth_store(), api=api)
+
+        result = self.runner.invoke(cli, [
+            'register', 'media',
+            'splash', 'Splash name', 'latest', media_file
+        ], obj=config)
+
+        self.assertIsNone(result.exception, result.output)
+        self.assertEqual(result.exit_code, 0)
+        self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
+            ------------ Splash screen ------------
+            File path: {}
+            Name: Splash name
+            Version: 42
+            ---------------------------------------
+
+            Continue registration? [Y/n]: 
+            Splash screen 'Splash name' registered.
         """.format(media_file)))
 
     def test__register_project__no_context_fails(self):
@@ -1432,6 +1561,7 @@ class CliTest(unittest.TestCase):
               - 'com.example.unittestapp1' at version 1
               - 'com.example.app2' at version 41
             Boot animation: 'anim-1' at version 41
+            Splash screen: 'splash-1' at version 41
             -----------------------------------
 
             Continue registration? [Y/n]: 

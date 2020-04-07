@@ -127,6 +127,12 @@ class MasonAnalytics:
                 'name': anim.get('name'),
                 'version': str(anim.get('version'))
             }]
+        splash = (mapped_config.get('media') or {}).get('splash')
+        if splash:
+            mapped_config['splash'] = [{
+                'name': splash.get('name'),
+                'version': str(splash.get('version'))
+            }]
         mapped_config.pop('media', None)
 
         os = mapped_config.get('os') or {}

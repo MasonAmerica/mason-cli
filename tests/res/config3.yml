@@ -16,3 +16,6 @@ apps:
 media:
   bootanimation:
     name: anim-1
+  splash:
+    name: splash-1
+    version: latest

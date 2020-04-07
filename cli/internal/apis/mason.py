@@ -27,7 +27,7 @@ class MasonApi:
         upload_url = signed_url['signed_request']
         download_url = signed_url['url']
 
-        self._upload_to_signed_url(upload_url, binary, artifact)
+        self._upload_to_signed_url(upload_url, binary)
         return self._register_signed_url(customer, download_url, binary, artifact)
 
     def deploy_artifact(self, type, name, version, group, push, no_https):
@@ -82,14 +82,14 @@ class MasonApi:
             'Authorization': 'Bearer {}'.format(self.auth_store['id_token'])
         }
 
-        url = self._get_base_url('registry_signed_url') + '/{0}/{1}/{2}?type={3}'.format(
+        url_path = '/{0}/{1}/{2}?type={3}&noContentType=true'.format(
             customer, artifact.get_name(), artifact.get_version(), artifact.get_type())
+        url = self._get_base_url('registry_signed_url') + url_path
         return self.handler.get(url, headers=headers)
 
-    def _upload_to_signed_url(self, signed_url, binary, artifact):
+    def _upload_to_signed_url(self, signed_url, binary):
         md5 = hash_file(binary, 'md5', False)
         headers = {
-            'Content-Type': artifact.get_content_type(),
             'Content-MD5': base64.b64encode(md5).decode('utf-8')
         }
 

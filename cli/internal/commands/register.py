@@ -126,7 +126,9 @@ class RegisterConfigCommand(RegisterCommand):
             rewrite_ops.append(self.config.executor.submit(
                 self._maybe_inject_app_version, lock, app))
         rewrite_ops.append(self.config.executor.submit(
-            self._maybe_inject_media_versions, lock, raw_config))
+            self._maybe_inject_media_versions, lock, raw_config, 'bootanimation'))
+        rewrite_ops.append(self.config.executor.submit(
+            self._maybe_inject_media_versions, lock, raw_config, 'splash'))
 
         wait_for_futures(self.config.executor, rewrite_ops)
 
@@ -159,20 +161,20 @@ class RegisterConfigCommand(RegisterCommand):
                     app.get('package_name')))
                 raise click.Abort()
 
-    def _maybe_inject_media_versions(self, lock: Lock, raw_config: dict):
+    def _maybe_inject_media_versions(self, lock: Lock, raw_config: dict, type: str):
         media = raw_config.get('media') or {}
-        boot_anim = media.get('bootanimation') or {}
+        media_dict = media.get(type) or {}
 
-        if boot_anim.get('version') != 'latest':
+        if media_dict.get('version') != 'latest':
             return
 
-        latest_anim = self.config.api.get_latest_artifact(boot_anim.get('name'), 'media')
-        if latest_anim:
+        latest_media = self.config.api.get_latest_artifact(media_dict.get('name'), 'media')
+        if latest_media:
             with lock:
-                boot_anim['version'] = int(latest_anim.get('version'))
+                media_dict['version'] = int(latest_media.get('version'))
         else:
-            self.config.logger.error("Boot animation '{}' not found, register it first.".format(
-                boot_anim.get('name')))
+            self.config.logger.error("Media '{}' not found, register it first.".format(
+                media_dict.get('name')))
             raise click.Abort()
 
 

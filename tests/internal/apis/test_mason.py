@@ -33,7 +33,7 @@ class MasonApiTest(unittest.TestCase):
         self.api.upload_artifact(config_file, artifact)
 
         self.handler.get.assert_called_with(
-            'url_root/mason-test/project-id/1?type=config',
+            'url_root/mason-test/project-id/1?type=config&noContentType=true',
             headers={
                 'Content-Type': 'application/json',
                 'Content-MD5': 'BtYkQIi96WeIVrTFcPaYtQ==',
@@ -43,7 +43,7 @@ class MasonApiTest(unittest.TestCase):
         self.handler.put.assert_called_with(
             'signed_request',
             config_file,
-            headers={'Content-Type': 'text/x-yaml', 'Content-MD5': 'BtYkQIi96WeIVrTFcPaYtQ=='}
+            headers={'Content-MD5': 'BtYkQIi96WeIVrTFcPaYtQ=='}
         )
         self.handler.post.assert_called_with(
             'url_root/mason-test',
@@ -69,7 +69,7 @@ class MasonApiTest(unittest.TestCase):
         self.api.upload_artifact(apk_file, artifact)
 
         self.handler.get.assert_called_with(
-            'url_root/mason-test/com.example.unittestapp1/1?type=apk',
+            'url_root/mason-test/com.example.unittestapp1/1?type=apk&noContentType=true',
             headers={
                 'Content-Type': 'application/json',
                 'Content-MD5': 'UK70RLRMCuewDJThkBcO8g==',
@@ -80,7 +80,6 @@ class MasonApiTest(unittest.TestCase):
             'signed_request',
             apk_file,
             headers={
-                'Content-Type': 'application/vnd.android.package-archive',
                 'Content-MD5': 'UK70RLRMCuewDJThkBcO8g=='
             }
         )
@@ -113,7 +112,7 @@ class MasonApiTest(unittest.TestCase):
         self.api.upload_artifact(media_file, artifact)
 
         self.handler.get.assert_called_with(
-            'url_root/mason-test/Boot Anim/1?type=media',
+            'url_root/mason-test/Boot Anim/1?type=media&noContentType=true',
             headers={
                 'Content-Type': 'application/json',
                 'Content-MD5': 'HzF5jT1tn8nOtt33IcFWaQ==',
@@ -123,7 +122,7 @@ class MasonApiTest(unittest.TestCase):
         self.handler.put.assert_called_with(
             'signed_request',
             media_file,
-            headers={'Content-Type': 'application/zip', 'Content-MD5': 'HzF5jT1tn8nOtt33IcFWaQ=='}
+            headers={'Content-MD5': 'HzF5jT1tn8nOtt33IcFWaQ=='}
         )
         self.handler.post.assert_called_with(
             'url_root/mason-test',
