@@ -255,7 +255,7 @@ class RegisterCommandTest(unittest.TestCase):
                 },
                 'splash': {
                     'name': 'splash-1',
-                    'version': 41
+                    'version': 42
                 }
             }
         })

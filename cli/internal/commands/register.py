@@ -330,22 +330,26 @@ class RegisterProjectCommand(RegisterCommand):
         raw_config_files = self._validated_files(context.get('configs') or 'mason.yml', 'yml')
         apk_files = self._validated_files(context.get('apps'), 'apk')
         raw_boot_animations = self._validated_media(context.get('bootanimations'))
+        raw_splash_screens = self._validated_media(context.get('splashscreens'))
 
         apk_registration = RegisterApkCommand(self.config, apk_files)
-        anim_registrations = []
+        media_registrations = []
         for anim in raw_boot_animations:
-            anim_registrations.append(RegisterMediaCommand(
+            media_registrations.append(RegisterMediaCommand(
                 self.config, anim.get('name'), 'bootanimation', 'latest', anim.get('file')))
+        for splash in raw_splash_screens:
+            media_registrations.append(RegisterMediaCommand(
+                self.config, splash.get('name'), 'splash', 'latest', splash.get('file')))
 
         apk_preps = apk_registration.start_prepare_ops()
         media_preps = []
-        for reg in anim_registrations:
+        for reg in media_registrations:
             media_preps.append(self.config.executor.submit(reg.prepare))
 
         apks = wait_for_futures(self.config.executor, apk_preps)
         media_artifacts = []
-        for prep in wait_for_futures(self.config.executor, media_preps):
-            media_artifacts.append(prep[1])
+        for (_, media) in wait_for_futures(self.config.executor, media_preps):
+            media_artifacts.append(media)
 
         config_files = []
         for raw_config_file in raw_config_files:
@@ -358,22 +362,22 @@ class RegisterProjectCommand(RegisterCommand):
 
         return [*apks, *media_artifacts, *configs], \
             apk_registration, apks, \
-            anim_registrations, media_artifacts, \
+            media_registrations, media_artifacts, \
             stage, configs, register
 
     def register(
         self,
         apk_registration: RegisterApkCommand,
         apks: list,
-        anim_registrations: list,
+        media_registrations: list,
         media_artifacts: list,
         stage,
         configs: list,
         register: RegisterConfigCommand
     ):
         register_ops = apk_registration.start_register_ops(apks)
-        for num, anim in enumerate(anim_registrations):
-            register_ops.append(self.config.executor.submit(anim.register, media_artifacts[num]))
+        for num, media in enumerate(media_registrations):
+            register_ops.append(self.config.executor.submit(media.register, media_artifacts[num]))
 
         wait_for_futures(self.config.executor, register_ops)
 
@@ -473,8 +477,10 @@ class RegisterProjectCommand(RegisterCommand):
         for medium in medias:
             name = medium.get_name()
             version = medium.get_version()
-            if self._has_boot_animation_presence(media, name):
-                config.get('media').get('bootanimation')['version'] = int(version)
+            type_ = medium.get_sub_type()
+
+            if self._has_media_animation_presence(media, name, type_):
+                config.get('media').get(type_)['version'] = int(version)
 
         config_file = os.path.join(self.working_dir, os.path.basename(raw_config_file))
         with open(config_file, 'w') as f:
@@ -490,11 +496,11 @@ class RegisterProjectCommand(RegisterCommand):
             "App '{}' declared in project context not found in project "
             "configuration.".format(package_name))
 
-    def _has_boot_animation_presence(self, media, name):
-        anim = media.get('bootanimation')
-        if anim and anim.get('name') == name:
+    def _has_media_animation_presence(self, media, name, type_):
+        media_details = media.get(type_)
+        if media_details and media_details.get('name') == name:
             return True
 
         self.config.logger.debug(
-            "Boot animation '{}' declared in project context not found in project "
+            "Media '{}' declared in project context not found in project "
             "configuration.".format(name))

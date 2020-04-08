@@ -1547,6 +1547,7 @@ class CliTest(unittest.TestCase):
             __tests_root__, 'res/complex-project/anims/bootanimation.zip')
         boot_animation2 = os.path.join(
             __tests_root__, 'res/complex-project/anims/bootanimation2.zip')
+        splash = os.path.join(__tests_root__, 'res/splash.png')
         api = MagicMock()
         api.get_build = MagicMock(return_value={'data': {'status': 'COMPLETED'}})
         api.get_latest_artifact = MagicMock(return_value={'version': '41'})
@@ -1593,6 +1594,12 @@ class CliTest(unittest.TestCase):
             Version: 42
             ----------------------------------------
 
+            ------------ Splash screen ------------
+            File path: {}
+            Name: splash-1
+            Version: 42
+            ---------------------------------------
+
             ------------ OS Config ------------
             File path: {}
             Name: project-id2
@@ -1610,7 +1617,7 @@ class CliTest(unittest.TestCase):
               - 'com.supercilex.test' at version 384866
               - 'com.example.app2' at version 41
             Boot animation: 'anim-1' at version 41
-            Splash screen: 'splash-1' at version 41
+            Splash screen: 'splash-1' at version 42
             -----------------------------------
 
             Continue registration? [Y/n]: 
@@ -1618,6 +1625,7 @@ class CliTest(unittest.TestCase):
             App 'com.supercilex.test' registered.
             Boot animation 'anim-1' already registered, ignoring.
             Boot animation 'anim-2' registered.
+            Splash screen 'splash-1' registered.
             OS Config 'project-id2' registered.
             OS Config 'project-id3' registered.
 
@@ -1633,7 +1641,7 @@ class CliTest(unittest.TestCase):
 
             Build completed for OS Config 'project-id3'.
         """.format(apk_file1, apk_file2,
-                   boot_animation1, boot_animation2,
+                   boot_animation1, boot_animation2, splash,
                    config_file1, config_file2)))
 
     def test__build__invalid_version_fails(self):

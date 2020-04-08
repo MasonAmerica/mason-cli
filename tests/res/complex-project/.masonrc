@@ -16,5 +16,9 @@
       "name": "anim-2",
       "file": "anims/bootanimation2.zip"
     }
-  ]
+  ],
+  "splashscreens": {
+    "name": "splash-1",
+    "file": "../splash.png"
+  }
 }

@@ -225,7 +225,7 @@ def register_media_bootanimation(config, name, version, media):
     command.run()
 
 
-@register_media.command('splash')
+@register_media.command('splashscreen')
 @click.argument('name')
 @click.argument('version', type=Version())
 @click.argument('media', type=click.Path(exists=True, dir_okay=False))
