@@ -95,7 +95,7 @@ class RegisterConfigCommand(RegisterCommand):
     def prepare(self):
         configs = []
 
-        for file in self.config_files:
+        for file in self._expand_files(self.config_files):
             config = OSConfig.parse(self.config, file)
             config = self._sanitize_config_for_upload(config)
 
@@ -177,6 +177,23 @@ class RegisterConfigCommand(RegisterCommand):
                 media_dict.get('name')))
             raise click.Abort()
 
+    def _expand_files(self, files):
+        explosion = []
+
+        for f in files:
+            if not f:
+                continue
+
+            if os.path.isdir(f):
+                sub_paths = list(map(lambda sub: os.path.join(f, sub), os.listdir(f)))
+                sub_paths = list(filter(
+                    lambda f: f.endswith('.yml') or f.endswith('.yaml'), sub_paths))
+                explosion.extend(self._expand_files(sub_paths))
+            else:
+                explosion.append(f)
+
+        return explosion
+
 
 class RegisterApkCommand(RegisterCommand):
     def __init__(self, config: Config, apk_files: list):
@@ -199,7 +216,7 @@ class RegisterApkCommand(RegisterCommand):
     def start_prepare_ops(self):
         apk_ops = []
 
-        for file in self.apk_files:
+        for file in self._expand_files(self.apk_files):
             apk_ops.append(self.config.executor.submit(self.prepare_apk, file))
 
         return apk_ops
@@ -230,6 +247,22 @@ class RegisterApkCommand(RegisterCommand):
                 apk.already_registered = True
 
         return apk
+
+    def _expand_files(self, files):
+        explosion = []
+
+        for f in files:
+            if not f:
+                continue
+
+            if os.path.isdir(f):
+                sub_paths = list(map(lambda sub: os.path.join(f, sub), os.listdir(f)))
+                sub_paths = list(filter(lambda f: f.endswith('.apk'), sub_paths))
+                explosion.extend(self._expand_files(sub_paths))
+            else:
+                explosion.append(f)
+
+        return explosion
 
 
 class RegisterMediaCommand(RegisterCommand):

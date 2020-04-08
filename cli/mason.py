@@ -131,7 +131,7 @@ def register_project(config, context):
 @click.option('--turbo/--no-turbo', is_flag=True, default=None, hidden=True,
               help='Enable fast Mason config builds (beta).')
 @click.option('--mason-version', hidden=True, help='Pick a specific Mason OS version.')
-@click.argument('configs', type=click.Path(exists=True, dir_okay=False), nargs=-1, required=True)
+@click.argument('configs', type=click.Path(exists=True), nargs=-1, required=True)
 @pass_config
 def register_config(config, block, turbo, mason_version, configs):
     """
@@ -161,7 +161,7 @@ def register_config(config, block, turbo, mason_version, configs):
 
 
 @register.command('apk')
-@click.argument('apks', type=click.Path(exists=True, dir_okay=False), nargs=-1, required=True)
+@click.argument('apks', type=click.Path(exists=True), nargs=-1, required=True)
 @pass_config
 def register_apk(config, apks):
     """

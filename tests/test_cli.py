@@ -600,6 +600,33 @@ class CliTest(unittest.TestCase):
             https://platform.bymason.com/controller/projects/project-id
         """.format(config_file)))
 
+    def test__register_config__folder_is_registered(self):
+        project_dir = os.path.join(__tests_root__, 'res/no-app-project')
+        config_file = os.path.join(project_dir, 'mason.yml')
+        api = MagicMock()
+        config = Config(auth_store=self._initialized_auth_store(), api=api)
+
+        result = self.runner.invoke(cli, ['register', 'config', project_dir], obj=config)
+
+        self.assertIsNone(result.exception, result.output)
+        self.assertEqual(result.exit_code, 0)
+        self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
+            ------------ OS Config ------------
+            File path: {}
+            Name: project-id
+            Version: 1
+            App(s):
+              - 'com.example.app' at version 1
+            -----------------------------------
+
+            Continue registration? [Y/n]: 
+            OS Config 'project-id' registered.
+
+            Build queued for OS Config 'project-id'.
+            You can see the status of your build at
+            https://platform.bymason.com/controller/projects/project-id
+        """.format(config_file)))
+
     def test__register_config__rewritten_file_is_registered(self):
         config_file = os.path.join(__tests_root__, 'res/config4.yml')
         api = MagicMock()
@@ -856,6 +883,28 @@ class CliTest(unittest.TestCase):
         config = Config(auth_store=self._initialized_auth_store(), api=api)
 
         result = self.runner.invoke(cli, ['register', 'apk', apk_file], obj=config)
+
+        self.assertIsNone(result.exception, result.output)
+        self.assertEqual(result.exit_code, 0)
+        self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
+            ------------ App ------------
+            File path: {}
+            Package name: com.supercilex.test
+            Version name: 0.1.0-4-g0f30bf8-dirty
+            Version code: 384866
+            -----------------------------
+
+            Continue registration? [Y/n]: 
+            App 'com.supercilex.test' registered.
+        """.format(apk_file)))
+
+    def test__register_apk__folder_is_registered(self):
+        project_dir = os.path.join(__tests_root__, 'res/simple-project')
+        apk_file = os.path.join(project_dir, 'v1.apk')
+        api = MagicMock()
+        config = Config(auth_store=self._initialized_auth_store(), api=api)
+
+        result = self.runner.invoke(cli, ['register', 'apk', project_dir], obj=config)
 
         self.assertIsNone(result.exception, result.output)
         self.assertEqual(result.exit_code, 0)
