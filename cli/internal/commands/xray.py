@@ -383,6 +383,8 @@ class XRay(object):
             else:
                 raise e
 
+        self._logger.info('Success: {} -> {}'.format(local, remote))
+
     def pull(self, remote, dest_file=None):
         self._run_in_reactor(self._pull, remote, dest_file=dest_file)
 
@@ -391,13 +393,15 @@ class XRay(object):
             dest_file = os.path.basename(remote)
 
         try:
-            return self._with_progressbar(remote, device.pull, remote, dest_file=str(dest_file))
+            self._with_progressbar(remote, device.pull, remote, dest_file=str(dest_file))
         except AdbCommandFailureException as e:
             if not remote.startswith('/') and 'No such file or directory' in str(e):
                 remote = '/sdcard/' + remote
-                return self._with_progressbar(remote, device.pull, remote, dest_file=str(dest_file))
+                self._with_progressbar(remote, device.pull, remote, dest_file=str(dest_file))
             else:
                 raise e
+
+        self._logger.info('Success: {} -> {}'.format(remote, dest_file))
 
     def install(self, local_path, replace_existing=True, grant_permissions=False, args=None):
 
