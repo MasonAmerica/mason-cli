@@ -396,6 +396,8 @@ class XRay(object):
     def _pull(self, device, remote, dest_file=None):
         if dest_file is None:
             dest_file = os.path.basename(remote)
+        elif os.path.isdir(dest_file):
+            dest_file = os.path.join(dest_file, os.path.basename(remote))
 
         try:
             self._with_progressbar(remote, device.pull, remote, dest_file=str(dest_file))
