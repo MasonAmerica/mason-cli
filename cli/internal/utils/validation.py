@@ -18,6 +18,9 @@ def validate_api_key(config: Config):
 def validate_artifact_version(config: Config, version, type: str):
     if version == 'latest':
         return
+    if version is None:
+        config.logger.error("Invalid {}: version not found.".format(type))
+        raise click.Abort()
 
     try:
         version = int(version)
