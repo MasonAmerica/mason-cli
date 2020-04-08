@@ -281,9 +281,14 @@ class XRay(object):
             except Exception as exc:
                 self._logger.debug(exc, exc_info=True)
                 if len(exc.args) >= 1 and type(exc.args[0]) is bytearray:
-                    self._logger.error(exc.args[0].decode('utf-8'))
+                    err = str(exc.args[0].decode('utf-8'))
                 else:
-                    self._logger.error(exc)
+                    err = str(exc)
+
+                if 'Read-only file system' in err:
+                    self._logger.error('Permission denied.')
+                else:
+                    self._logger.error(err)
 
             finally:
                 adb.close()
