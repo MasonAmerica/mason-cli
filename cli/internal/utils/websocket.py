@@ -35,7 +35,7 @@ MSG_CLIENT_FAIL = b'client:fail'
 
 HTTP_STATUS_CODES = {
     '400': 'The service could not understand the request.',
-    '401': 'Authorization required.',
+    '401': 'Invalid API Key.',
     '403': 'Access to the requested device is denied.',
     '404': 'The requested device was not found.',
     '410': 'X-Ray is not supported on this device.',
