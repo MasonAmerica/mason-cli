@@ -330,7 +330,7 @@ class RegisterProjectCommand(RegisterCommand):
         raw_config_files = self._validated_files(context.get('configs') or 'mason.yml', 'yml')
         apk_files = self._validated_files(context.get('apps'), 'apk')
         raw_boot_animations = self._validated_media(context.get('bootanimations'))
-        raw_splash_screens = self._validated_media(context.get('splashscreens'))
+        raw_splash_screens = self._validated_media(context.get('splashes'))
 
         apk_registration = RegisterApkCommand(self.config, apk_files)
         media_registrations = []

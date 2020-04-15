@@ -225,26 +225,26 @@ def register_media_bootanimation(config, name, version, media):
     command.run()
 
 
-@register_media.command('splashscreen')
+@register_media.command('splash')
 @click.argument('name')
 @click.argument('version', type=Version())
 @click.argument('media', type=click.Path(exists=True, dir_okay=False))
 @pass_config
 def register_media_splash(config, name, version, media):
     """
-    Register splash artifacts.
+    Register splash screen artifacts.
 
     \b
-      NAME of the splash.
-      VERSION of the splash.
+      NAME of the splash screen.
+      VERSION of the splash screen.
       MEDIA file to be uploaded.
 
     \b
-    For example, register a splash:
+    For example, register a splash screen:
       $ mason register media splash mason-test latest splash.png
 
     \b
-    Full docs: https://docs.bymason.com/mason-cli/#mason-register-media-splashscreen
+    Full docs: https://docs.bymason.com/mason-cli/#mason-register-media-splash
     """
 
     from cli.internal.commands.register import RegisterMediaCommand
