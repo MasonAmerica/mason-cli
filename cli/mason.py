@@ -244,7 +244,7 @@ def register_media_splash(config, name, version, media):
       $ mason register media splash mason-test latest splash.png
 
     \b
-    Full docs: https://docs.bymason.com/mason-cli/#mason-register-media-splash
+    Full docs: https://docs.bymason.com/mason-cli/#mason-register-media-splashscreen
     """
 
     from cli.internal.commands.register import RegisterMediaCommand
