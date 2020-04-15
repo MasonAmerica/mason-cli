@@ -17,8 +17,8 @@ class Apk(IArtifact):
         self.config = config
         self.binary = binary
         self.apk = apk
-        self.name = apk.get_package()
-        self.version = apk.get_androidversion_code()
+        self.name = apk.get_package() if apk.is_valid_APK() else None
+        self.version = apk.get_androidversion_code() if apk.is_valid_APK() else None
         self.details = None
 
     @staticmethod
@@ -29,12 +29,12 @@ class Apk(IArtifact):
 
     # TODO: Move this entire validation to service side.
     def validate(self):
-        validate_artifact_version(self.config, self.version, self.get_type())
-
         # If not parsed well by apk_parse
         if not self.apk.is_valid_APK():
             self.config.logger.error('Not a valid APK.')
             raise click.Abort()
+
+        validate_artifact_version(self.config, self.version, self.get_type())
 
         min_sdk = int(self.apk.get_min_sdk_version())
         # We don't support anything higher right now

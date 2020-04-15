@@ -814,6 +814,20 @@ class CliTest(unittest.TestCase):
             Aborted!
         """))
 
+    def test__register_apk__invalid_file_fails_cleanly(self):
+        apk_file = os.path.join(__tests_root__, 'res/config.yml')
+        api = MagicMock()
+        config = Config(auth_store=self._initialized_auth_store(), api=api)
+
+        result = self.runner.invoke(cli, ['register', 'apk', apk_file], obj=config)
+
+        self.assertIsInstance(result.exception, SystemExit)
+        self.assertEqual(result.exit_code, 1)
+        self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
+            error: Not a valid APK.
+            Aborted!
+        """))
+
     def test__register_apk__existing_artifact_fails(self):
         apk_file = os.path.join(__tests_root__, 'res/v1.apk')
         api = MagicMock()

@@ -262,7 +262,11 @@ class APK:
             self.zip = zipfile.ZipFile(io.BytesIO(self.__raw), mode="r")
         else:
             self.__raw = None
-            self.zip = zipfile.ZipFile(filename, mode="r")
+            try:
+                self.zip = zipfile.ZipFile(filename, mode="r")
+            except zipfile.BadZipFile as e:
+                log.debug(e)
+                return
 
         if testzip:
             log.info("Testing zip file integrity, this might take a while...")
