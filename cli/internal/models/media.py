@@ -1,3 +1,4 @@
+import imghdr
 import os
 import zipfile
 
@@ -116,7 +117,10 @@ class Media(IArtifact):
                 self.details = filename.readlines()
 
     def _validate_splash(self):
-        pass
+        type_ = imghdr.what(self.binary)
+        if type_ != 'png':
+            self.config.logger.error('Invalid splash screen: only PNGs are supported')
+            raise click.Abort()
 
     def __eq__(self, other):
         return self.binary == other.binary and self.version == other.version

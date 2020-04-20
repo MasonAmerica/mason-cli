@@ -1134,6 +1134,23 @@ class CliTest(unittest.TestCase):
             Aborted!
         """))
 
+    def test__register_splash__invalid_image_fails(self):
+        media_file = os.path.join(__tests_root__, 'res/config.yml')
+        api = MagicMock()
+        config = Config(auth_store=self._initialized_auth_store(), api=api)
+
+        result = self.runner.invoke(cli, [
+            'register', 'media',
+            'splash', 'Splash name', '1', media_file
+        ], obj=config)
+
+        self.assertIsInstance(result.exception, SystemExit)
+        self.assertEqual(result.exit_code, 1)
+        self.assertEqual(inspect.cleandoc(result.output), inspect.cleandoc("""
+            error: Invalid splash screen: only PNGs are supported
+            Aborted!
+        """))
+
     def test__register_splash__negative_confirmation_aborts(self):
         media_file = os.path.join(__tests_root__, 'res/splash.png')
         api = MagicMock()
