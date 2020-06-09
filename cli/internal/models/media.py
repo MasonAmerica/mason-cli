@@ -56,7 +56,7 @@ class Media(IArtifact):
 
             if self.details:
                 self.config.logger.debug('Details: ')
-                lines = list(line for line in (l.strip() for l in self.details) if line)
+                lines = list(line.strip() for line in self.details if line)
                 for line in lines:
                     self.config.logger.debug(line)
 
