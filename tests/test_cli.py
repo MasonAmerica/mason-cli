@@ -214,6 +214,7 @@ class CliTest(unittest.TestCase):
             Aborted!
         """))
 
+    @unittest.skipIf(os.name == 'nt', 'The Windows tmp dir is inside the home dir')
     def test__init__outside_home_dir_shows_warning(self):
         api = MagicMock()
         config = Config(auth_store=self._initialized_auth_store(), api=api)
