@@ -138,6 +138,7 @@ class CliTest(unittest.TestCase):
         self.assertIn('Lowest logging level activated.', result.output)
         self.assertIn('debug: Debug logging activated.', result.output)
 
+    @unittest.skipIf(os.name == 'nt', 'Windows doesn\'t support colors')
     def test__logging__colors_are_enabled_by_default(self):
         result = self.runner.invoke(cli, ['-v', 'debug', 'version'], color=True)
 
@@ -145,6 +146,7 @@ class CliTest(unittest.TestCase):
         self.assertEqual(result.exit_code, 0)
         self.assertIn(b'\x1b[34mdebug: \x1b[0mDebug logging activated.', result.stdout_bytes)
 
+    @unittest.skipIf(os.name == 'nt', 'Windows doesn\'t support colors')
     def test__logging__colors_can_be_disabled(self):
         result = self.runner.invoke(cli, ['-v', 'debug', '--no-color', 'version'], color=True)
 
