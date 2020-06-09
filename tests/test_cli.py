@@ -402,8 +402,8 @@ class CliTest(unittest.TestCase):
             os.makedirs(os.path.join(current_dir, 'apps'))
             os.makedirs(os.path.join(current_dir, 'apps2'))
 
-            apk_file = os.path.join(__tests_root__, 'res/v1.apk')
-            shutil.copyfile(apk_file, os.path.join(current_dir, 'apps/app.apk'))
+            apk_file = os.path.join(__tests_root__, 'res', 'v1.apk')
+            shutil.copyfile(apk_file, os.path.join(current_dir, 'apps', 'app.apk'))
 
             result = self.runner.invoke(cli, ['init'], obj=config, input='y\nfake-dir\napps, apps2')
 
@@ -449,7 +449,7 @@ class CliTest(unittest.TestCase):
         self.assertEqual(result.exit_code, 2)
 
     def test__register_config__no_creds_fails(self):
-        config_file = os.path.join(__tests_root__, 'res/config.yml')
+        config_file = os.path.join(__tests_root__, 'res', 'config.yml')
         api = MagicMock()
         config = Config(auth_store=self._uninitialized_auth_store(), api=api)
 
@@ -463,7 +463,7 @@ class CliTest(unittest.TestCase):
         """))
 
     def test__register_config__existing_artifact_fails(self):
-        config_file = os.path.join(__tests_root__, 'res/config.yml')
+        config_file = os.path.join(__tests_root__, 'res', 'config.yml')
         api = MagicMock()
         api.upload_artifact = MagicMock(side_effect=ApiError(
             'Artifact already exists and cannot be overwritten'))
@@ -488,7 +488,7 @@ class CliTest(unittest.TestCase):
         """.format(config_file)))
 
     def test__register_config__latest_non_existent_apk_fails(self):
-        config_file = os.path.join(__tests_root__, 'res/complex-project/config3.yml')
+        config_file = os.path.join(__tests_root__, 'res', 'complex-project', 'config3.yml')
         api = MagicMock()
         api.get_latest_artifact = MagicMock(return_value=None)
         config = Config(
@@ -513,7 +513,7 @@ class CliTest(unittest.TestCase):
             if type == 'apk':
                 return {'version': '12'}
 
-        config_file = os.path.join(__tests_root__, 'res/config4.yml')
+        config_file = os.path.join(__tests_root__, 'res', 'config4.yml')
         api = MagicMock()
         api.get_latest_artifact = MagicMock(side_effect=version_finder)
         config = Config(
@@ -532,7 +532,7 @@ class CliTest(unittest.TestCase):
         """))
 
     def test__register_config__negative_confirmation_aborts(self):
-        config_file = os.path.join(__tests_root__, 'res/config.yml')
+        config_file = os.path.join(__tests_root__, 'res', 'config.yml')
         api = MagicMock()
         config = Config(auth_store=self._initialized_auth_store(), api=api)
 
@@ -554,7 +554,7 @@ class CliTest(unittest.TestCase):
         """.format(config_file)))
 
     def test__register_config__dry_run_exits_cleanly(self):
-        config_file = os.path.join(__tests_root__, 'res/config.yml')
+        config_file = os.path.join(__tests_root__, 'res', 'config.yml')
         api = MagicMock()
         config = Config(auth_store=self._initialized_auth_store(), api=api)
 
@@ -575,7 +575,7 @@ class CliTest(unittest.TestCase):
         """.format(config_file)))
 
     def test__register_config__file_is_registered(self):
-        config_file = os.path.join(__tests_root__, 'res/config.yml')
+        config_file = os.path.join(__tests_root__, 'res', 'config.yml')
         api = MagicMock()
         config = Config(auth_store=self._initialized_auth_store(), api=api)
 
@@ -601,7 +601,7 @@ class CliTest(unittest.TestCase):
         """.format(config_file)))
 
     def test__register_config__folder_is_registered(self):
-        project_dir = os.path.join(__tests_root__, 'res/no-app-project')
+        project_dir = os.path.join(__tests_root__, 'res', 'no-app-project')
         config_file = os.path.join(project_dir, 'mason.yml')
         api = MagicMock()
         config = Config(auth_store=self._initialized_auth_store(), api=api)
@@ -628,7 +628,7 @@ class CliTest(unittest.TestCase):
         """.format(config_file)))
 
     def test__register_config__rewritten_file_is_registered(self):
-        config_file = os.path.join(__tests_root__, 'res/config4.yml')
+        config_file = os.path.join(__tests_root__, 'res', 'config4.yml')
         api = MagicMock()
         api.get_latest_artifact = MagicMock(return_value={'version': '41'})
         api.get_highest_artifact = MagicMock(return_value={'version': '41'})
@@ -658,8 +658,8 @@ class CliTest(unittest.TestCase):
         """.format(config_file)))
 
     def test__register_config__files_are_registered(self):
-        config_file1 = os.path.join(__tests_root__, 'res/config.yml')
-        config_file2 = os.path.join(__tests_root__, 'res/config2.yml')
+        config_file1 = os.path.join(__tests_root__, 'res', 'config.yml')
+        config_file2 = os.path.join(__tests_root__, 'res', 'config2.yml')
         api = MagicMock()
         config = Config(
             auth_store=self._initialized_auth_store(),
@@ -704,7 +704,7 @@ class CliTest(unittest.TestCase):
         """.format(config_file1, config_file2)))
 
     def test__register_config__config_is_registered_and_awaits_build_completion(self):
-        config_file = os.path.join(__tests_root__, 'res/config.yml')
+        config_file = os.path.join(__tests_root__, 'res', 'config.yml')
         api = MagicMock()
         api.get_build = MagicMock(return_value={'data': {'status': 'COMPLETED'}})
         config = Config(
@@ -737,8 +737,8 @@ class CliTest(unittest.TestCase):
         """.format(config_file)))
 
     def test__register_config__multiple_configs_are_registered_and_await_build_completion(self):
-        config_file1 = os.path.join(__tests_root__, 'res/config.yml')
-        config_file2 = os.path.join(__tests_root__, 'res/config2.yml')
+        config_file1 = os.path.join(__tests_root__, 'res', 'config.yml')
+        config_file2 = os.path.join(__tests_root__, 'res', 'config2.yml')
         api = MagicMock()
         api.get_build = MagicMock(return_value={'data': {'status': 'COMPLETED'}})
         config = Config(
@@ -801,7 +801,7 @@ class CliTest(unittest.TestCase):
         self.assertEqual(result.exit_code, 2)
 
     def test__register_apk__no_creds_fails(self):
-        apk_file = os.path.join(__tests_root__, 'res/v1.apk')
+        apk_file = os.path.join(__tests_root__, 'res', 'v1.apk')
         api = MagicMock()
         config = Config(auth_store=self._uninitialized_auth_store(), api=api)
 
@@ -815,7 +815,7 @@ class CliTest(unittest.TestCase):
         """))
 
     def test__register_apk__invalid_file_fails_cleanly(self):
-        apk_file = os.path.join(__tests_root__, 'res/config.yml')
+        apk_file = os.path.join(__tests_root__, 'res', 'config.yml')
         api = MagicMock()
         config = Config(auth_store=self._initialized_auth_store(), api=api)
 
@@ -829,7 +829,7 @@ class CliTest(unittest.TestCase):
         """))
 
     def test__register_apk__existing_artifact_fails(self):
-        apk_file = os.path.join(__tests_root__, 'res/v1.apk')
+        apk_file = os.path.join(__tests_root__, 'res', 'v1.apk')
         api = MagicMock()
         api.upload_artifact = MagicMock(side_effect=ApiError(
             'Artifact already exists and cannot be overwritten'))
@@ -853,7 +853,7 @@ class CliTest(unittest.TestCase):
         """.format(apk_file)))
 
     def test__register_apk__negative_confirmation_aborts(self):
-        apk_file = os.path.join(__tests_root__, 'res/v1.apk')
+        apk_file = os.path.join(__tests_root__, 'res', 'v1.apk')
         api = MagicMock()
         config = Config(auth_store=self._initialized_auth_store(), api=api)
 
@@ -874,7 +874,7 @@ class CliTest(unittest.TestCase):
         """.format(apk_file)))
 
     def test__register_apk__dry_run_exits_cleanly(self):
-        apk_file = os.path.join(__tests_root__, 'res/v1.apk')
+        apk_file = os.path.join(__tests_root__, 'res', 'v1.apk')
         api = MagicMock()
         config = Config(auth_store=self._initialized_auth_store(), api=api)
 
@@ -892,7 +892,7 @@ class CliTest(unittest.TestCase):
         """.format(apk_file)))
 
     def test__register_apk__file_is_registered(self):
-        apk_file = os.path.join(__tests_root__, 'res/v1.apk')
+        apk_file = os.path.join(__tests_root__, 'res', 'v1.apk')
         api = MagicMock()
         config = Config(auth_store=self._initialized_auth_store(), api=api)
 
@@ -913,7 +913,7 @@ class CliTest(unittest.TestCase):
         """.format(apk_file)))
 
     def test__register_apk__folder_is_registered(self):
-        project_dir = os.path.join(__tests_root__, 'res/simple-project')
+        project_dir = os.path.join(__tests_root__, 'res', 'simple-project')
         apk_file = os.path.join(project_dir, 'v1.apk')
         api = MagicMock()
         config = Config(auth_store=self._initialized_auth_store(), api=api)
@@ -935,8 +935,8 @@ class CliTest(unittest.TestCase):
         """.format(apk_file)))
 
     def test__register_apk__files_are_registered(self):
-        apk_file1 = os.path.join(__tests_root__, 'res/v1.apk')
-        apk_file2 = os.path.join(__tests_root__, 'res/v1and2.apk')
+        apk_file1 = os.path.join(__tests_root__, 'res', 'v1.apk')
+        apk_file2 = os.path.join(__tests_root__, 'res', 'v1and2.apk')
         api = MagicMock()
         config = Config(
             auth_store=self._initialized_auth_store(),
@@ -982,7 +982,7 @@ class CliTest(unittest.TestCase):
         self.assertEqual(result.exit_code, 2)
 
     def test__register_boot_animation__invalid_version_fails(self):
-        media_file = os.path.join(__tests_root__, 'res/bootanimation.zip')
+        media_file = os.path.join(__tests_root__, 'res', 'bootanimation.zip')
         result = self.runner.invoke(
             cli, ['register', 'media', 'bootanimation', 'Anim name', 'invalid', media_file])
 
@@ -990,7 +990,7 @@ class CliTest(unittest.TestCase):
         self.assertEqual(result.exit_code, 2)
 
     def test__register_boot_animation__no_creds_fails(self):
-        media_file = os.path.join(__tests_root__, 'res/bootanimation.zip')
+        media_file = os.path.join(__tests_root__, 'res', 'bootanimation.zip')
         api = MagicMock()
         config = Config(auth_store=self._uninitialized_auth_store(), api=api)
 
@@ -1007,7 +1007,7 @@ class CliTest(unittest.TestCase):
         """))
 
     def test__register_boot_animation__negative_confirmation_aborts(self):
-        media_file = os.path.join(__tests_root__, 'res/bootanimation.zip')
+        media_file = os.path.join(__tests_root__, 'res', 'bootanimation.zip')
         api = MagicMock()
         config = Config(auth_store=self._initialized_auth_store(), api=api)
 
@@ -1030,7 +1030,7 @@ class CliTest(unittest.TestCase):
         """.format(media_file)))
 
     def test__register_boot_animation__dry_run_exits_cleanly(self):
-        media_file = os.path.join(__tests_root__, 'res/bootanimation.zip')
+        media_file = os.path.join(__tests_root__, 'res', 'bootanimation.zip')
         api = MagicMock()
         config = Config(auth_store=self._initialized_auth_store(), api=api)
 
@@ -1050,7 +1050,7 @@ class CliTest(unittest.TestCase):
         """.format(media_file)))
 
     def test__register_boot_animation__file_is_registered(self):
-        media_file = os.path.join(__tests_root__, 'res/bootanimation.zip')
+        media_file = os.path.join(__tests_root__, 'res', 'bootanimation.zip')
         api = MagicMock()
         config = Config(auth_store=self._initialized_auth_store(), api=api)
 
@@ -1073,7 +1073,7 @@ class CliTest(unittest.TestCase):
         """.format(media_file)))
 
     def test__register_boot_animation__latest_file_is_registered(self):
-        media_file = os.path.join(__tests_root__, 'res/bootanimation.zip')
+        media_file = os.path.join(__tests_root__, 'res', 'bootanimation.zip')
         api = MagicMock()
         api.get_highest_artifact = MagicMock(return_value={'version': '41'})
         config = Config(auth_store=self._initialized_auth_store(), api=api)
@@ -1110,7 +1110,7 @@ class CliTest(unittest.TestCase):
         self.assertEqual(result.exit_code, 2)
 
     def test__register_splash__invalid_version_fails(self):
-        media_file = os.path.join(__tests_root__, 'res/splash.png')
+        media_file = os.path.join(__tests_root__, 'res', 'splash.png')
         result = self.runner.invoke(
             cli, ['register', 'media', 'splash', 'Splash name', 'invalid', media_file])
 
@@ -1118,7 +1118,7 @@ class CliTest(unittest.TestCase):
         self.assertEqual(result.exit_code, 2)
 
     def test__register_splash__no_creds_fails(self):
-        media_file = os.path.join(__tests_root__, 'res/splash.png')
+        media_file = os.path.join(__tests_root__, 'res', 'splash.png')
         api = MagicMock()
         config = Config(auth_store=self._uninitialized_auth_store(), api=api)
 
@@ -1135,7 +1135,7 @@ class CliTest(unittest.TestCase):
         """))
 
     def test__register_splash__invalid_image_fails(self):
-        media_file = os.path.join(__tests_root__, 'res/config.yml')
+        media_file = os.path.join(__tests_root__, 'res', 'config.yml')
         api = MagicMock()
         config = Config(auth_store=self._initialized_auth_store(), api=api)
 
@@ -1152,7 +1152,7 @@ class CliTest(unittest.TestCase):
         """))
 
     def test__register_splash__negative_confirmation_aborts(self):
-        media_file = os.path.join(__tests_root__, 'res/splash.png')
+        media_file = os.path.join(__tests_root__, 'res', 'splash.png')
         api = MagicMock()
         config = Config(auth_store=self._initialized_auth_store(), api=api)
 
@@ -1175,7 +1175,7 @@ class CliTest(unittest.TestCase):
         """.format(media_file)))
 
     def test__register_splash__dry_run_exits_cleanly(self):
-        media_file = os.path.join(__tests_root__, 'res/splash.png')
+        media_file = os.path.join(__tests_root__, 'res', 'splash.png')
         api = MagicMock()
         config = Config(auth_store=self._initialized_auth_store(), api=api)
 
@@ -1195,7 +1195,7 @@ class CliTest(unittest.TestCase):
         """.format(media_file)))
 
     def test__register_splash__file_is_registered(self):
-        media_file = os.path.join(__tests_root__, 'res/splash.png')
+        media_file = os.path.join(__tests_root__, 'res', 'splash.png')
         api = MagicMock()
         config = Config(auth_store=self._initialized_auth_store(), api=api)
 
@@ -1218,7 +1218,7 @@ class CliTest(unittest.TestCase):
         """.format(media_file)))
 
     def test__register_splash__latest_file_is_registered(self):
-        media_file = os.path.join(__tests_root__, 'res/splash.png')
+        media_file = os.path.join(__tests_root__, 'res', 'splash.png')
         api = MagicMock()
         api.get_highest_artifact = MagicMock(return_value={'version': '41'})
         config = Config(auth_store=self._initialized_auth_store(), api=api)
@@ -1255,8 +1255,8 @@ class CliTest(unittest.TestCase):
         """))
 
     def test__register_project__non_existent_resource_fails(self):
-        invalid_project = os.path.join(__tests_root__, 'res/invalid-project')
-        config_file = os.path.join(__tests_root__, 'res/invalid-project/mason.yml')
+        invalid_project = os.path.join(__tests_root__, 'res', 'invalid-project')
+        config_file = os.path.join(__tests_root__, 'res', 'invalid-project', 'mason.yml')
         api = MagicMock()
         config = Config(auth_store=self._initialized_auth_store(), api=api)
 
@@ -1271,7 +1271,7 @@ class CliTest(unittest.TestCase):
         """.format(config_file)))
 
     def test__register_project__no_creds_fails(self):
-        simple_project = os.path.join(__tests_root__, 'res/simple-project')
+        simple_project = os.path.join(__tests_root__, 'res', 'simple-project')
         api = MagicMock()
         config = Config(auth_store=self._uninitialized_auth_store(), api=api)
 
@@ -1286,9 +1286,9 @@ class CliTest(unittest.TestCase):
         """))
 
     def test__register_project__negative_confirmation_aborts(self):
-        simple_project = os.path.join(__tests_root__, 'res/simple-project')
+        simple_project = os.path.join(__tests_root__, 'res', 'simple-project')
         config_file = os.path.join(simple_project, 'mason.yml')
-        apk_file = os.path.join(__tests_root__, 'res/simple-project/v1.apk')
+        apk_file = os.path.join(__tests_root__, 'res', 'simple-project', 'v1.apk')
         api = MagicMock()
         config = Config(auth_store=self._initialized_auth_store(), api=api)
 
@@ -1318,9 +1318,9 @@ class CliTest(unittest.TestCase):
         """.format(apk_file, config_file)))
 
     def test__register_project__dry_run_exits_cleanly(self):
-        simple_project = os.path.join(__tests_root__, 'res/simple-project')
+        simple_project = os.path.join(__tests_root__, 'res', 'simple-project')
         config_file = os.path.join(simple_project, 'mason.yml')
-        apk_file = os.path.join(__tests_root__, 'res/simple-project/v1.apk')
+        apk_file = os.path.join(__tests_root__, 'res', 'simple-project', 'v1.apk')
         api = MagicMock()
         config = Config(auth_store=self._initialized_auth_store(), api=api)
 
@@ -1347,9 +1347,9 @@ class CliTest(unittest.TestCase):
         """.format(apk_file, config_file)))
 
     def test__register_project__app_not_present_is_ignored(self):
-        no_app_project = os.path.join(__tests_root__, 'res/no-app-project')
-        config_file = os.path.join(__tests_root__, 'res/no-app-project/mason.yml')
-        apk_file = os.path.join(__tests_root__, 'res/no-app-project/v1.apk')
+        no_app_project = os.path.join(__tests_root__, 'res', 'no-app-project')
+        config_file = os.path.join(__tests_root__, 'res', 'no-app-project', 'mason.yml')
+        apk_file = os.path.join(__tests_root__, 'res', 'no-app-project', 'v1.apk')
         api = MagicMock()
         api.get_build = MagicMock(return_value={'data': {'status': 'COMPLETED'}})
         config = Config(auth_store=self._initialized_auth_store(), api=api)
@@ -1400,9 +1400,9 @@ class CliTest(unittest.TestCase):
             if artifact.get_type() == 'config':
                 raise ApiError('Artifact already exists and cannot be overwritten')
 
-        simple_project = os.path.join(__tests_root__, 'res/simple-project')
-        config_file = os.path.join(__tests_root__, 'res/simple-project/mason.yml')
-        apk_file = os.path.join(__tests_root__, 'res/simple-project/v1.apk')
+        simple_project = os.path.join(__tests_root__, 'res', 'simple-project')
+        config_file = os.path.join(__tests_root__, 'res', 'simple-project', 'mason.yml')
+        apk_file = os.path.join(__tests_root__, 'res', 'simple-project', 'v1.apk')
         api = MagicMock()
         api.get_artifact = MagicMock(side_effect=artifact_response)
         api.upload_artifact = MagicMock(side_effect=upload_response)
@@ -1444,9 +1444,9 @@ class CliTest(unittest.TestCase):
                     'checksum': {'sha1': '891544e59702a6138962a9a2728cb2527fb77554'}
                 }
 
-        simple_project = os.path.join(__tests_root__, 'res/simple-project')
-        config_file = os.path.join(__tests_root__, 'res/simple-project/mason.yml')
-        apk_file = os.path.join(__tests_root__, 'res/simple-project/v1.apk')
+        simple_project = os.path.join(__tests_root__, 'res', 'simple-project')
+        config_file = os.path.join(__tests_root__, 'res', 'simple-project', 'mason.yml')
+        apk_file = os.path.join(__tests_root__, 'res', 'simple-project', 'v1.apk')
         api = MagicMock()
         api.get_artifact = MagicMock(side_effect=api_response)
         api.get_build = MagicMock(return_value={'data': {'status': 'COMPLETED'}})
@@ -1490,9 +1490,9 @@ class CliTest(unittest.TestCase):
             if artifact.get_type() == 'apk':
                 raise ApiError('Artifact already exists and cannot be overwritten')
 
-        simple_project = os.path.join(__tests_root__, 'res/simple-project')
-        config_file = os.path.join(__tests_root__, 'res/simple-project/mason.yml')
-        apk_file = os.path.join(__tests_root__, 'res/simple-project/v1.apk')
+        simple_project = os.path.join(__tests_root__, 'res', 'simple-project')
+        config_file = os.path.join(__tests_root__, 'res', 'simple-project', 'mason.yml')
+        apk_file = os.path.join(__tests_root__, 'res', 'simple-project', 'v1.apk')
         api = MagicMock()
         api.upload_artifact = MagicMock(side_effect=api_response)
         api.get_build = MagicMock(return_value={'data': {'status': 'COMPLETED'}})
@@ -1525,9 +1525,9 @@ class CliTest(unittest.TestCase):
         """.format(apk_file, config_file)))
 
     def test__register_project__simple_project_is_registered_and_built(self):
-        simple_project = os.path.join(__tests_root__, 'res/simple-project')
-        config_file = os.path.join(__tests_root__, 'res/simple-project/mason.yml')
-        apk_file = os.path.join(__tests_root__, 'res/simple-project/v1.apk')
+        simple_project = os.path.join(__tests_root__, 'res', 'simple-project')
+        config_file = os.path.join(__tests_root__, 'res', 'simple-project', 'mason.yml')
+        apk_file = os.path.join(__tests_root__, 'res', 'simple-project', 'v1.apk')
         api = MagicMock()
         api.get_build = MagicMock(return_value={'data': {'status': 'COMPLETED'}})
         config = Config(
@@ -1569,16 +1569,18 @@ class CliTest(unittest.TestCase):
         """.format(apk_file, config_file)))
 
     def test__register_project__complex_project_is_registered_and_built(self):
-        complex_project = os.path.join(__tests_root__, 'res/complex-project')
-        config_file1 = os.path.join(__tests_root__, 'res/complex-project/.mason/config2.yml')
-        config_file2 = os.path.join(__tests_root__, 'res/complex-project/config3.yml')
-        apk_file1 = os.path.join(__tests_root__, 'res/complex-project/test-path/v1.apk')
-        apk_file2 = os.path.join(__tests_root__, 'res/complex-project/built-apks/built.apk')
+        complex_project = os.path.join(__tests_root__, 'res', 'complex-project')
+        config_file1 = os.path.join(
+            __tests_root__, 'res', 'complex-project', '.mason', 'config2.yml')
+        config_file2 = os.path.join(__tests_root__, 'res', 'complex-project', 'config3.yml')
+        apk_file1 = os.path.join(__tests_root__, 'res', 'complex-project', 'test-path', 'v1.apk')
+        apk_file2 = os.path.join(
+            __tests_root__, 'res', 'complex-project', 'built-apks', 'built.apk')
         boot_animation1 = os.path.join(
-            __tests_root__, 'res/complex-project/anims/bootanimation.zip')
+            __tests_root__, 'res', 'complex-project', 'anims', 'bootanimation.zip')
         boot_animation2 = os.path.join(
-            __tests_root__, 'res/complex-project/anims/bootanimation2.zip')
-        splash = os.path.join(__tests_root__, 'res/splash.png')
+            __tests_root__, 'res', 'complex-project', 'anims', 'bootanimation2.zip')
+        splash = os.path.join(__tests_root__, 'res', 'splash.png')
         api = MagicMock()
         api.get_build = MagicMock(return_value={'data': {'status': 'COMPLETED'}})
         api.get_latest_artifact = MagicMock(return_value={'version': '41'})
@@ -1749,7 +1751,7 @@ class CliTest(unittest.TestCase):
         self.assertEqual(result.exit_code, 2)
 
     def test__stage__no_creds_fails(self):
-        config_file = os.path.join(__tests_root__, 'res/config.yml')
+        config_file = os.path.join(__tests_root__, 'res', 'config.yml')
         api = MagicMock()
         config = Config(auth_store=self._uninitialized_auth_store(), api=api)
 
@@ -1764,7 +1766,7 @@ class CliTest(unittest.TestCase):
         """))
 
     def test__stage__negative_confirmation_aborts(self):
-        config_file = os.path.join(__tests_root__, 'res/config.yml')
+        config_file = os.path.join(__tests_root__, 'res', 'config.yml')
         api = MagicMock()
         config = Config(auth_store=self._initialized_auth_store(), api=api)
 
@@ -1787,7 +1789,7 @@ class CliTest(unittest.TestCase):
         """.format(config_file)))
 
     def test__stage__file_is_registered(self):
-        config_file = os.path.join(__tests_root__, 'res/config.yml')
+        config_file = os.path.join(__tests_root__, 'res', 'config.yml')
         api = MagicMock()
         config = Config(
             auth_store=self._initialized_auth_store(),
@@ -1818,7 +1820,7 @@ class CliTest(unittest.TestCase):
         """.format(config_file)))
 
     def test__stage__config_is_registered_and_awaits_build_completion(self):
-        config_file = os.path.join(__tests_root__, 'res/config.yml')
+        config_file = os.path.join(__tests_root__, 'res', 'config.yml')
         api = MagicMock()
         api.get_build = MagicMock(return_value={'data': {'status': 'COMPLETED'}})
         config = Config(
@@ -2508,7 +2510,7 @@ class CliTest(unittest.TestCase):
     @contextlib.contextmanager
     def _home_dir_isolated_filesystem(self):
         cwd = os.getcwd()
-        t = os.path.join(os.path.expanduser('~'), '.cache/tmp-mason-tests')
+        t = os.path.join(os.path.expanduser('~'), '.cache', 'tmp-mason-tests')
         os.makedirs(t, exist_ok=True)
         os.chdir(t)
         try:

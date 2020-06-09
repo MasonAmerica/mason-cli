@@ -23,7 +23,7 @@ class MasonApiTest(unittest.TestCase):
         self.api._customer = 'mason-test'
 
     def test__upload_artifact__config_requests_are_correct(self):
-        config_file = os.path.join(__tests_root__, 'res/config.yml')
+        config_file = os.path.join(__tests_root__, 'res', 'config.yml')
         artifact = OSConfig.parse(MagicMock(), config_file)
         self.handler.get = MagicMock(return_value={
             'signed_request': 'signed_request',
@@ -59,7 +59,7 @@ class MasonApiTest(unittest.TestCase):
         )
 
     def test__upload_artifact__apk_requests_are_correct(self):
-        apk_file = os.path.join(__tests_root__, 'res/v1.apk')
+        apk_file = os.path.join(__tests_root__, 'res', 'v1.apk')
         artifact = Apk.parse(MagicMock(), apk_file)
         self.handler.get = MagicMock(return_value={
             'signed_request': 'signed_request',
@@ -102,7 +102,7 @@ class MasonApiTest(unittest.TestCase):
         )
 
     def test__upload_artifact__media_requests_are_correct(self):
-        media_file = os.path.join(__tests_root__, 'res/bootanimation.zip')
+        media_file = os.path.join(__tests_root__, 'res', 'bootanimation.zip')
         artifact = Media.parse(MagicMock(), 'Boot Anim', 'bootanimation', '1', media_file)
         self.handler.get = MagicMock(return_value={
             'signed_request': 'signed_request',

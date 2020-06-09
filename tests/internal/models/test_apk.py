@@ -60,19 +60,19 @@ class ApkTest(unittest.TestCase):
 
     def test_apk_v1_signed(self):
         mock_config = MagicMock()
-        apk = Apk.parse(mock_config, os.path.join(__tests_root__, 'res/v1.apk'))
+        apk = Apk.parse(mock_config, os.path.join(__tests_root__, 'res', 'v1.apk'))
 
         self.assertIsNotNone(apk)
 
     def test_apk_v2_signed(self):
         mock_config = MagicMock()
-        apk = Apk.parse(mock_config, os.path.join(__tests_root__, 'res/v2.apk'))
+        apk = Apk.parse(mock_config, os.path.join(__tests_root__, 'res', 'v2.apk'))
 
         self.assertIsNotNone(apk)
 
     def test_apk_v1_and_v2_signed(self):
         mock_config = MagicMock()
-        apk = Apk.parse(mock_config, os.path.join(__tests_root__, 'res/v1and2.apk'))
+        apk = Apk.parse(mock_config, os.path.join(__tests_root__, 'res', 'v1and2.apk'))
 
         self.assertIsNotNone(apk)
 
@@ -80,10 +80,10 @@ class ApkTest(unittest.TestCase):
         mock_config = MagicMock()
 
         with self.assertRaises(click.Abort):
-            Apk.parse(mock_config, os.path.join(__tests_root__, 'res/unsigned.apk'))
+            Apk.parse(mock_config, os.path.join(__tests_root__, 'res', 'unsigned.apk'))
 
     def test_apk_debug_signed(self):
         mock_config = MagicMock()
 
         with self.assertRaises(click.Abort):
-            Apk.parse(mock_config, os.path.join(__tests_root__, 'res/debug.apk'))
+            Apk.parse(mock_config, os.path.join(__tests_root__, 'res', 'debug.apk'))

@@ -29,7 +29,7 @@ class RegisterCommandTest(unittest.TestCase):
         self.config.executor = ThreadPoolExecutor()
 
     def test_registration_exits_cleanly_on_failure(self):
-        config_file = os.path.join(__tests_root__, 'res/config.yml')
+        config_file = os.path.join(__tests_root__, 'res', 'config.yml')
         command = RegisterConfigCommand(self.config, [config_file])
         self.config.api.upload_artifact = MagicMock(side_effect=ApiError())
 
@@ -37,7 +37,7 @@ class RegisterCommandTest(unittest.TestCase):
             command.run()
 
     def test_registration_with_rewrite_exits_cleanly_on_failure(self):
-        config_file = os.path.join(__tests_root__, 'res/config3.yml')
+        config_file = os.path.join(__tests_root__, 'res', 'config3.yml')
         command = RegisterConfigCommand(self.config, [config_file])
         self.config.api.get_latest_artifact = MagicMock(side_effect=ApiError())
 
@@ -45,7 +45,7 @@ class RegisterCommandTest(unittest.TestCase):
             command.run()
 
     def test_config_registers_successfully(self):
-        input_config_file = os.path.join(__tests_root__, 'res/config.yml')
+        input_config_file = os.path.join(__tests_root__, 'res', 'config.yml')
         working_dir = tempfile.mkdtemp()
         config_file = os.path.join(working_dir, 'config.yml')
         command = RegisterConfigCommand(self.config, [input_config_file], working_dir)
@@ -58,7 +58,7 @@ class RegisterCommandTest(unittest.TestCase):
     def test_config_registers_rewritten_config_successfully(self):
         self.config.api.get_latest_artifact = MagicMock(return_value={'version': '41'})
         self.config.api.get_highest_artifact = MagicMock(return_value={'version': '41'})
-        input_config_file = os.path.join(__tests_root__, 'res/config4.yml')
+        input_config_file = os.path.join(__tests_root__, 'res', 'config4.yml')
         working_dir = tempfile.mkdtemp()
         config_file = os.path.join(working_dir, 'config4.yml')
         command = RegisterConfigCommand(self.config, [input_config_file], working_dir)
@@ -98,7 +98,7 @@ class RegisterCommandTest(unittest.TestCase):
 
         self.config.api.get_latest_artifact = MagicMock(side_effect=version_finder)
         self.config.api.get_highest_artifact = MagicMock(side_effect=version_finder)
-        input_config_file = os.path.join(__tests_root__, 'res/config4.yml')
+        input_config_file = os.path.join(__tests_root__, 'res', 'config4.yml')
         working_dir = tempfile.mkdtemp()
         config_file = os.path.join(working_dir, 'config4.yml')
         command = RegisterConfigCommand(self.config, [input_config_file], working_dir)
@@ -131,8 +131,8 @@ class RegisterCommandTest(unittest.TestCase):
         })
 
     def test_apk_registers_successfully(self):
-        apk_file1 = os.path.join(__tests_root__, 'res/v1.apk')
-        apk_file2 = os.path.join(__tests_root__, 'res/v1and2.apk')
+        apk_file1 = os.path.join(__tests_root__, 'res', 'v1.apk')
+        apk_file2 = os.path.join(__tests_root__, 'res', 'v1and2.apk')
         command = RegisterApkCommand(self.config, [apk_file1, apk_file2])
 
         command.run()
@@ -143,7 +143,7 @@ class RegisterCommandTest(unittest.TestCase):
         ], any_order=True)
 
     def test_media_registers_successfully(self):
-        media_file = os.path.join(__tests_root__, 'res/bootanimation.zip')
+        media_file = os.path.join(__tests_root__, 'res', 'bootanimation.zip')
         command = RegisterMediaCommand(self.config, 'Boot Anim', 'bootanimation', '1', media_file)
 
         command.run()
@@ -153,7 +153,7 @@ class RegisterCommandTest(unittest.TestCase):
 
     def test_latest_media_registers_successfully(self):
         self.config.api.get_highest_artifact = MagicMock(return_value={'version': '41'})
-        media_file = os.path.join(__tests_root__, 'res/bootanimation.zip')
+        media_file = os.path.join(__tests_root__, 'res', 'bootanimation.zip')
         command = RegisterMediaCommand(
             self.config, 'Boot Anim', 'bootanimation', 'latest', media_file)
 
@@ -164,7 +164,7 @@ class RegisterCommandTest(unittest.TestCase):
 
     def test_latest_non_existant_media_registers_successfully(self):
         self.config.api.get_highest_artifact = MagicMock(return_value=None)
-        media_file = os.path.join(__tests_root__, 'res/bootanimation.zip')
+        media_file = os.path.join(__tests_root__, 'res', 'bootanimation.zip')
         command = RegisterMediaCommand(
             self.config, 'Boot Anim', 'bootanimation', 'latest', media_file)
 
@@ -176,8 +176,8 @@ class RegisterCommandTest(unittest.TestCase):
     def test_project_registers_successfully(self):
         self.config.endpoints_store.__getitem__ = MagicMock(return_value='https://google.com')
         self.config.api.get_build = MagicMock(return_value={'data': {'status': 'COMPLETED'}})
-        simple_project = os.path.join(__tests_root__, 'res/simple-project')
-        apk_file = os.path.join(__tests_root__, 'res/simple-project/v1.apk')
+        simple_project = os.path.join(__tests_root__, 'res', 'simple-project')
+        apk_file = os.path.join(__tests_root__, 'res', 'simple-project', 'v1.apk')
         working_dir = tempfile.mkdtemp()
         config_file = os.path.join(working_dir, 'mason.yml')
         command = RegisterProjectCommand(self.config, simple_project, working_dir)
@@ -193,7 +193,7 @@ class RegisterCommandTest(unittest.TestCase):
     def test_project_registers_updated_config(self):
         self.config.endpoints_store.__getitem__ = MagicMock(return_value='https://google.com')
         self.config.api.get_build = MagicMock(return_value={'data': {'status': 'COMPLETED'}})
-        simple_project = os.path.join(__tests_root__, 'res/simple-project')
+        simple_project = os.path.join(__tests_root__, 'res', 'simple-project')
         working_dir = tempfile.mkdtemp()
         config_file = os.path.join(working_dir, 'mason.yml')
         command = RegisterProjectCommand(self.config, simple_project, working_dir)
@@ -220,7 +220,7 @@ class RegisterCommandTest(unittest.TestCase):
         self.config.api.get_build = MagicMock(return_value={'data': {'status': 'COMPLETED'}})
         self.config.api.get_latest_artifact = MagicMock(return_value={'version': '41'})
         self.config.api.get_highest_artifact = MagicMock(return_value={'version': '41'})
-        complex_project = os.path.join(__tests_root__, 'res/complex-project')
+        complex_project = os.path.join(__tests_root__, 'res', 'complex-project')
         working_dir = tempfile.mkdtemp()
         config_file = os.path.join(working_dir, 'config3.yml')
         command = RegisterProjectCommand(self.config, complex_project, working_dir)

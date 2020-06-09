@@ -9,7 +9,7 @@ from tests import __tests_root__
 
 class MediaBootAnimationTest(unittest.TestCase):
     def setUp(self):
-        media_file = os.path.join(__tests_root__, 'res/bootanimation.zip')
+        media_file = os.path.join(__tests_root__, 'res', 'bootanimation.zip')
         self.media = Media(
             MagicMock(), 'test-boot', 'bootanimation', 1, media_file)
 

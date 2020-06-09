@@ -17,7 +17,7 @@ class StageCommandTest(unittest.TestCase):
         self.config.executor = ThreadPoolExecutor()
 
     def test_registers_and_uploads_config(self):
-        input_config_file = os.path.join(__tests_root__, 'res/config.yml')
+        input_config_file = os.path.join(__tests_root__, 'res', 'config.yml')
         working_dir = tempfile.mkdtemp()
         config_file = os.path.join(working_dir, 'config.yml')
         command = StageCommand(self.config, [input_config_file], False, None, working_dir)
@@ -31,7 +31,7 @@ class StageCommandTest(unittest.TestCase):
     def test_registers_and_uploads_rewritten_config(self):
         self.config.api.get_latest_artifact = MagicMock(return_value={'version': '12'})
         self.config.api.get_highest_artifact = MagicMock(return_value={'version': '12'})
-        input_config_file = os.path.join(__tests_root__, 'res/config4.yml')
+        input_config_file = os.path.join(__tests_root__, 'res', 'config4.yml')
         working_dir = tempfile.mkdtemp()
         config_file = os.path.join(working_dir, 'config4.yml')
         command = StageCommand(self.config, [input_config_file], False, None, working_dir)

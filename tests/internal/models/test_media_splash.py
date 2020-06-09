@@ -9,7 +9,7 @@ from tests import __tests_root__
 
 class MediaSplashTest(unittest.TestCase):
     def setUp(self):
-        media_file = os.path.join(__tests_root__, 'res/splash.png')
+        media_file = os.path.join(__tests_root__, 'res', 'splash.png')
         self.media = Media(MagicMock(), 'test-splash', 'splash', 1, media_file)
 
     def test_media_is_valid(self):
