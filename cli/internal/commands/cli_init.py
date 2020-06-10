@@ -79,11 +79,20 @@ class CliInitCommand(Command):
 
     def _check_for_updates(self):
         cache = self.update_checker_cache
+
+        runtime_version = cache['runtime_version']
+        if 'current_version' not in cache or not cache['current_version'] == runtime_version:
+            # Fresh install or update installed. Either way, we want to start with fresh state to
+            # clear out old schemas.
+            cache.clear()
+            cache['current_version'] = runtime_version
+
+        current_version = cache['current_version']
         current_time = int(self.time.time())
         frequency = cache['update_check_frequency_seconds']
 
         if current_time - cache['last_update_check_timestamp'] >= frequency:
-            available_update, success = self._get_available_update(cache['current_version'])
+            available_update, success = self._get_available_update(current_version)
             if success:
                 cache['last_update_check_timestamp'] = current_time
                 cache['latest_version'] = available_update
@@ -102,7 +111,7 @@ class CliInitCommand(Command):
             cache.save()
             return
 
-        if not self._compare_versions(cache['current_version'], available_update):
+        if not self._compare_versions(current_version, available_update):
             cache['latest_version'] = None
             cache['last_nag_timestamp'] = None
             cache['first_update_found_timestamp'] = None

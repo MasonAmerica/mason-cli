@@ -30,7 +30,8 @@ class CliTest(unittest.TestCase):
         os.environ['_MASON_CLI_TEST_MODE'] = 'TRUE'
         os.environ.pop('CI', None)  # Guarantee test stability
 
-        UPDATE_CHECKER_CACHE['last_update_check_timestamp'] = time.time()
+        UPDATE_CHECKER_CACHE['last_update_check_timestamp'] = int(time.time())
+        UPDATE_CHECKER_CACHE['current_version'] = __version__
         UPDATE_CHECKER_CACHE.save()
 
     def test__version__command_prints_info(self):
@@ -72,7 +73,7 @@ class CliTest(unittest.TestCase):
         config = Config(api=api)
 
         UPDATE_CHECKER_CACHE.clear()
-        UPDATE_CHECKER_CACHE['current_version'] = '1.0'
+        UPDATE_CHECKER_CACHE['runtime_version'] = '1.0'
         UPDATE_CHECKER_CACHE.save()
         result = self.runner.invoke(cli, ['version'], obj=config)
 

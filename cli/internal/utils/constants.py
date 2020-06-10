@@ -34,10 +34,10 @@ ENDPOINTS = Store('endpoints', {
 
 UPDATE_CHECKER_CACHE = Store('version-check-cache', {
     'last_update_check_timestamp': 0,
-    'current_version': __version__,
+    'runtime_version': __version__,
     'latest_version': None,
     'last_nag_timestamp': 0,
     'first_update_found_timestamp': 0,
     'update_check_frequency_seconds': 86400  # 1 day
 })
-UPDATE_CHECKER_CACHE['current_version'] = None
+UPDATE_CHECKER_CACHE['runtime_version'] = None

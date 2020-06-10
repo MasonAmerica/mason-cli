@@ -97,11 +97,14 @@ class CliInitCommandTest(unittest.TestCase):
         self.config.api.get_latest_cli_version = MagicMock(return_value='999.999.999')
 
         self.command._check_for_updates()
-        self.update_cache['current_version'] = '999.999.999'
+        self.assertEqual(self.update_cache['current_version'], self.update_cache['runtime_version'])
+
+        self.update_cache['runtime_version'] = '999.999.999'
         self.command._check_for_updates()
 
         self.assertEqual(self.update_cache['last_update_check_timestamp'], int(self.current_time))
         self.assertEqual(self.update_cache['latest_version'], None)
+        self.assertEqual(self.update_cache['current_version'], '999.999.999')
         self.assertEqual(self.update_cache['last_nag_timestamp'], 0)
         self.assertEqual(self.update_cache['first_update_found_timestamp'], 0)
 

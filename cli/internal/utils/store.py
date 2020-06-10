@@ -35,5 +35,8 @@ class Store(object):
         else:
             self._fields[key] = value
 
+    def __contains__(self, item):
+        return item in self._fields or item in self._defaults
+
     def clear(self):
         self._fields = {}
