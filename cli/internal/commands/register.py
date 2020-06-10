@@ -154,8 +154,13 @@ class RegisterConfigCommand(RegisterCommand):
         if app and app.get('version_code') == 'latest':
             latest_apk = self.config.api.get_latest_artifact(app.get('package_name'), 'apk')
             if latest_apk:
+                version = int(latest_apk.get('version'))
+                local_version = app.pop('_local_version_code', None)
+                if local_version and version < int(local_version):
+                    version = int(local_version)
+
                 with lock:
-                    app['version_code'] = int(latest_apk.get('version'))
+                    app['version_code'] = version
             else:
                 self.config.logger.error("Apk '{}' not found, register it first.".format(
                     app.get('package_name')))
@@ -356,9 +361,7 @@ class RegisterProjectCommand(RegisterCommand):
             config_files.append(self._rewritten_config(raw_config_file, apks, media_artifacts))
         stage = StageCommand(self.config, config_files, True, None, self.working_dir)
 
-        stage_prep = stage.prepare()
-        configs = stage_prep[0]
-        register = stage_prep[2]
+        (configs, _, register) = stage.prepare()
 
         return [*apks, *media_artifacts, *configs], \
             apk_registration, apks, \
@@ -466,12 +469,15 @@ class RegisterProjectCommand(RegisterCommand):
         config['from'] = raw_config_file
         for apk in apks:
             package_name = apk.get_name()
-            version = apk.get_version()
+            version = int(apk.get_version())
 
             if self._has_app_presence(package_name, apps):
                 for app in config.get('apps'):
                     if package_name == app.get('package_name'):
-                        app['version_code'] = int(version)
+                        if 'version_code' not in app:
+                            app['version_code'] = version
+                        elif app.get('version_code') == 'latest':
+                            app['_local_version_code'] = version
                         break
 
         for medium in medias:
