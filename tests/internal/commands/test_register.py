@@ -338,6 +338,47 @@ class RegisterCommandTest(unittest.TestCase):
             }]
         })
 
+    def test_project_registers_latest_app_version_when_remote_nonexistent(self):
+        self.config.endpoints_store.__getitem__ = MagicMock(return_value='https://google.com')
+        self.config.api.get_build = MagicMock(return_value={'data': {'status': 'COMPLETED'}})
+        self.config.api.get_latest_artifact = MagicMock(return_value=None)
+        project_dir = tempfile.mkdtemp()
+        working_dir = tempfile.mkdtemp()
+        config_file = os.path.join(working_dir, 'mason.yml')
+        command = RegisterProjectCommand(self.config, project_dir, working_dir)
+
+        shutil.copytree(
+            os.path.join(__tests_root__, 'res', 'simple-project'),
+            project_dir,
+            dirs_exist_ok=True
+        )
+        with open(os.path.join(project_dir, 'mason.yml'), 'w') as f:
+            f.write("""
+                    os:
+                      name: test-project
+                      version: 1
+                    apps:
+                      - name: Dummy app
+                        package_name: com.supercilex.test
+                        version_code: latest
+                """)
+
+        command.run()
+        with open(config_file) as f:
+            yml = yaml.safe_load(f)
+
+        self.assertDictEqual(yml, {
+            'os': {
+                'name': 'test-project',
+                'version': 1
+            },
+            'apps': [{
+                'name': 'Dummy app',
+                'package_name': 'com.supercilex.test',
+                'version_code': 384866
+            }]
+        })
+
     def test_project_registers_updated_complex_config(self):
         self.config.endpoints_store.__getitem__ = MagicMock(return_value='https://google.com')
         self.config.api.get_build = MagicMock(return_value={'data': {'status': 'COMPLETED'}})

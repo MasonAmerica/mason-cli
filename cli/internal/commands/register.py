@@ -161,6 +161,9 @@ class RegisterConfigCommand(RegisterCommand):
 
                 with lock:
                     app['version_code'] = version
+            elif '_local_version_code' in app:
+                with lock:
+                    app['version_code'] = int(app.pop('_local_version_code'))
             else:
                 self.config.logger.error("Apk '{}' not found, register it first.".format(
                     app.get('package_name')))
