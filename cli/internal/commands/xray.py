@@ -458,15 +458,17 @@ class XRay(object):
         return self._run_in_reactor(self._screencap, outputfile)
 
     def _screencap(self, device, outputfile=None):
-        if outputfile is None:
-            outputfile = "screencap-%s-%s.png" % (self._device, strftime("%Y%m%d%H%M%S", gmtime()))
+        file_name = "screencap-%s-%s.png" % (self._device, strftime("%Y%m%d%H%M%S", gmtime()))
+        outputfile = os.path.abspath(outputfile or file_name)
+        rpath = "/data/local/tmp/%s" % file_name
 
-        rpath = "/data/local/tmp/%s" % outputfile
+        if '.' not in os.path.basename(outputfile):
+            outputfile = os.path.join(outputfile, file_name)
+        os.makedirs(os.path.dirname(outputfile), exist_ok=True)
+
         self._shell(device, ['/system/bin/screencap', '-p', rpath])
-        self._pull(device, rpath)
+        self._pull(device, rpath, outputfile)
         self._shell(device, ['rm', rpath])
-
-        self._logger.info("Screen captured to %s" % outputfile)
 
     def _bugreport(self, device):
         self._logger.info("Collecting bugreport, this may take a minute..")
