@@ -34,3 +34,15 @@ All behavior changes and bug fixes should come with associated test changes. Whi
 run tests with `python3 setup.py test`, the best way to do so is with IntelliJ's
 [Auto Test](https://www.jetbrains.com/help/idea/monitoring-and-managing-tests.html) feature which
 continuously tests your code as you write it. Just run all tests in the `tests` folder.
+
+#### Cutting a release
+
+The release process is automated using tag pushes.
+
+1. Create a commit called `v$VERSION` which sets the CLI version inside the `VERSION` file at the
+   root of this repository.
+   - The commit message will be used as release notes for this CLI release.
+1. Create a tag for that commit and call it `$VERSION`.
+1. Push both the commit and tag to master.
+
+For an example, see e50d6981a77e5d1a363cb5a8c97a644a07aaabfb.
