@@ -5,6 +5,7 @@ import posixpath
 import socket
 import sys
 import threading
+from os.path import expanduser
 from time import gmtime
 from time import strftime
 
@@ -207,7 +208,7 @@ class XRay(object):
         self._cur_bytes = 0
         self._url = build_url(config.endpoints_store, 'xray_url') + "/{}/{}"
         self._logger = config.logger
-        self._adbkey = os.path.join(click.get_app_dir('Mason CLI'), 'adbkey')
+        self._adbkey = os.path.join(expanduser("~"), '.android', 'adbkey')
         self._awaiting_auth = False
 
     def _get_url(self, service):
@@ -221,6 +222,8 @@ class XRay(object):
 
     def _connect_adb(self):
         if not os.path.isfile(self._adbkey):
+            if not os.path.isdir(os.path.dirname(self._adbkey)):
+                os.mkdir(os.path.dirname(self._adbkey))
             self._keygen()
 
         return WsHandle(self._logger, self._get_url('adb'), timeout_ms=5000, header=self._auth)
