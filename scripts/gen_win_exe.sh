@@ -1,6 +1,7 @@
 #!/bin/bash -ex
 
 echo "__version__ = '$(cat VERSION)'" > cli/version.py
+wine c:\\Python37\\python.exe -m pip install --upgrade pip
 wine pip install windows-curses
 wine pip install .
 wine pyinstaller cli/mason.py --onefile \

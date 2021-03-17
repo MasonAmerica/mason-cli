@@ -1,6 +1,7 @@
 #!/bin/bash -ex
 
 echo "__version__ = '$(cat VERSION)'" > cli/version.py
+pip3 install --upgrade pip
 pip3 install .
 pyinstaller cli/mason.py --onefile \
   --hidden-import='pkg_resources.py2_warn' \

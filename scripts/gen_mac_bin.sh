@@ -1,6 +1,7 @@
 #!/bin/bash -ex
 
 echo "__version__ = '$(cat VERSION)'" > cli/version.py
+pip3 install --upgrade pip
 pip3 install .
 pyinstaller cli/mason.py --onefile \
   --add-data "$(pip3 show pyaxmlparser | grep Location | cut -c11-)/pyaxmlparser/resources/public.xml:pyaxmlparser/resources" \
