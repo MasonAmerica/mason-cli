@@ -38,12 +38,12 @@ class Apk(IArtifact):
 
         min_sdk = int(self.apk.get_min_sdk_version())
         # We don't support anything higher right now
-        if min_sdk > 25:
+        if min_sdk > 30:
             self.config.logger.error(inspect.cleandoc("""
                 File Name: {}
 
                 Mason Platform does not currently support applications with a minimum sdk greater
-                than API 25. Please lower the minimum sdk value in your manifest or
+                than API 30. Please lower the minimum sdk value in your manifest or
                 gradle file.
             """.format(self.binary)))
             raise click.Abort()
