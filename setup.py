@@ -25,7 +25,7 @@ setup(
         'requests',
         'requests-toolbelt',
         'tqdm',
-        'pyyaml',
+        'pyyaml>=5.4',
         'six',
         'packaging',
         'pyaxmlparser>=0.3.22',
